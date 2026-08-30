@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Register | Fitpro Equips</title>
+	<style>
+		:root { --blue: #2864e8; --deep-blue: #0751cb; --ink: #172238; --muted: #677186; --pale: #f2f6ff; --navy: #111d2b; }
+		* { box-sizing: border-box; }
+		body { margin: 0; min-height: 100vh; border-top: 4px solid #252525; color: var(--ink); background: var(--pale); font-family: "Segoe UI", Tahoma, sans-serif; font-size: 12px; }
+		a { color: inherit; text-decoration: none; }
+		.register-shell { min-height: calc(100vh - 4px); display: flex; flex-direction: column; }
+		.register-main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 500px; }
+		.welcome-panel { position: relative; display: flex; align-items: flex-end; min-height: 500px; padding: clamp(36px, 5vw, 72px); overflow: hidden; color: #fff; background: linear-gradient(180deg, rgba(32, 76, 129, .05), rgba(24, 78, 158, .63)), url("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85") center / cover; }
+		.welcome-copy { max-width: 360px; }
+		.welcome-copy h1 { max-width: 330px; margin: 0 0 15px; color: #fff; font-size: clamp(30px, 3.3vw, 43px); line-height: .98; }.welcome-copy p { max-width: 320px; margin: 0; color: rgba(255,255,255,.88); font-size: 12px; line-height: 1.5; }
+		.form-panel { display: flex; align-items: center; justify-content: center; padding: clamp(32px, 5vw, 58px); }.form-content { width: min(100%, 390px); }
+		.register-card { padding: 30px 26px 25px; border: 1px solid #e8edf5; border-radius: 7px; background: #fff; box-shadow: 0 4px 16px rgba(37,77,145,.09); }
+		.register-card h2 { margin: 0 0 7px; font-size: 16px; }.intro { margin: 0 0 16px; color: var(--muted); font-size: 10px; line-height: 1.45; }.form-rule { height: 1px; margin-bottom: 16px; background: #e3e7ef; }
+		.field { position: relative; margin-bottom: 13px; }.field label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }.field input, .field select { width: 100%; height: 35px; padding: 0 11px; border: 1px solid #d6deeb; border-radius: 5px; outline: 0; color: var(--ink); background: #fff; font: inherit; font-size: 10px; }.field input:focus, .field select:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(40,100,232,.12); }.field select { color: #596579; }.date-field input[type="text"] { padding-right: 38px; }.calendar-button { position: absolute; z-index: 2; top: 0; right: 0; width: 36px; height: 35px; border: 0; background: transparent; cursor: pointer; }.calendar-icon { position: absolute; top: 10px; right: 11px; width: 13px; height: 12px; border: 1px solid #65728a; border-radius: 2px; }.calendar-icon::before { content: ""; position: absolute; top: 3px; left: 1px; right: 1px; border-top: 1px solid #65728a; }.calendar-icon::after { content: ""; position: absolute; top: -3px; left: 3px; width: 5px; height: 4px; border-right: 1px solid #65728a; border-left: 1px solid #65728a; }.date-picker-panel { position: absolute; z-index: 5; top: 40px; right: 0; display: none; width: 250px; padding: 14px; border: 1px solid #dce3ee; border-radius: 6px; background: #fff; box-shadow: 0 6px 18px rgba(37,77,145,.16); }.date-picker-panel.open { display: block; }.date-picker-panel select { height: 30px; padding: 0 6px; font-size: 9px; }.date-picker-selects { display: grid; grid-template-columns: .8fr 1fr 1.2fr; gap: 6px; }.date-picker-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 11px; }.date-picker-actions button { height: 25px; padding: 0 10px; border: 1px solid #d6deeb; border-radius: 4px; color: #596579; background: #fff; font-size: 8px; cursor: pointer; }.date-picker-actions .apply-date { color: #fff; border-color: var(--blue); background: var(--blue); }
+		.password-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }.password-field input { padding-right: 30px; }.password-toggle { position: absolute; top: 10px; right: 10px; width: 15px; height: 15px; padding: 0; border: 0; color: #526078; background: transparent; cursor: pointer; }.eye { display: block; width: 12px; height: 8px; border: 1px solid currentColor; border-radius: 75% 15%; transform: rotate(45deg); }.eye::after { content: ""; position: absolute; inset: 2px; border: 1px solid currentColor; border-radius: 50%; }
+		.phone-input-wrap { display: flex; align-items: center; gap: 8px; width: 100%; height: 35px; padding: 0 11px; border: 1px solid #d6deeb; border-radius: 5px; background: #fff; }
+		.phone-input-wrap input { flex: 1; width: 100%; height: 100%; padding: 0; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; font-size: 10px; }
+		.country-code { min-width: 38px; color: #3d4c67; font-weight: 600; font-size: 10px; }
+		.security-label { margin: -3px 0 9px; color: #3e4859; font-size: 8px; }.security-label span { color: #68758a; }.terms { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 17px; color: #596579; font-size: 9px; line-height: 1.4; }.terms input { width: 13px; height: 13px; margin: 0; accent-color: var(--blue); }.terms a { color: #0751cb; }
+		.submit-button { width: 100%; height: 38px; border: 0; border-radius: 5px; color: #fff; background: var(--blue); font-size: 12px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(40,100,232,.25); }.submit-button:hover { background: var(--deep-blue); }.error-message { margin: 0 0 10px; color: #d73535; font-size: 9px; }.signin-prompt { margin: 14px 0 0; text-align: center; color: #596579; font-size: 9px; }.signin-prompt a { color: var(--blue); }.field.invalid input, .field.invalid select, .phone-input-wrap.invalid { border-color: #d73535 !important; box-shadow: 0 0 0 2px rgba(215,53,53,.12); }
+		.trust-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 22px; text-align: center; }.trust-item { display: flex; flex-direction: column; align-items: center; gap: 6px; color: #34425d; font-size: 8px; }.trust-icon { color: var(--blue); font-size: 15px; }
+		.help-area { padding: 33px clamp(26px, 5vw, 64px); background: var(--pale); }.help-box { max-width: 100%; min-height: 117px; padding: 22px 20px; border-radius: 5px; color: #fff; background: var(--deep-blue); box-shadow: 0 2px 4px rgba(7,81,203,.16); }.help-box h3 { margin: 0 0 11px; font-size: 10px; }.help-box p { max-width: 230px; margin: 0 0 11px; color: rgba(255,255,255,.9); font-size: 7px; line-height: 1.45; }.help-box a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 18px; border: 1px solid rgba(255,255,255,.25); border-radius: 4px; font-size: 7px; }
+		.site-footer { padding: 32px clamp(18px, 5vw, 64px) 12px; color: #c2cad7; background: var(--navy); }.footer-columns { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 25px; }.site-footer h3 { margin: 0 0 10px; color: #fff; font-size: 14px; }.site-footer h4 { margin: 0 0 10px; color: #fff; font-size: 10px; font-weight: 500; }.site-footer p, .site-footer a { display: block; margin: 0 0 7px; color: #aeb8c8; font-size: 9px; line-height: 1.45; }.copyright { margin: 18px calc(clamp(18px, 5vw, 64px) * -1) 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); text-align: center; color: #8290a5; font-size: 9px; }
+		@media (max-width: 700px) { .register-main { grid-template-columns: 1fr; }.welcome-panel { min-height: 300px; }.form-panel { padding: 35px 20px 45px; }.help-area { padding: 24px 20px; }.footer-columns { grid-template-columns: repeat(2, 1fr); } }
+		@media (max-width: 420px) { .welcome-panel { min-height: 270px; padding: 28px 24px; }.welcome-copy h1 { font-size: 30px; }.welcome-copy p { font-size: 11px; }.register-card { padding: 24px 18px 22px; }.password-row { grid-template-columns: 1fr; gap: 0; }.footer-columns { grid-template-columns: 1fr 1fr; gap: 18px 12px; }.site-footer { padding-right: 16px; padding-left: 16px; }.copyright { margin-right: -16px; margin-left: -16px; } }
+	</style>
+</head>
+<body>
+	<div class="register-shell">
+		<main class="register-main">
+			<section class="welcome-panel">
+				<div class="welcome-copy">
+					<h1>Start Your Fitness Journey</h1>
+					<p>Unlock personalized workout tracks, exclusive equipment launches, and a community dedicated to peak human performance.</p>
+				</div>
+			</section>
+			<section class="form-panel">
+				<div class="form-content">
+					<form class="register-card" action="/register" method="POST" novalidate>
+						<h2>Register</h2>
+						<p class="intro">Join the Apex community and elevate your potential.</p>
+						<div class="form-rule"></div>
+						<% if (typeof message !== 'undefined' && message) { %><p class="error-message"><%= message %></p><% } %>
+						<div id="formMessage" class="error-message" style="display:none;"></div>
+						<div class="field"><label for="name">Full Name</label><input id="name" name="name" type="text" placeholder="Full Name" required></div>
+						<div class="field"><label for="email">Email Address</label><input id="email" name="email" type="email" placeholder="Email Address" required></div>
+						<div class="field"><label for="phone">Phone Number</label><div class="phone-input-wrap"><span class="country-code">+91</span><input id="phone" name="phone" type="tel" placeholder="98765 43210" inputmode="tel" pattern="^[6-9]\d{9}$" required></div></div>
+						<div class="field date-field"><label for="dateOfBirthDisplay">Date of Birth</label><input id="dateOfBirthDisplay" name="dateOfBirthDisplay" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/[0-9]{4}" maxlength="10" required><button class="calendar-button" type="button" aria-label="Choose date"><span class="calendar-icon" aria-hidden="true"></span></button><div class="date-picker-panel" id="datePickerPanel"><div class="date-picker-selects"><select id="pickerDay" aria-label="Day"><option value="">Day</option><% for (let day = 1; day <= 31; day++) { %><option value="<%= String(day).padStart(2, '0') %>"><%= day %></option><% } %></select><select id="pickerMonth" aria-label="Month"><option value="">Month</option><% for (let month = 1; month <= 12; month++) { %><option value="<%= String(month).padStart(2, '0') %>"><%= month %></option><% } %></select><select id="pickerYear" aria-label="Year"><option value="">Year</option><% for (let year = new Date().getFullYear(); year >= 1900; year--) { %><option value="<%= year %>"><%= year %></option><% } %></select></div><div class="date-picker-actions"><button type="button" class="cancel-date">Cancel</button><button type="button" class="apply-date">Apply</button></div></div><input id="dateOfBirth" name="dateOfBirth" type="hidden"></div>
+						<div class="field"><label for="gender">Gender</label><select id="gender" name="gender" required><option value="" disabled selected>Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select></div>
+						<div class="password-row"><div class="field password-field"><label for="password">Password</label><input id="password" name="password" type="password" placeholder="Password" required><button class="password-toggle" type="button" data-password="password" aria-label="Show password"><span class="eye"></span></button></div><div class="field password-field"><label for="confirmPassword">Confirm Password</label><input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm Password" required><button class="password-toggle" type="button" data-password="confirmPassword" aria-label="Show confirm password"><span class="eye"></span></button></div></div>
+						<p class="security-label">Security Level: <span>None</span></p>
+						<label class="terms"><input type="checkbox" required><span>I agree to the <a href="#">Privacy Policy</a> and <a href="#">Terms of Service</a>.</span></label>
+						<button class="submit-button" type="submit">Register</button>
+						<p class="signin-prompt">Already have an account? <a href="/login">Login</a></p>
+					</form>
+					<div class="trust-row"><div class="trust-item"><span class="trust-icon">&#9825;</span><span>Secure Registration</span></div><div class="trust-item"><span class="trust-icon">&#9671;</span><span>Protected Data</span></div><div class="trust-item"><span class="trust-icon">&#10003;</span><span>Safe Shopping</span></div></div>
+				</div>
+			</section>
+		</main>
+		<section class="help-area"><div class="help-box"><h3>Need Assistance?</h3><p>Our support team is available 24/7 to help you with your setup or any account queries.</p><a href="#contact"><span>&#9742;</span> Contact Us</a></div></section>
+		<%- include('../partials/user-footer') %>
+	</div>
+	<script>
+		var dateDisplay = document.getElementById('dateOfBirthDisplay');
+		var datePickerPanel = document.getElementById('datePickerPanel');
+		var pickerDay = document.getElementById('pickerDay');
+		var pickerMonth = document.getElementById('pickerMonth');
+		var pickerYear = document.getElementById('pickerYear');
+		document.querySelector('.calendar-button').addEventListener('click', function () { datePickerPanel.classList.toggle('open'); });
+		document.querySelector('.cancel-date').addEventListener('click', function () { datePickerPanel.classList.remove('open'); });
+		document.querySelector('.apply-date').addEventListener('click', function () {
+			if (pickerDay.value && pickerMonth.value && pickerYear.value) {
+				dateDisplay.value = pickerDay.value + '/' + pickerMonth.value + '/' + pickerYear.value;
+				datePickerPanel.classList.remove('open');
+			}
+		});
+		var registerForm = document.querySelector('.register-card');
+		var formMessage = document.getElementById('formMessage');
+		function clearFieldState() {
+			document.querySelectorAll('.field, .phone-input-wrap').forEach(function (element) {
+				element.classList.remove('invalid');
+			});
+		}
+		function markFieldInvalid(fieldSelector, parentSelector) {
+			var field = document.querySelector(fieldSelector);
+			var parent = document.querySelector(parentSelector);
+			if (field) field.closest('.field')?.classList.add('invalid');
+			if (parent) parent.classList.add('invalid');
+		}
+		function showFormError(message) {
+			formMessage.textContent = message;
+			formMessage.style.display = 'block';
+			window.scrollTo({ top: 0, behavior: 'smooth' });
+		}
+
+		registerForm.addEventListener('submit', function (event) {
+			clearFieldState();
+			formMessage.style.display = 'none';
+			formMessage.textContent = '';
+
+			var name = document.getElementById('name').value.trim();
+			var email = document.getElementById('email').value.trim();
+			var phoneInput = document.getElementById('phone');
+			var password = document.getElementById('password').value;
+			var confirmPassword = document.getElementById('confirmPassword').value;
+			var rawPhone = phoneInput.value.replace(/\s+/g, '').trim();
+			var emailPattern = /^[^\s@]+@gmail\.com$/i;
+			var passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
+			if (!name || !email || !phoneInput.value.trim() || !document.getElementById('gender').value || !dateDisplay.value || !password || !confirmPassword) {
+				event.preventDefault();
+				markFieldInvalid('#name', null);
+				markFieldInvalid('#email', null);
+				markFieldInvalid('#phone', '.phone-input-wrap');
+				markFieldInvalid('#gender', null);
+				markFieldInvalid('#dateOfBirthDisplay', null);
+				markFieldInvalid('#password', null);
+				markFieldInvalid('#confirmPassword', null);
+				showFormError('Please fill in all required fields before creating your account.');
+				return;
+			}
+
+			if (!emailPattern.test(email)) {
+				event.preventDefault();
+				markFieldInvalid('#email', null);
+				showFormError('Please enter a valid Gmail address (example: name@gmail.com).');
+				return;
+			}
+
+			if (!passwordPattern.test(password)) {
+				event.preventDefault();
+				markFieldInvalid('#password', null);
+				showFormError('Password must be at least 8 characters long and include uppercase, lowercase, and a number.');
+				return;
+			}
+
+			if (password !== confirmPassword) {
+				event.preventDefault();
+				markFieldInvalid('#confirmPassword', null);
+				showFormError('Password and confirm password do not match.');
+				return;
+			}
+
+			if (rawPhone && !rawPhone.startsWith('+91')) {
+				phoneInput.value = '+91 ' + rawPhone;
+			}
+
+			var dateParts = dateDisplay.value.split('/');
+			if (dateParts.length === 3) {
+				document.getElementById('dateOfBirth').value = dateParts[2] + '-' + dateParts[1] + '-' + dateParts[0];
+			}
+		});
+
+		document.querySelectorAll('[data-password]').forEach(function (button) {
+			button.addEventListener('click', function () {
+				var input = document.getElementById(button.dataset.password);
+				input.type = input.type === 'password' ? 'text' : 'password';
+				button.setAttribute('aria-label', input.type === 'password' ? 'Show password' : 'Hide password');
+			});
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Login | Fitpro Equips</title>
+	<link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+	<div class="page-shell">
+		<%- include('../partials/user-header') %>
+
+		<main class="main-content">
+			<section class="welcome-panel">
+				<div class="welcome-copy">
+					<h1>Welcome Back</h1>
+					<p>Your peak performance journey continues here. Reconnect with your goals and unlock your next level of vitality.</p>
+				</div>
+			</section>
+
+			<section class="login-panel">
+				<div class="login-content">
+					<div class="login-card">
+						<h2>Login</h2>
+						<p class="intro">Welcome back! Please enter your account<br>details.</p>
+						<% if (typeof message !== 'undefined' && message) { %>
+							<p class="error-message"><%= message %></p>
+						<% } %>
+						<form action="/login" method="POST">
+							<div class="form-field">
+								<label for="email">Email Address</label>
+								<input id="email" name="email" type="email" placeholder="Email Address" autocomplete="email" required>
+							</div>
+							<div class="form-field password-field">
+								<label for="password">Password</label>
+								<input id="password" name="password" type="password" placeholder="Password" autocomplete="current-password" required>
+								<button class="password-toggle" type="button" aria-label="Show password" data-password-toggle>
+									<span class="icon eye-icon" aria-hidden="true"></span>
+								</button>
+							</div>
+							<div class="form-options">
+								<label class="remember-option" for="remember">
+									<input id="remember" name="remember" type="checkbox">
+									<span>Remember Me</span>
+								</label>
+								<a class="forgot-link" href="/forgot-password">Forgot Password?</a>
+							</div>
+							<button class="sign-in-button" type="submit">Login</button>
+						</form>
+						<div class="divider"><span>OR</span></div>
+						<button class="google-button" type="button"><span class="google-mark">G</span> Google</button>
+						<p class="register-prompt">Don't have an account? <a href="/register">Register</a></p>
+					</div>
+
+					<div class="trust-row">
+						<div class="trust-item"><span class="trust-icon lock-icon"></span><span>Secure Login</span></div>
+						<div class="trust-item"><span class="trust-icon bolt-icon"></span><span>Fast Checkout</span></div>
+						<div class="trust-item"><span class="trust-icon shield-icon"></span><span>Protected</span></div>
+					</div>
+
+					<div class="help-box">
+						<h3>Need Help?</h3>
+						<a href="#contact">Contact Support</a>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<%- include('../partials/user-footer') %>
+	</div>
+	<script src="/js/login.js"></script>
+</body>
+</html>

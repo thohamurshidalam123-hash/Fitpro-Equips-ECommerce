@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Fitpro Equips | My Account</title>
+	<link rel="stylesheet" href="/css/landing.css">
+	<link rel="stylesheet" href="/css/profile.css">
+</head>
+<body>
+	<div class="page-shell profile-shell">
+		<%- include('../partials/user-header') %>
+		<main class="profile-main">
+			<div class="breadcrumb"><a href="/">Home</a><span>›</span><strong>My Account</strong></div>
+
+			<section class="account-banner" aria-label="Account summary">
+				<div class="profile-identity">
+					<button type="button" class="profile-avatar-button" data-open-profile-image-modal aria-label="Preview profile image">
+						<% if (user.profile_image) { %>
+							<img class="profile-avatar" src="<%= user.profile_image %>" alt="<%= user.name %> profile">
+						<% } else { %>
+							<div class="profile-avatar avatar-fallback" aria-hidden="true"><%= user.name.charAt(0).toUpperCase() %></div>
+						<% } %>
+					</button>
+					<span class="online-dot" aria-label="Active account"></span>
+					<div>
+						<h1><%= user.name %></h1>
+						<p>Member since <%= new Date(user.createdAt || Date.now()).toLocaleDateString('en-GB') %></p>
+					</div>
+				</div>
+				<div class="account-actions">
+					<button type="button" class="details-button" data-open-user-details-modal>User Details</button>
+					<a href="/forgot-password">Reset Password</a>
+					<button type="button" class="edit-profile-btn" data-open-profile-modal>Edit Profile</button>
+					<a class="logout-link" href="/logout"><span aria-hidden="true">↪</span> Logout</a>
+				</div>
+			</section>
+
+			<section class="account-grid" aria-label="Account links">
+				<a class="account-card" href="#orders"><span class="card-icon">◇</span><h2>My Orders</h2><p>Track, return or cancel your orders</p><span class="card-link">View Orders →</span></a>
+				<a class="account-card" href="#cart"><span class="card-icon">♜</span><h2>Shopping Cart</h2><p>Products you stored</p><span class="card-link">View Your Cart →</span></a>
+				<a class="account-card" href="#addresses"><span class="card-icon">◎</span><h2>Saved Addresses</h2><p>Manage delivery addresses</p><span class="card-link">Manage Addresses →</span></a>
+				<a class="account-card" href="#wishlist"><span class="card-icon heart">♡</span><h2>Wishlist</h2><p>Products you've saved</p><span class="card-link">Open Wishlist →</span></a>
+				<a class="account-card" href="#cart"><span class="card-icon">♜</span><h2>Cart</h2><p>View and manage your active shopping cart</p><span class="card-link">View Cart →</span></a>
+				<a class="account-card" href="#wallet"><span class="card-icon">▤</span><h2>Wallet</h2><p>Manage your balance and payment methods</p><span class="card-link">Manage Wallet →</span></a>
+			</section>
+
+			<section class="trust-strip" aria-label="Fitpro Equips benefits">
+				<div><span class="trust-icon">♢</span><span><strong>Secure Shopping</strong><small>100% Protected Payments</small></span></div>
+				<div><span class="trust-icon">ϟ</span><span><strong>Fast Delivery</strong><small>2-3 Business Days</small></span></div>
+				<div><span class="trust-icon">✣</span><span><strong>Premium Quality</strong><small>Tested Performance Gear</small></span></div>
+				<div><span class="trust-icon">♧</span><span><strong>24/7 Support</strong><small>Always Here to Help</small></span></div>
+			</section>
+		</main>
+		<%- include('../partials/user-footer') %>
+	</div>
+	<div class="profile-details-modal" id="profileImageModal" aria-hidden="true">
+		<div class="profile-update-backdrop" data-close-profile-image-modal></div>
+		<div class="profile-update-dialog profile-image-dialog" role="dialog" aria-modal="true" aria-labelledby="profileImageTitle">
+			<div class="profile-update-header">
+				<h2 id="profileImageTitle">Profile Photo</h2>
+				<button type="button" class="profile-close-btn" aria-label="Close profile photo" data-close-profile-image-modal>&times;</button>
+			</div>
+			<div class="profile-image-content">
+				<% if (user.profile_image) { %>
+					<img src="<%= user.profile_image %>" alt="<%= user.name %> profile preview">
+				<% } else { %>
+					<div class="profile-image-placeholder"><%= user.name.charAt(0).toUpperCase() %></div>
+				<% } %>
+			</div>
+		</div>
+	</div>
+	<div class="profile-details-modal" id="userDetailsModal" aria-hidden="true">
+		<div class="profile-update-backdrop" data-close-user-details-modal></div>
+		<div class="profile-update-dialog profile-details-dialog" role="dialog" aria-modal="true" aria-labelledby="userDetailsTitle">
+			<div class="profile-update-header">
+				<h2 id="userDetailsTitle">User Details</h2>
+				<button type="button" class="profile-close-btn" aria-label="Close user details" data-close-user-details-modal>&times;</button>
+			</div>
+			<div class="profile-details-content">
+				<div class="profile-details-avatar-wrap">
+					<div class="profile-details-avatar" aria-hidden="true">
+						<% if (user.profile_image) { %>
+							<img src="<%= user.profile_image %>" alt="<%= user.name %> profile image">
+						<% } else { %>
+							<%= user.name.charAt(0).toUpperCase() %>
+						<% } %>
+					</div>
+				</div>
+				<div class="profile-detail-row">
+					<span class="detail-label">Name</span>
+					<span class="detail-value"><%= user.name || 'Not available' %></span>
+				</div>
+				<div class="profile-detail-row">
+					<span class="detail-label">Email</span>
+					<span class="detail-value"><%= user.email || 'Not available' %></span>
+				</div>
+				<div class="profile-detail-row">
+					<span class="detail-label">Date of Birth</span>
+					<span class="detail-value"><%= user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('en-GB') : 'Not available' %></span>
+				</div>
+				<div class="profile-detail-row">
+					<span class="detail-label">Phone Number</span>
+					<span class="detail-value"><%= user.phone || 'Not available' %></span>
+				</div>
+				<div class="profile-detail-row">
+					<span class="detail-label">Gender</span>
+					<span class="detail-value"><%= user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available' %></span>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div id="otp-state" data-show-otp-verification="<%= showOtpVerification ? 'true' : 'false' %>" hidden></div>
+	<%- include('userProfileUpdate') %>
+	<script>
+		const profileModal = document.getElementById('profileUpdateModal');
+		const otpModal = document.getElementById('profileOtpModal');
+		const userDetailsModal = document.getElementById('userDetailsModal');
+		const profileImageModal = document.getElementById('profileImageModal');
+		const openProfileButtons = document.querySelectorAll('[data-open-profile-modal]');
+		const closeProfileButtons = document.querySelectorAll('[data-close-profile-modal]');
+		const closeOtpButtons = document.querySelectorAll('[data-close-profile-otp-modal]');
+		const openUserDetailsButtons = document.querySelectorAll('[data-open-user-details-modal]');
+		const closeUserDetailsButtons = document.querySelectorAll('[data-close-user-details-modal]');
+		const openProfileImageButtons = document.querySelectorAll('[data-open-profile-image-modal]');
+		const closeProfileImageButtons = document.querySelectorAll('[data-close-profile-image-modal]');
+
+		const openModal = (modal) => {
+			if (modal) {
+				modal.classList.add('active');
+				modal.setAttribute('aria-hidden', 'false');
+			}
+		};
+
+		const closeModal = (modal) => {
+			if (modal) {
+				modal.classList.remove('active');
+				modal.setAttribute('aria-hidden', 'true');
+			}
+		};
+
+		openProfileButtons.forEach((button) => {
+			button.addEventListener('click', () => openModal(profileModal));
+		});
+
+		closeProfileButtons.forEach((button) => {
+			button.addEventListener('click', () => closeModal(profileModal));
+		});
+
+		closeOtpButtons.forEach((button) => {
+			button.addEventListener('click', () => closeModal(otpModal));
+		});
+
+		openUserDetailsButtons.forEach((button) => {
+			button.addEventListener('click', () => openModal(userDetailsModal));
+		});
+
+		closeUserDetailsButtons.forEach((button) => {
+			button.addEventListener('click', () => closeModal(userDetailsModal));
+		});
+
+		openProfileImageButtons.forEach((button) => {
+			button.addEventListener('click', () => openModal(profileImageModal));
+		});
+
+		closeProfileImageButtons.forEach((button) => {
+			button.addEventListener('click', () => closeModal(profileImageModal));
+		});
+
+		const otpState = document.getElementById('otp-state');
+		const shouldOpenOtpModal = otpState && otpState.dataset.showOtpVerification === 'true';
+		if (shouldOpenOtpModal && otpModal) {
+			openModal(otpModal);
+		}
+	</script>
+</body>
+</html>
