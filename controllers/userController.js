@@ -408,14 +408,14 @@ const updatePassword = async (req, res) => {
 }
 
 // For submitting updated profile data
-const updateProfile=async(req,res)=>{
-    try{
-        const userId=req.session.userId;
-        const {name,email,phone,gender,dateOfBirth}=req.body;
+const updateProfile = async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        const { name, email, phone, gender, dateOfBirth } = req.body;
         const profileImage = req.file ? `/uploads/profile-pics/${req.file.filename}` : null;
 
-        const user=await User.findById(userId);
-        if(!user) return res.redirect('/login');
+        const user = await User.findById(userId);
+        if (!user) return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
 
         const normalizedEmail = email ? email.trim() : '';
         const normalizedPhone = phone ? phone.trim() : '';
@@ -432,17 +432,17 @@ const updateProfile=async(req,res)=>{
             updateData.profile_image = profileImage;
         }
 
-        if(normalizedEmail && normalizedEmail !== user.email){
-            const emailExists=await User.findOne({ email: normalizedEmail });
-            if(emailExists){
-                return res.redirect('/userProfile?error=Email is already in use');
+        if (normalizedEmail && normalizedEmail !== user.email) {
+            const emailExists = await User.findOne({ email: normalizedEmail });
+            if (emailExists) {
+                return res.status(400).json({ success: false, message: 'Email is already in use' });
             }
 
             const otp = generateOtp();
             const emailSent = await sendOtpEmail(normalizedEmail, otp);
 
-            if(!emailSent){
-                return res.redirect('/userProfile?error=Failed to send OTP');
+            if (!emailSent) {
+                return res.status(500).json({ success: false, message: 'Failed to send OTP' });
             }
 
             req.session.pendingProfileUpdate = {
@@ -452,15 +452,17 @@ const updateProfile=async(req,res)=>{
             req.session.profileOtp = otp;
             req.session.profileOtpExpiry = Date.now() + 180000;
 
-            return res.redirect('/userProfile?emailOtp=true');
+            // Send JSON telling frontend to open OTP modal
+            return res.json({ success: true, requireOtp: true });
         }
 
         await User.findByIdAndUpdate(userId, updateData);
 
-        return res.redirect('/userProfile?success=Profile updated successfully');
-    }catch(error){
-        console.error('Update profile error:',error.message);
-        res.status(500).send('Server Error');
+        // Send JSON telling frontend it was completely successful
+        return res.json({ success: true, requireOtp: false });
+    } catch (error) {
+        console.error('Update profile error:', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
@@ -475,26 +477,20 @@ const loadProfileOtpModal=async(req,res)=>{
     }
 };
 
-const verifyProfileOtp=async (req,res)=>{
-    try{
-        const {otp}=req.body;
-        const pendingData=req.session.pendingProfileUpdate;
+const verifyProfileOtp = async (req, res) => {
+    try {
+        const { otp } = req.body;
+        const pendingData = req.session.pendingProfileUpdate;
 
-        if(!pendingData || !req.session.profileOtp){
-            return res.redirect('/userProfile');
+        if (!pendingData || !req.session.profileOtp) {
+            return res.status(400).json({ success: false, message: 'Session expired. Please try editing again.' });
         }
 
-        if(Date.now() > req.session.profileOtpExpiry){
-            return res.render('user/userProfile', {
-                user: await User.findById(req.session.userId).lean(),
-                currentPage: 'profile',
-                showOtpVerification: true,
-                pendingEmail: pendingData.email,
-                message: 'OTP expired. Please try editing again.'
-            });
+        if (Date.now() > req.session.profileOtpExpiry) {
+            return res.status(400).json({ success: false, message: 'OTP expired. Please try editing again.' });
         }
 
-        if(otp === req.session.profileOtp){
+        if (otp === req.session.profileOtp) {
             const userId = req.session.userId;
 
             await User.findByIdAndUpdate(userId, {
@@ -514,21 +510,16 @@ const verifyProfileOtp=async (req,res)=>{
                 if (err) {
                     console.log('Session destroy error:', err.message);
                 }
-                return res.redirect('/login?message=' + encodeURIComponent('Your email was updated. Please log in with your new email.'));
+                // Send JSON telling frontend to redirect the user to login
+                const redirectUrl = '/login?message=' + encodeURIComponent('Your email was updated. Please log in with your new email.');
+                return res.json({ success: true, redirectUrl });
             });
-            return;
-        }else{
-            return res.render('user/userProfile', {
-                user: await User.findById(req.session.userId).lean(),
-                currentPage: 'profile',
-                showOtpVerification: true,
-                pendingEmail: pendingData.email,
-                message: 'Invalid OTP. Please try again.'
-            });
+        } else {
+            return res.status(400).json({ success: false, message: 'Invalid OTP. Please try again.' });
         }
-    }catch(error){
-        console.error('Profile OTP verification error:',error.message);
-        res.status(500).send('Server Error');
+    } catch (error) {
+        console.error('Profile OTP verification error:', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
