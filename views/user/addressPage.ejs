@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Addresses | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <style>
+        :root { --address-blue: #2365f2; --address-ink: #18243a; --address-muted: #6d788b; --address-bg: #f7f9fe; --address-line: #e8edf6; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--address-bg); color: var(--address-ink); font-family: Arial, sans-serif; font-size: 12px; }
+        .address-page { min-height: 100vh; display: flex; flex-direction: column; }
+        .address-main { width: min(100% - 40px, 1180px); margin: 0 auto; flex: 1; padding: 34px 0 58px; }
+        .address-breadcrumb { display: flex; align-items: center; gap: 8px; color: #a0aabd; font-size: 10px; margin-bottom: 18px; }
+        .address-breadcrumb strong { color: var(--address-blue); font-weight: 500; }
+        .address-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 26px; }
+        .address-heading h1 { margin: 0 0 8px; font-size: 27px; letter-spacing: -.4px; }
+        .address-heading p { max-width: 510px; margin: 0; color: var(--address-muted); line-height: 1.55; }
+        .address-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; margin-bottom: 36px; }
+        .summary-card { min-height: 82px; display: flex; align-items: center; gap: 15px; padding: 15px 18px; background: #fff; border-radius: 9px; box-shadow: 0 7px 18px rgba(31, 55, 99, .07); }
+        .summary-card.selected { padding: 15px 18px; }
+        .summary-icon { width: 38px; height: 38px; display: grid; place-items: center; flex: 0 0 38px; border-radius: 12px; background: #e9f1ff; color: var(--address-blue); font-size: 19px; }
+        .summary-card:nth-child(2) .summary-icon { background: #ddfae9; color: #18ae6b; }
+        .summary-card:nth-child(3) .summary-icon { background: #e9e9ff; color: #6667dc; }
+        .summary-card small { display: block; color: #a1aaba; font-size: 8px; letter-spacing: .45px; text-transform: uppercase; margin-bottom: 6px; }
+        .summary-card strong { font-size: 14px; }
+        .address-toolbar { display: flex; justify-content: flex-end; margin-bottom: 28px; }
+        .add-address { border: 0; border-radius: 5px; padding: 11px 18px; color: #fff; background: var(--address-blue); font-size: 11px; font-weight: 600; cursor: pointer; }
+        .add-address span { margin-right: 7px; font-size: 14px; }
+        .address-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+        .address-card { min-height: 194px; padding: 19px 20px 17px; background: #fff; border: 1px solid transparent; border-radius: 9px; box-shadow: 0 7px 18px rgba(31, 55, 99, .07); display: flex; flex-direction: column; }
+        .address-card.default { border-color: transparent; }
+        .address-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .address-tags, .address-actions { display: flex; align-items: center; gap: 7px; }
+        .tag { border-radius: 10px; padding: 4px 9px; color: var(--address-blue); background: #eaf2ff; font-size: 9px; font-weight: 700; }
+        .address-type-label { display: inline-block; min-width: 42px; color: var(--address-blue); font-size: 11px; font-weight: 700; }
+        .tag.default-tag { color: #12a961; background: #ddfae9; }
+        .address-actions button { padding: 0; border: 0; background: none; color: #99a3b4; font-size: 8px; cursor: pointer; }
+        .address-actions button:last-child { color: #f04853; }
+        .address-name { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; font-weight: 700; }
+        .address-name span, .address-detail span { color: #9aa5b7; font-size: 12px; }
+        .address-detail { display: flex; gap: 10px; margin: 0 0 8px; color: var(--address-muted); line-height: 1.45; }
+        .address-detail span { flex: 0 0 10px; }
+        .address-card .address-detail:last-of-type { margin-bottom: 14px; }
+        .checkout-button { width: 100%; margin-top: auto; padding: 10px; border: 1px solid var(--address-blue); border-radius: 5px; color: var(--address-blue); background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
+        .address-card:not(.default) .checkout-button { color: #fff; background: var(--address-blue); }
+        .address-card:not(.default) .address-detail { margin-bottom: 8px; }
+        .address-benefits { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; margin-top: 44px; }
+        .benefit { min-height: 63px; display: flex; gap: 12px; align-items: flex-start; padding: 15px 18px; border-radius: 9px; background: #fff; }
+        .benefit.dark { color: #fff; background: #121b2b; }
+        .benefit-icon { color: var(--address-blue); font-size: 15px; }
+        .benefit:nth-child(2) .benefit-icon { color: #14c878; }
+        .benefit h3 { margin: 0 0 5px; font-size: 10px; }
+        .benefit p { margin: 0; color: #8691a3; font-size: 8px; line-height: 1.45; }
+        .benefit.dark p { color: #fff; text-align: center; }
+        .support-button { width: 100%; margin-top: 7px; padding: 6px; border: 1px solid #405069; border-radius: 4px; color: #fff; background: transparent; font-size: 8px; cursor: pointer; }
+        
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; place-items: center; z-index: 1000; }
+        .modal-overlay.active { display: grid; }
+        .modal-content { background: #fff; padding: 30px; border-radius: 12px; width: 90%; max-width: 600px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; font-size: 20px; }
+        .close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--address-muted); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 15px; }
+        .form-group.full-width { grid-column: 1 / -1; }
+        .form-group label { font-weight: 600; color: var(--address-ink); }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--address-line); border-radius: 6px; font-size: 13px; }
+        .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; grid-column: 1 / -1; }
+        .btn-cancel { padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .btn-save { padding: 10px 20px; background: var(--address-blue); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+        @media (max-width: 700px) {
+            .address-main { width: min(100% - 28px, 540px); padding-top: 24px; }
+            .address-heading { display: block; }
+            .address-summary, .address-list, .address-benefits { grid-template-columns: 1fr; gap: 16px; }
+            .address-toolbar { margin-top: 20px; margin-bottom: 20px; }
+            .address-card { min-height: 210px; }
+            .form-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="address-page">
+        <%- include('../partials/user-header') %>
+        <main class="address-main">
+            <div class="address-breadcrumb"><a href="/">Home</a><span>›</span><a href="/userProfile" style="color:inherit;text-decoration:none;">My Account</a><span>›</span><strong>Saved Addresses</strong></div>
+            <div class="address-heading">
+                <div>
+                    <h1>Saved Addresses</h1>
+                    <p>Manage your shipping and billing addresses for faster checkout and track your high-performance equipment deliveries.</p>
+                </div>
+            </div>
+
+            <section class="address-summary" aria-label="Address summary">
+                <div class="summary-card"><div class="summary-icon">⌾</div><div><small>Total Addresses</small><strong><%= typeof addresses !== 'undefined' ? addresses.length : 0 %> Active</strong></div></div>
+                <div class="summary-card selected"><div class="summary-icon">⌂</div><div><small>Default Address</small><strong>Home</strong></div></div>
+                <div class="summary-card"><div class="summary-icon">◷</div><div><small>Recently Used</small><strong>Work</strong></div></div>
+            </section>
+
+            <!-- Trigger Add Modal -->
+            <div class="address-toolbar"><button class="add-address" type="button" onclick="openModal('addAddressModal')"><span>+</span> Add New Address</button></div>
+
+            <section class="address-list" aria-label="Saved addresses">
+                <!-- Dynamic Loop targeting the 'addresses' variable passed from controller -->
+                <% if (typeof addresses !== 'undefined' && addresses.length > 0) { %>
+                    <% addresses.forEach((address) => { %>
+                        <% const addressType = ['Home', 'Work', 'Other'].find((type) => type.toLowerCase() === String(address.addressType || '').toLowerCase()) || 'Home'; %>
+                        <article class="address-card <%= address.isDefault ? 'default' : '' %>">
+                            <div class="address-card-top">
+                                <div class="address-tags">
+                                    <span class="address-type-label"><%= addressType %></span>
+                                    <% if (address.isDefault) { %><span class="tag default-tag">✓ DEFAULT</span><% } %>
+                                </div>
+                                <div class="address-actions">
+                                    <!-- Edit Button (Passes all data to JS) -->
+                                    <button type="button" class="edit-address-btn"
+                                        data-id="<%= address._id %>"
+                                        data-fullname="<%= address.fullName %>"
+                                        data-phone="<%= address.phone %>"
+                                        data-housename="<%= address.houseName %>"
+                                        data-street="<%= address.street %>"
+                                        data-city="<%= address.city %>"
+                                        data-district="<%= address.district %>"
+                                        data-state="<%= address.state %>"
+                                        data-pincode="<%= address.pincode %>"
+                                        data-type="<%= address.addressType %>">
+                                        ✎ EDIT
+                                    </button>
+                                    <!-- Delete Button -->
+                                    <button type="button" onclick="deleteAddress('<%= address._id %>')">▥ REMOVE</button>
+                                </div>
+                            </div>
+                            <div class="address-name"><span>♙</span><%= address.fullName %></div>
+                            <p class="address-detail"><span>♧</span><%= address.phone %></p>
+                            <p class="address-detail">
+                                <span>⌾</span>
+                                <%= address.houseName %>, <%= address.street %><br>
+                                <%= address.city %>, <%= address.district %>, <%= address.state %> - <%= address.pincode %><br>
+                                <%= address.landmark ? 'Landmark: ' + address.landmark : '' %>
+                            </p>
+                            <button class="checkout-button" type="button">Use for Checkout</button>
+                        </article>
+                    <% }); %>
+                <% } else { %>
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px; background: #fff; border-radius: 9px; box-shadow: 0 7px 18px rgba(31, 55, 99, .07);">
+                        <p style="color: var(--address-muted); margin: 0;">You haven't saved any addresses yet. Add one to checkout faster!</p>
+                    </div>
+                <% } %>
+            </section>
+
+            <section class="address-benefits" aria-label="Shopping benefits">
+                <div class="benefit"><div class="benefit-icon">♢</div><div><h3>Secure Storage</h3><p>Your personal data is protected by industry-standard AES-256 encryption.</p></div></div>
+                <div class="benefit"><div class="benefit-icon">ϟ</div><div><h3>Fast Checkout</h3><p>One-click checkout across all Apex Vitality platforms with saved addresses.</p></div></div>
+                <div class="benefit dark"><div style="width:100%; text-align:center"><h3>Need Help?</h3><button class="support-button" type="button">◉ &nbsp; Contact Support</button></div></div>
+            </section>
+        </main>
+        <%- include('../partials/user-footer') %>
+    </div>
+
+    <!-- ADD ADDRESS MODAL -->
+    <div id="addAddressModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Address</h2>
+                <button class="close-btn" onclick="closeModal('addAddressModal')">&times;</button>
+            </div>
+            <form id="addAddressForm">
+                <div class="form-grid">
+                    <div class="form-group"><label>Full Name</label><input type="text" name="fullName" required></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" name="phone" required></div>
+                    <div class="form-group"><label>House Name / Flat No.</label><input type="text" name="houseName" required></div>
+                    <div class="form-group"><label>Street / Area</label><input type="text" name="street" required></div>
+                    <div class="form-group"><label>City</label><input type="text" name="city" required></div>
+                    <div class="form-group"><label>District</label><input type="text" name="district" required></div>
+                    <div class="form-group"><label>State</label><input type="text" name="state" required></div>
+                    <div class="form-group"><label>Pincode</label><input type="text" name="pincode" required></div>
+                    <div class="form-group"><label>Landmark (Optional)</label><input type="text" name="landmark"></div>
+                    <div class="form-group">
+                        <label>Address Type</label>
+                        <select name="addressType">
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeModal('addAddressModal')">Cancel</button>
+                        <button type="submit" class="btn-save">Save Address</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT ADDRESS MODAL -->
+    <div id="editAddressModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Address</h2>
+                <button class="close-btn" onclick="closeModal('editAddressModal')">&times;</button>
+            </div>
+            <form id="editAddressForm">
+                <input type="hidden" id="editAddressId" name="addressId">
+                <div class="form-grid">
+                    <div class="form-group"><label>Full Name</label><input type="text" id="editFullName" name="fullName" required></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" id="editPhone" name="phone" required></div>
+                    <div class="form-group"><label>House Name / Flat No.</label><input type="text" id="editHouseName" name="houseName" required></div>
+                    <div class="form-group"><label>Street / Area</label><input type="text" id="editStreet" name="street" required></div>
+                    <div class="form-group"><label>City</label><input type="text" id="editCity" name="city" required></div>
+                    <div class="form-group"><label>District</label><input type="text" id="editDistrict" name="district" required></div>
+                    <div class="form-group"><label>State</label><input type="text" id="editState" name="state" required></div>
+                    <div class="form-group"><label>Pincode</label><input type="text" id="editPincode" name="pincode" required></div>
+                    <div class="form-group"><label>Landmark (Optional)</label><input type="text" id="editLandmark" name="landmark"></div>
+                    <div class="form-group">
+                        <label>Address Type</label>
+                        <select id="editAddressType" name="addressType">
+                            <option value="Home">Home</option>
+                            <option value="Work">Work</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeModal('editAddressModal')">Cancel</button>
+                        <button type="submit" class="btn-save">Update Address</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Modal Display Logic ---
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // --- Populate Edit Modal ---
+        const editBtns = document.querySelectorAll('.edit-address-btn');
+        editBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('editAddressId').value = btn.dataset.id;
+                document.getElementById('editFullName').value = btn.dataset.fullname;
+                document.getElementById('editPhone').value = btn.dataset.phone;
+                document.getElementById('editHouseName').value = btn.dataset.housename;
+                document.getElementById('editStreet').value = btn.dataset.street;
+                document.getElementById('editCity').value = btn.dataset.city;
+                document.getElementById('editDistrict').value = btn.dataset.district;
+                document.getElementById('editState').value = btn.dataset.state;
+                document.getElementById('editPincode').value = btn.dataset.pincode;
+                document.getElementById('editAddressType').value = btn.dataset.type;
+                openModal('editAddressModal');
+            });
+        });
+
+        // --- AJAX Add Address ---
+        const addForm = document.getElementById('addAddressForm');
+        addForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = addForm.querySelector('.btn-save');
+            btn.innerText = 'Saving...'; btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(addForm).entries());
+
+            try {
+                const res = await fetch('/add-address', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if(result.success) window.location.reload();
+                else alert(result.message);
+            } catch (err) {
+                alert('Something went wrong.');
+            } finally {
+                btn.innerText = 'Save Address'; btn.disabled = false;
+            }
+        });
+
+        // --- AJAX Edit Address ---
+        const editForm = document.getElementById('editAddressForm');
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = editForm.querySelector('.btn-save');
+            btn.innerText = 'Updating...'; btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(editForm).entries());
+            const addressId = data.addressId;
+
+            try {
+                const res = await fetch(`/edit-address/${addressId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+                if(result.success) window.location.reload();
+                else alert(result.message);
+            } catch (err) {
+                alert('Something went wrong.');
+            } finally {
+                btn.innerText = 'Update Address'; btn.disabled = false;
+            }
+        });
+
+        // --- AJAX Delete Address ---
+        async function deleteAddress(addressId) {
+            if(confirm('Are you sure you want to remove this address?')) {
+                try {
+                    const res = await fetch(`/delete-address/${addressId}`, { method: 'DELETE' });
+                    const result = await res.json();
+                    if(result.success) window.location.reload();
+                    else alert(result.message);
+                } catch (err) {
+                    alert('Failed to delete address.');
+                }
+            }
+        }
+    </script>
+</body>
+</html>

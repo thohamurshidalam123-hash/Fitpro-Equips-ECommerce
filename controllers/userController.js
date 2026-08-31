@@ -1,6 +1,7 @@
 const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const { sendOtpEmail } = require('../services/emailServices');
+const Address= require('../models/addressModel');
 
 
 // Render the login page
@@ -453,7 +454,7 @@ const updateProfile = async (req, res) => {
             req.session.profileOtpExpiry = Date.now() + 180000;
 
             // Send JSON telling frontend to open OTP modal
-            return res.json({ success: true, requireOtp: true });
+            return res.json({ success: true, requireOtp: true, pendingEmail: normalizedEmail });
         }
 
         await User.findByIdAndUpdate(userId, updateData);
@@ -523,6 +524,30 @@ const verifyProfileOtp = async (req, res) => {
     }
 };
 
+const loadAddressPage = async (req, res)=>{
+    try{
+        if(!req.session.userId){
+            return res.redirect('/login');
+        }
+
+        // fetching user and address
+        const user = await User.findById(req.session.userId).lean();
+        const addresses = await Address.find({ userId: req.session.userId }).lean();
+        addresses.forEach((address) => {
+            address.addressType = address.addressType || 'Home';
+        });
+
+        res.render('user/addressPage',{
+            user,
+            addresses,
+            currentPage:'addresses'
+        });
+    }catch(error){
+        console.log(error.message);
+        res.status(500).send('Server Error');
+    }
+}
+
 
 module.exports = {
     loadLogin,
@@ -539,6 +564,7 @@ module.exports = {
     loadProfile,
     updateProfile,
     loadProfileOtpModal,
-    verifyProfileOtp
+    verifyProfileOtp,
+    loadAddressPage
 };
 

@@ -75,7 +75,7 @@
     </div>
 
     <form class="profile-update-form" method="POST" action="/verify-profile-otp">
-      <p class="otp-message">We sent a 6-digit OTP to <strong><%= pendingEmail || user.email %></strong>. Enter it below to confirm the new email.</p>
+      <p class="otp-message">We sent a 6-digit OTP to <strong id="profileOtpEmail"><%= pendingEmail || user.email %></strong>. Enter it below to confirm the new email.</p>
       <% if (typeof message !== 'undefined' && message) { %>
         <p class="error-message"><%= message %></p>
       <% } %>

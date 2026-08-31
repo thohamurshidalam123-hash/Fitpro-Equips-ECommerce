@@ -47,8 +47,6 @@ a { color: inherit; text-decoration: none; }
 .eye-icon { border: 1px solid currentColor; border-radius: 75% 15%; transform: rotate(45deg) scale(.7); }
 .eye-icon::after { content: ""; position: absolute; inset: 3px; border: 1px solid currentColor; border-radius: 50%; }
 .form-options { display: flex; align-items: center; justify-content: space-between; margin: 3px 0 20px; font-size: 10px; }
-.remember-option { display: flex; align-items: center; gap: 3px; color: #414b5e; }
-.remember-option input { width: 13px; height: 13px; margin: 0; accent-color: var(--blue); }
 .forgot-link { color: var(--blue); }
 .sign-in-button { width: 100%; height: 42px; border: 0; border-radius: 5px; color: #fff; background: var(--blue); font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(36,99,233,.25); }
 .error-message { margin: -10px 0 12px; color: #d73535; font-size: 10px; }

@@ -39,7 +39,7 @@
             <section class="account-grid" aria-label="Account links">
                 <a class="account-card" href="#orders"><span class="card-icon">◇</span><h2>My Orders</h2><p>Track, return or cancel your orders</p><span class="card-link">View Orders →</span></a>
                 <a class="account-card" href="#cart"><span class="card-icon">♜</span><h2>Shopping Cart</h2><p>Products you stored</p><span class="card-link">View Your Cart →</span></a>
-                <a class="account-card" href="#addresses"><span class="card-icon">◎</span><h2>Saved Addresses</h2><p>Manage delivery addresses</p><span class="card-link">Manage Addresses →</span></a>
+                <a class="account-card" href="/addresses"><span class="card-icon">◎</span><h2>Saved Addresses</h2><p>Manage delivery addresses</p><span class="card-link">Manage Addresses →</span></a>
                 <a class="account-card" href="#wishlist"><span class="card-icon heart">♡</span><h2>Wishlist</h2><p>Products you've saved</p><span class="card-link">Open Wishlist →</span></a>
                 <a class="account-card" href="#cart"><span class="card-icon">♜</span><h2>Cart</h2><p>View and manage your active shopping cart</p><span class="card-link">View Cart →</span></a>
                 <a class="account-card" href="#wallet"><span class="card-icon">▤</span><h2>Wallet</h2><p>Manage your balance and payment methods</p><span class="card-link">Manage Wallet →</span></a>
@@ -189,7 +189,8 @@
                 submitBtn.disabled = true;
 
                 try {
-                    const response = await fetch('/update-profile', {
+                    // CHANGED: URL updated to match your router exactly
+                    const response = await fetch('/userProfile', {
                         method: 'POST',
                         body: formData // Sends text fields and the image file
                     });
@@ -197,6 +198,10 @@
                     const result = await response.json();
 
                     if (result.requireOtp) {
+                        const otpEmail = document.getElementById('profileOtpEmail');
+                        if (otpEmail && result.pendingEmail) {
+                            otpEmail.textContent = result.pendingEmail;
+                        }
                         // Email changed: Close edit modal, open OTP modal
                         closeModal(profileModal);
                         openModal(otpModal);
@@ -212,6 +217,47 @@
                     alert('Something went wrong. Please try again.');
                 } finally {
                     // Reset button state
+                    submitBtn.innerHTML = originalBtnText;
+                    submitBtn.disabled = false;
+                }
+            });
+        }
+
+        // --- Fetch AJAX Implementation for Profile OTP ---
+        const otpForm = document.querySelector('.profile-otp-modal form');
+        
+        if (otpForm) {
+            otpForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const submitBtn = otpForm.querySelector('button[type="submit"]');
+                const originalBtnText = submitBtn.innerHTML;
+                
+                submitBtn.innerHTML = 'Verifying...';
+                submitBtn.disabled = true;
+
+                // Collect JSON data (OTP forms don't have files)
+                const formData = new FormData(otpForm);
+                const data = Object.fromEntries(formData.entries());
+
+                try {
+                    const response = await fetch('/verify-profile-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success && result.redirectUrl) {
+                        window.location.href = result.redirectUrl; // Redirects to login page
+                    } else {
+                        alert(result.message || 'Invalid OTP');
+                    }
+                } catch (error) {
+                    console.error('Fetch error:', error);
+                    alert('Verification failed. Please try again.');
+                } finally {
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.disabled = false;
                 }

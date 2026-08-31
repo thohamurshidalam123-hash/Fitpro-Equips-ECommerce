@@ -4,6 +4,7 @@ const fs = require('fs');
 const multer = require('multer');
 const router = express.Router();
 const userController = require('../controllers/userController');
+const addressController = require('../controllers/addressController');
 const passport = require('passport');
 require('../configuration/passport');
 
@@ -69,6 +70,7 @@ router.post('/forgot-password', userController.processForgotPassword);
 router.get('/reset-password', userController.loadResetPassword);
 router.post('/reset-password', userController.updatePassword);
 
-
+router.get('/addresses', userController.loadAddressPage);
+router.post('/add-address', addressController.addAddress);
 
 module.exports = router;
