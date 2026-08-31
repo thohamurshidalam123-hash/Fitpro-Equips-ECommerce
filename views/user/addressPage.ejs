@@ -70,6 +70,9 @@
         .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; grid-column: 1 / -1; }
         .btn-cancel { padding: 10px 20px; background: #f0f0f0; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
         .btn-save { padding: 10px 20px; background: var(--address-blue); color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .success-modal-content { width: min(90%, 360px); padding: 25px; text-align: center; }
+        .success-modal-content h2 { margin: 0 0 20px; font-size: 18px; color: var(--address-ink); }
+        .success-modal-content .btn-save { min-width: 80px; }
 
         @media (max-width: 700px) {
             .address-main { width: min(100% - 28px, 540px); padding-top: 24px; }
@@ -230,6 +233,13 @@
         </div>
     </div>
 
+    <div id="addressSuccessModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="addressSuccessTitle">
+        <div class="modal-content success-modal-content">
+            <h2 id="addressSuccessTitle">Address updated successfully</h2>
+            <button class="btn-save" type="button" onclick="completeAddressUpdate()">OK</button>
+        </div>
+    </div>
+
     <script>
         // --- Modal Display Logic ---
         function openModal(id) {
@@ -237,6 +247,10 @@
         }
         function closeModal(id) {
             document.getElementById(id).classList.remove('active');
+        }
+        function completeAddressUpdate() {
+            closeModal('addressSuccessModal');
+            window.location.reload();
         }
 
         // --- Populate Edit Modal ---
@@ -299,7 +313,10 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                if(result.success) window.location.reload();
+                if(result.success) {
+                    closeModal('editAddressModal');
+                    openModal('addressSuccessModal');
+                }
                 else alert(result.message);
             } catch (err) {
                 alert('Something went wrong.');
