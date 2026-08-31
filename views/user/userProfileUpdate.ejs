@@ -6,7 +6,7 @@
       <button type="button" class="profile-close-btn" aria-label="Close profile editor" data-close-profile-modal>&times;</button>
     </div>
 
-    <form class="profile-update-form" method="POST" action="/userProfile" enctype="multipart/form-data">
+    <form class="profile-update-form" id="profileUpdateForm" enctype="multipart/form-data">
       <div class="profile-update-avatar-wrap">
         <div class="profile-update-avatar" aria-label="Profile photo">
           <% if (user.profile_image) { %>
