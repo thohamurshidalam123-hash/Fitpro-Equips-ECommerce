@@ -73,5 +73,6 @@ router.post('/reset-password', userController.updatePassword);
 router.get('/addresses', userController.loadAddressPage);
 router.post('/add-address', addressController.addAddress);
 router.post('/edit-address/:id', addressController.editAddress);
+router.delete('/delete-address/:id', addressController.deleteAddress);
 
 module.exports = router;

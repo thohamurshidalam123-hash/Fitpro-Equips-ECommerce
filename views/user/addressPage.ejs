@@ -73,6 +73,9 @@
         .success-modal-content { width: min(90%, 360px); padding: 25px; text-align: center; }
         .success-modal-content h2 { margin: 0 0 20px; font-size: 18px; color: var(--address-ink); }
         .success-modal-content .btn-save { min-width: 80px; }
+        .delete-modal-content { width: min(90%, 380px); padding: 25px; text-align: center; }
+        .delete-modal-content h2 { margin: 0 0 22px; font-size: 18px; color: var(--address-ink); }
+        .delete-modal-actions { display: flex; justify-content: center; gap: 10px; }
 
         @media (max-width: 700px) {
             .address-main { width: min(100% - 28px, 540px); padding-top: 24px; }
@@ -240,7 +243,19 @@
         </div>
     </div>
 
+    <div id="deleteAddressModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="deleteAddressTitle">
+        <div class="modal-content delete-modal-content">
+            <h2 id="deleteAddressTitle">Are you sure to delete this address</h2>
+            <div class="delete-modal-actions">
+                <button class="btn-cancel" type="button" onclick="closeModal('deleteAddressModal')">Cancel</button>
+                <button class="btn-save" type="button" onclick="confirmDeleteAddress()">Yes</button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        let addressIdToDelete = null;
+
         // --- Modal Display Logic ---
         function openModal(id) {
             document.getElementById(id).classList.add('active');
@@ -251,6 +266,11 @@
         function completeAddressUpdate() {
             closeModal('addressSuccessModal');
             window.location.reload();
+        }
+        function confirmDeleteAddress() {
+            closeModal('deleteAddressModal');
+            performDeleteAddress(addressIdToDelete);
+            addressIdToDelete = null;
         }
 
         // --- Populate Edit Modal ---
@@ -327,15 +347,19 @@
 
         // --- AJAX Delete Address ---
         async function deleteAddress(addressId) {
-            if(confirm('Are you sure you want to remove this address?')) {
-                try {
-                    const res = await fetch(`/delete-address/${addressId}`, { method: 'DELETE' });
-                    const result = await res.json();
-                    if(result.success) window.location.reload();
-                    else alert(result.message);
-                } catch (err) {
-                    alert('Failed to delete address.');
-                }
+            addressIdToDelete = addressId;
+            openModal('deleteAddressModal');
+        }
+
+        async function performDeleteAddress(addressId) {
+            if (!addressId) return;
+            try {
+                const res = await fetch(`/delete-address/${addressId}`, { method: 'DELETE' });
+                const result = await res.json();
+                if(result.success) window.location.reload();
+                else alert(result.message);
+            } catch (err) {
+                alert('Failed to delete address.');
             }
         }
     </script>
