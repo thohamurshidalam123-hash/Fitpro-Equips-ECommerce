@@ -7,6 +7,11 @@ router.post('/login',adminController.adminLogin);
 router.get('/logout',adminController.adminLogout);
 router.get('/dashboard',adminController.loadDashboard);
 
+router.post('/forgot-password',adminController.forgotPassword);
+router.post('/verify-forgot-otp',adminController.verifyForgotOtp);
+router.post('/reset-password',adminController.resetPassword);
+router.post('/resend-otp',adminController.resendForgotOtp);
+
 
 
 

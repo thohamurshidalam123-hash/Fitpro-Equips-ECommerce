@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Management</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <!-- Using FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>Fitpro Equips</h2>
+            <span>ENTERPRISE ADMIN</span>
+        </div>
+        <nav class="nav-menu">
+            <a href="#"><i class="fas fa-border-all"></i> Dashboard</a>
+            <a href="#"><i class="fas fa-box"></i> Products</a>
+            <a href="#"><i class="fas fa-list"></i> Categories</a>
+            <a href="#"><i class="fas fa-tags"></i> Brands</a>
+            <a href="#"><i class="fas fa-shopping-cart"></i> Orders</a>
+            <a href="#" class="active"><i class="fas fa-users"></i> Customers</a>
+            <a href="#"><i class="fas fa-ticket-alt"></i> Coupons</a>
+            <a href="#"><i class="fas fa-chart-bar"></i> Sales Reports</a>
+            <a href="#"><i class="fas fa-cog"></i> Settings</a>
+        </nav>
+        <div class="sidebar-bottom">
+            <div class="user-profile">
+                <img src="/avatar-placeholder.png" alt="Admin" class="avatar">
+                <div>
+                    <strong>Admin User</strong>
+                    <small>admin@apexvitality.com</small>
+                </div>
+            </div>
+            <a href="#" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search categories, slugs, or IDs...">
+            </div>
+            <div class="topbar-actions">
+                <i class="fas fa-bell"></i>
+                <a href="#">Support</a>
+            </div>
+        </header>
+
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1>Customer Management</h1>
+            <p>Monitor customer accounts, purchase history, and engagement analytics.</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fas fa-users"></i></div>
+                <div class="stat-info">
+                    <span class="label">TOTAL CUSTOMERS</span>
+                    <h2>3,240</h2>
+                </div>
+                <span class="trend positive">+12.5%</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fas fa-user-plus"></i></div>
+                <div class="stat-info">
+                    <span class="label">NEW TODAY</span>
+                    <h2>18</h2>
+                </div>
+                <span class="trend positive">+8%</span>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon light-blue"><i class="fas fa-bolt"></i></div>
+                <div class="stat-info">
+                    <span class="label">ACTIVE USERS</span>
+                    <h2>2,980</h2>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon red"><i class="fas fa-ban"></i></div>
+                <div class="stat-info">
+                    <span class="label">BLOCKED</span>
+                    <h2>12</h2>
+                </div>
+                <span class="trend negative">-2%</span>
+            </div>
+        </div>
+
+        <!-- Table Controls -->
+        <div class="table-controls">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search by Name, Email, ID...">
+            </div>
+            <div class="filters">
+                <button>Status: All <i class="fas fa-chevron-down"></i></button>
+                <button>Membership: All <i class="fas fa-chevron-down"></i></button>
+                <button class="more-filters"><i class="fas fa-sliders-h"></i> More Filters</button>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>CUSTOMER</th>
+                        <th>CUSTOMER ID</th>
+                        <th>JOINED DATE</th>
+                        <th>ORDERS</th>
+                        <th>STATUS</th>
+                        <th>ACTIONS</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Mock EJS Loop Example -->
+                    <!-- <% customers.forEach(customer => { %> -->
+                    <tr>
+                        <td class="customer-cell">
+                            <img src="/avatar1.png" class="avatar" alt="">
+                            <div>
+                                <strong>Arjun Sharma</strong>
+                                <small>arjun.s@example.com</small>
+                            </div>
+                        </td>
+                        <td>#AV-88421</td>
+                        <td>12 Oct, 2023</td>
+                        <td><strong>14</strong></td>
+                        <td><span class="badge active">ACTIVE</span></td>
+                        <td class="actions-cell">
+                            <button class="btn-icon"><i class="far fa-eye"></i></button>
+                            <button class="btn-icon btn-block"><i class="far fa-times-circle"></i></button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="customer-cell">
+                            <img src="/avatar2.png" class="avatar" alt="">
+                            <div>
+                                <strong>Rohan Verma</strong>
+                                <small>rohan.v@tech.in</small>
+                            </div>
+                        </td>
+                        <td>#AV-88390</td>
+                        <td>05 Sep, 2023</td>
+                        <td><strong>2</strong></td>
+                        <td><span class="badge blocked">BLOCKED</span></td>
+                        <td class="actions-cell">
+                            <button class="btn-icon"><i class="far fa-eye"></i></button>
+                            <button class="btn-icon btn-block"><i class="far fa-times-circle"></i></button>
+                        </td>
+                    </tr>
+                    <!-- <% }) %> -->
+                </tbody>
+            </table>
+            
+            <div class="pagination">
+                <span>Showing 1-10 of 3,240 customers</span>
+                <div class="page-numbers">
+                    <button>Previous</button>
+                    <button class="active">1</button>
+                    <button>2</button>
+                    <button>3</button>
+                    <button>Next</button>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Block Confirmation Modal -->
+<div id="blockModal" class="modal-overlay hidden">
+    <div class="modal-content">
+        <div class="modal-body">
+            <div class="modal-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <h2>Are you sure you want to block this customer?</h2>
+            <p>This action will prevent the customer from logging in or placing new orders. You can unblock them later from the customer management page.</p>
+        </div>
+        <div class="modal-footer">
+            <button id="cancelBlockBtn" class="btn-secondary">Cancel</button>
+            <button id="confirmBlockBtn" class="btn-danger">Yes, Block</button>
+        </div>
+    </div>
+</div>
+
+<script src="/js/script.js"></script>
+</body>
+</html>

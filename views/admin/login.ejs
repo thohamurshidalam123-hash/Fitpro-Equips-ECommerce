@@ -1,261 +1,570 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Admin Login | Fitpro Equips</title>
-	<link rel="stylesheet" href="/css/admin-login.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/admin-login.css">
+    <style>
+        /* Admin Password Reset Modal Styles */
+        .admin-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .admin-modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        .admin-modal-box { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 400px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); animation: slideUp 0.3s ease; }
+        .admin-modal-title { font-size: 1.25rem; font-weight: 700; margin: 0 0 10px 0; color: #1a1a1a; }
+        .admin-modal-subtitle { font-size: 0.85rem; color: #666; margin-bottom: 20px; line-height: 1.4; }
+        .admin-modal-group { margin-bottom: 15px; text-align: left; }
+        .admin-modal-group label { display: block; margin-bottom: 6px; font-size: 0.85rem; font-weight: 600; color: #333; }
+        .admin-modal-group input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 0.95rem; transition: border-color 0.2s; box-sizing: border-box; }
+        .admin-modal-group input:focus { border-color: #1a73e8; outline: none; }
+        .admin-modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 25px; }
+        .admin-modal-btn { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: all 0.2s; }
+        .admin-btn-cancel { background: #f0f0f0; color: #555; }
+        .admin-btn-cancel:hover { background: #e4e4e4; }
+        .admin-btn-submit { background: #1a73e8; color: white; }
+        .admin-btn-submit:hover { background: #1557b0; }
+        .admin-btn-submit:disabled { background: #8ab4f8; cursor: not-allowed; }
+        
+        /* Notification Modal Styles */
+        .notification-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 3000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .notification-modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+        .notification-modal { background: white; padding: 30px; border-radius: 12px; width: 90%; max-width: 350px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); animation: slideUp 0.3s ease; text-align: center; }
+        .notification-icon { font-size: 3rem; margin-bottom: 15px; }
+        .notification-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 10px 0; color: #1a1a1a; }
+        .notification-message { font-size: 0.9rem; color: #666; line-height: 1.5; margin-bottom: 25px; }
+        .notification-btn { padding: 12px 30px; background: #1a73e8; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; transition: all 0.2s; width: 100%; }
+        .notification-btn:hover { background: #1557b0; }
+        
+        .notification-modal.success .notification-icon { color: #34a853; }
+        .notification-modal.error .notification-icon { color: #ea4335; }
+        .notification-modal.info .notification-icon { color: #1a73e8; }
+        
+        /* Resend OTP Styling */
+        .resend-otp-container { text-align: center; margin-top: 15px; padding-top: 15px; border-top: 1px solid #f0f0f0; }
+        .resend-otp-text { font-size: 0.85rem; color: #666; margin-bottom: 8px; }
+        .resend-otp-link { font-size: 0.85rem; color: #1a73e8; text-decoration: none; font-weight: 600; cursor: pointer; transition: all 0.2s; border: none; background: none; padding: 0; }
+        .resend-otp-link:hover { color: #1557b0; text-decoration: underline; }
+        .resend-otp-link:disabled { color: #999; cursor: not-allowed; opacity: 0.6; }
+        .resend-otp-timer { font-size: 0.8rem; color: #999; margin-left: 8px; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
 </head>
 <body>
-	<div class="admin-page-wrapper">
-		<!-- Admin Header -->
-		<header class="admin-header">
-			<div class="admin-header-content">
-				<a href="/" class="admin-brand">Fitpro Equips</a>
-				<div class="admin-icons">
-					<a href="/" class="back-btn">← Back to Website</a>
-				</div>
-			</div>
-		</header>
+    <div class="admin-page-wrapper">
+        <!-- Admin Header -->
+        <header class="admin-header">
+            <div class="admin-header-content">
+                <a href="/" class="admin-brand">Fitpro Equips</a>
+                <div class="admin-icons">
+                    <a href="/" class="back-btn">← Back to Website</a>
+                </div>
+            </div>
+        </header>
 
-		<main class="admin-main-content">
-			<div class="admin-container">
-				<!-- Left Section: Admin Control Center -->
-				<section class="admin-preview-section">
-					<div class="admin-control-center">
-						<!-- Header -->
-						<div class="acc-header">
-							<h2 class="acc-title">Admin Control Center</h2>
-							<p class="acc-description">Access the centralized health and performance analytics ecosystem. Securely manage enterprise operations, user inventory, and vitality metrics.</p>
-						</div>
+        <main class="admin-main-content">
+            <div class="admin-container">
+                <!-- Left Section: Admin Control Center -->
+                <section class="admin-preview-section">
+                    <div class="admin-control-center">
+                        <!-- Header -->
+                        <div class="acc-header">
+                            <h2 class="acc-title">Admin Control Center</h2>
+                            <p class="acc-description">Access the centralized health and performance analytics ecosystem. Securely manage enterprise operations, user inventory, and vitality metrics.</p>
+                        </div>
 
-						<!-- Dashboard Preview in Rounded Frame -->
-						<div class="dashboard-frame">
-							<svg class="frame-border" viewBox="0 0 500 350" preserveAspectRatio="none">
-								<defs>
-									<filter id="shadow">
-										<feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.15"/>
-									</filter>
-								</defs>
-								<path d="M 20,60 Q 20,20 60,20 L 440,20 Q 480,20 480,60 L 480,280 Q 480,320 440,330 L 60,330 Q 20,340 20,280 Z" 
-									  fill="white" stroke="#1a73e8" stroke-width="8" filter="url(#shadow)"/>
-							</svg>
-							
-							<div class="dashboard-image-container">
-								<!-- Simulated Dashboard -->
-								<div class="sim-dashboard">
-									<div class="sim-header">
-										<div class="sim-nav">
-											<span class="sim-nav-item">📊</span>
-											<span class="sim-nav-item">📦</span>
-											<span class="sim-nav-item">👥</span>
-											<span class="sim-nav-item">⚙️</span>
-										</div>
-										<div class="sim-actions">
-											<span class="sim-icon">🔔</span>
-											<span class="sim-icon">⚙️</span>
-										</div>
-									</div>
-									
-									<div class="sim-title">ENTERPRISE E-COMMERCE ANALYTICS</div>
-									
-									<div class="sim-content">
-										<div class="sim-chart">
-											<div class="chart-line"></div>
-											<div class="chart-bars">
-												<div class="bar" style="height: 60%"></div>
-												<div class="bar" style="height: 75%"></div>
-												<div class="bar" style="height: 45%"></div>
-												<div class="bar" style="height: 80%"></div>
-												<div class="bar" style="height: 55%"></div>
-												<div class="bar" style="height: 70%"></div>
-											</div>
-										</div>
-										
-										<div class="sim-metrics">
-											<div class="metric-box">
-												<div class="metric-value">₹2.0K</div>
-												<div class="metric-label">Revenue</div>
-											</div>
-											<div class="metric-box">
-												<div class="metric-value">$1.5K</div>
-												<div class="metric-label">Sales</div>
-											</div>
-											<div class="metric-box">
-												<div class="metric-value">19.3%</div>
-												<div class="metric-label">Growth</div>
-											</div>
-										</div>
-									</div>
+                        <!-- Dashboard Preview in Rounded Frame -->
+                        <div class="dashboard-frame">
+                            <svg class="frame-border" viewBox="0 0 500 350" preserveAspectRatio="none">
+                                <defs>
+                                    <filter id="shadow">
+                                        <feDropShadow dx="0" dy="4" stdDeviation="8" flood-opacity="0.15"/>
+                                    </filter>
+                                </defs>
+                                <path d="M 20,60 Q 20,20 60,20 L 440,20 Q 480,20 480,60 L 480,280 Q 480,320 440,330 L 60,330 Q 20,340 20,280 Z" 
+                                      fill="white" stroke="#1a73e8" stroke-width="8" filter="url(#shadow)"/>
+                            </svg>
+                            
+                            <div class="dashboard-image-container">
+                                <!-- Simulated Dashboard -->
+                                <div class="sim-dashboard">
+                                    <div class="sim-header">
+                                        <div class="sim-nav">
+                                            <span class="sim-nav-item">📊</span>
+                                            <span class="sim-nav-item">📦</span>
+                                            <span class="sim-nav-item">👥</span>
+                                            <span class="sim-nav-item">⚙️</span>
+                                        </div>
+                                        <div class="sim-actions">
+                                            <span class="sim-icon">🔔</span>
+                                            <span class="sim-icon">⚙️</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="sim-title">ENTERPRISE E-COMMERCE ANALYTICS</div>
+                                    
+                                    <div class="sim-content">
+                                        <div class="sim-chart">
+                                            <div class="chart-line"></div>
+                                            <div class="chart-bars">
+                                                <div class="bar" style="height: 60%"></div>
+                                                <div class="bar" style="height: 75%"></div>
+                                                <div class="bar" style="height: 45%"></div>
+                                                <div class="bar" style="height: 80%"></div>
+                                                <div class="bar" style="height: 55%"></div>
+                                                <div class="bar" style="height: 70%"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="sim-metrics">
+                                            <div class="metric-box">
+                                                <div class="metric-value">₹2.0K</div>
+                                                <div class="metric-label">Revenue</div>
+                                            </div>
+                                            <div class="metric-box">
+                                                <div class="metric-value">$1.5K</div>
+                                                <div class="metric-label">Sales</div>
+                                            </div>
+                                            <div class="metric-box">
+                                                <div class="metric-value">19.3%</div>
+                                                <div class="metric-label">Growth</div>
+                                            </div>
+                                        </div>
+                                    </div>
 
-									<div class="sim-products">
-										<div class="product-icon">👕</div>
-										<div class="product-icon">👟</div>
-										<div class="product-icon">⌚</div>
-										<div class="product-icon">🎒</div>
-										<div class="product-icon">👜</div>
-										<div class="product-icon">🕶️</div>
-									</div>
-								</div>
-							</div>
-						</div>
+                                    <div class="sim-products">
+                                        <div class="product-icon">👕</div>
+                                        <div class="product-icon">👟</div>
+                                        <div class="product-icon">⌚</div>
+                                        <div class="product-icon">🎒</div>
+                                        <div class="product-icon">👜</div>
+                                        <div class="product-icon">🕶️</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-						<!-- Security Features at Bottom -->
-						<div class="acc-features">
-							<div class="feature">
-								<div class="feature-dots">
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-								</div>
-								<p class="feature-text">ENCRYPTED<br>LOGIN</p>
-							</div>
-							<div class="feature">
-								<div class="feature-dots">
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-								</div>
-								<p class="feature-text">ADMIN<br>ACCESS</p>
-							</div>
-							<div class="feature">
-								<div class="feature-dots">
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-								</div>
-								<p class="feature-text">SECURE<br>AUTH</p>
-							</div>
-							<div class="feature">
-								<div class="feature-dots">
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-									<span class="dot"></span>
-								</div>
-								<p class="feature-text">PROTECTED<br>DATA</p>
-							</div>
-						</div>
-					</div>
-				</section>
+                        <!-- Security Features at Bottom -->
+                        <div class="acc-features">
+                            <div class="feature">
+                                <div class="feature-dots">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </div>
+                                <p class="feature-text">ENCRYPTED<br>LOGIN</p>
+                            </div>
+                            <div class="feature">
+                                <div class="feature-dots">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </div>
+                                <p class="feature-text">ADMIN<br>ACCESS</p>
+                            </div>
+                            <div class="feature">
+                                <div class="feature-dots">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </div>
+                                <p class="feature-text">SECURE<br>AUTH</p>
+                            </div>
+                            <div class="feature">
+                                <div class="feature-dots">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </div>
+                                <p class="feature-text">PROTECTED<br>DATA</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
 
-				<!-- Right Section: Login Form -->
-				<section class="admin-login-section">
-					<div class="admin-login-card">
-						<!-- Warning Banner -->
-						<div class="restricted-banner">
-							<span class="banner-icon">🔒</span>
-							<span class="banner-text">Restricted Area: Authorized Personnel Only</span>
-						</div>
+                <!-- Right Section: Login Form -->
+                <section class="admin-login-section">
+                    <div class="admin-login-card">
+                        <!-- Warning Banner -->
+                        <div class="restricted-banner">
+                            <span class="banner-icon">🔒</span>
+                            <span class="banner-text">Restricted Area: Authorized Personnel Only</span>
+                        </div>
 
-						<!-- Login Form Header -->
-						<div class="login-header">
-							<h1 class="login-title">Administrator Login</h1>
-							<p class="login-subtitle">Verify your credentials to continue</p>
-						</div>
+                        <!-- Login Form Header -->
+                        <div class="login-header">
+                            <h1 class="login-title">Administrator Login</h1>
+                            <p class="login-subtitle">Verify your credentials to continue</p>
+                        </div>
 
-						<!-- Error/Success Messages -->
-						<% if (typeof message !== 'undefined' && message) { %>
-							<div class="error-message"><%= message %></div>
-						<% } %>
+                        <!-- Error/Success Messages -->
+                        <% if (typeof message !== 'undefined' && message) { %>
+                            <div class="error-message"><%= message %></div>
+                        <% } %>
 
-						<!-- Login Form -->
-						<form action="/admin/login" method="POST" class="admin-login-form">
-							<div class="form-group">
-								<label for="email" class="form-label">Admin Email</label>
-								<input 
-									id="email" 
-									name="email" 
-									type="email" 
-									placeholder="admin@apexvitality.com" 
-									class="form-input"
-									autocomplete="email" 
-									required>
-							</div>
+                        <!-- Login Form -->
+                        <form action="/admin/login" method="POST" class="admin-login-form">
+                            <div class="form-group">
+                                <label for="email" class="form-label">Admin Email</label>
+                                <input 
+                                    id="email" 
+                                    name="email" 
+                                    type="email" 
+                                    placeholder="admin@apexvitality.com" 
+                                    class="form-input"
+                                    autocomplete="email" 
+                                    required>
+                            </div>
 
-							<div class="form-group">
-								<label for="password" class="form-label">Password</label>
-								<div class="password-wrapper">
-									<input 
-										id="password" 
-										name="password" 
-										type="password" 
-										placeholder="••••••••" 
-										class="form-input password-input"
-										autocomplete="current-password" 
-										required>
-									<button 
-										class="password-toggle-btn" 
-										type="button" 
-										aria-label="Toggle password visibility"
-										onclick="togglePasswordVisibility()">
-										<span class="toggle-text">Show</span>
-									</button>
-								</div>
-							</div>
+                            <div class="form-group">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="password-wrapper">
+                                    <input 
+                                        id="password" 
+                                        name="password" 
+                                        type="password" 
+                                        placeholder="••••••••" 
+                                        class="form-input password-input"
+                                        autocomplete="current-password" 
+                                        required>
+                                    <button 
+                                        class="password-toggle-btn" 
+                                        type="button" 
+                                        aria-label="Toggle password visibility"
+                                        onclick="togglePasswordVisibility()">
+                                        <span class="toggle-text">Show</span>
+                                    </button>
+                                </div>
+                            </div>
 
-							<div class="form-footer">
-								<a href="/admin/forgot-password" class="forgot-password-link">Forgot Password?</a>
-							</div>
+                            <div class="form-footer">
+                                <!-- CHANGED THIS LINK TO OPEN MODAL -->
+                                <a href="#" onclick="openAdminModal('forgotModal'); return false;" class="forgot-password-link">Forgot Password?</a>
+                            </div>
 
-							<button type="submit" class="sign-in-button">Sign In</button>
-						</form>
-					</div>
-				</section>
-			</div>
+                            <button type="submit" class="sign-in-button">Sign In</button>
+                        </form>
+                    </div>
+                </section>
+            </div>
 
-			<!-- Security Features Section -->
-			<section class="security-features">
-				<div class="features-container">
-					<div class="feature-item">
-						<div class="feature-icon">🔐</div>
-						<p class="feature-label">ENCRYPTED<br>LOGIN</p>
-					</div>
-					<div class="feature-item">
-						<div class="feature-icon">👤</div>
-						<p class="feature-label">ADMIN<br>ACCESS</p>
-					</div>
-					<div class="feature-item">
-						<div class="feature-icon">✓</div>
-						<p class="feature-label">SECURE<br>AUTH</p>
-					</div>
-					<div class="feature-item">
-						<div class="feature-icon">🛡️</div>
-						<p class="feature-label">PROTECTED<br>DATA</p>
-					</div>
-				</div>
-			</section>
-		</main>
+            <!-- Security Features Section -->
+            <section class="security-features">
+                <div class="features-container">
+                    <div class="feature-item">
+                        <div class="feature-icon">🔐</div>
+                        <p class="feature-label">ENCRYPTED<br>LOGIN</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">👤</div>
+                        <p class="feature-label">ADMIN<br>ACCESS</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">✓</div>
+                        <p class="feature-label">SECURE<br>AUTH</p>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-icon">🛡️</div>
+                        <p class="feature-label">PROTECTED<br>DATA</p>
+                    </div>
+                </div>
+            </section>
+        </main>
 
-		<!-- Admin Footer -->
-		<footer class="admin-footer">
-			<div class="footer-content">
-				<p class="copyright">&copy; 2026 Fitpro Equips. All rights reserved.</p>
-				<div class="footer-links">
-					<a href="/security-policy">Security Policy</a>
-					<a href="/terms">Terms</a>
-					<a href="/privacy">Privacy</a>
-				</div>
-			</div>
-		</footer>
-	</div>
+        <!-- Admin Footer -->
+        <footer class="admin-footer">
+            <div class="footer-content">
+                <p class="copyright">&copy; 2026 Fitpro Equips. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="/security-policy">Security Policy</a>
+                    <a href="/terms">Terms</a>
+                    <a href="/privacy">Privacy</a>
+                </div>
+            </div>
+        </footer>
+    </div>
 
-	<script>
-		function togglePasswordVisibility() {
-			const passwordInput = document.getElementById('password');
-			const toggleBtn = document.querySelector('.password-toggle-btn');
-			
-			if (passwordInput.type === 'password') {
-				passwordInput.type = 'text';
-				toggleBtn.querySelector('.toggle-text').textContent = 'Hide';
-			} else {
-				passwordInput.type = 'password';
-				toggleBtn.querySelector('.toggle-text').textContent = 'Show';
-			}
-		}
-	</script>
+    <!-- ==================== FORGOT PASSWORD MODALS ==================== -->
+
+    <!-- 1. Email Input Modal -->
+    <div id="forgotModal" class="admin-modal-overlay">
+        <div class="admin-modal-box">
+            <h2 class="admin-modal-title">Reset Admin Password</h2>
+            <p class="admin-modal-subtitle">Enter your administrator email. We will send an OTP to verify your identity.</p>
+            <form id="forgotEmailForm">
+                <div class="admin-modal-group">
+                    <label>Admin Email Address</label>
+                    <input type="email" name="email" required placeholder="admin@fitpro.com">
+                </div>
+                <div class="admin-modal-actions">
+                    <button type="button" class="admin-modal-btn admin-btn-cancel" onclick="closeAdminModal('forgotModal')">Cancel</button>
+                    <button type="submit" class="admin-modal-btn admin-btn-submit">Send OTP</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. OTP Input Modal -->
+    <div id="otpModal" class="admin-modal-overlay">
+        <div class="admin-modal-box">
+            <h2 class="admin-modal-title">Enter Security OTP</h2>
+            <p class="admin-modal-subtitle">Please enter the 6-digit code sent to your email.</p>
+            <form id="forgotOtpForm">
+                <div class="admin-modal-group">
+                    <label>OTP Code</label>
+                    <input type="text" name="otp" required maxlength="6" placeholder="Enter OTP">
+                </div>
+                <div class="admin-modal-actions">
+                    <button type="button" class="admin-modal-btn admin-btn-cancel" onclick="closeAdminModal('otpModal')">Cancel</button>
+                    <button type="submit" class="admin-modal-btn admin-btn-submit">Verify OTP</button>
+                </div>
+                <div class="resend-otp-container">
+                    <p class="resend-otp-text">Didn't receive OTP?</p>
+                    <button type="button" id="resendOtpBtn" class="resend-otp-link" onclick="resendOTP()">Resend OTP <span id="otpTimer" class="resend-otp-timer"></span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. New Password Modal -->
+    <div id="resetModal" class="admin-modal-overlay">
+        <div class="admin-modal-box">
+            <h2 class="admin-modal-title">Set New Password</h2>
+            <p class="admin-modal-subtitle">Create a new secure password for your administrator account.</p>
+            <form id="resetPasswordForm">
+                <div class="admin-modal-group">
+                    <label>New Password</label>
+                    <input type="password" name="newPassword" required placeholder="••••••••">
+                </div>
+                <div class="admin-modal-group">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirmPassword" required placeholder="••••••••">
+                </div>
+                <div class="admin-modal-actions">
+                    <button type="button" class="admin-modal-btn admin-btn-cancel" onclick="closeAdminModal('resetModal')">Cancel</button>
+                    <button type="submit" class="admin-modal-btn admin-btn-submit">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM NOTIFICATION MODAL -->
+    <div id="notificationModal" class="notification-modal-overlay">
+        <div class="notification-modal">
+            <div class="notification-icon" id="notificationIcon">ℹ️</div>
+            <h2 class="notification-title" id="notificationTitle">Notice</h2>
+            <p class="notification-message" id="notificationMessage">Message</p>
+            <button class="notification-btn" onclick="closeNotificationModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- ================================================================ -->
+
+    <script>
+        // Global variables for OTP resend timer
+        let otpResendTimer = 0;
+        let otpResendInterval = null;
+        let userEmail = '';
+
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle-btn');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.querySelector('.toggle-text').textContent = 'Hide';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.querySelector('.toggle-text').textContent = 'Show';
+            }
+        }
+
+        // --- Custom Notification Modal Functions ---
+        function showNotification(message, type = 'info', title = 'Notice') {
+            const modal = document.getElementById('notificationModal');
+            const icon = document.getElementById('notificationIcon');
+            const titleEl = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+
+            // Remove previous type classes
+            modal.classList.remove('success', 'error', 'info');
+            
+            // Set type and icon
+            if (type === 'success') {
+                icon.textContent = '✓';
+                modal.classList.add('success');
+            } else if (type === 'error') {
+                icon.textContent = '✕';
+                modal.classList.add('error');
+            } else {
+                icon.textContent = 'ℹ️';
+                modal.classList.add('info');
+            }
+
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+            
+            document.getElementById('notificationModal').classList.add('active');
+        }
+
+        function closeNotificationModal() {
+            document.getElementById('notificationModal').classList.remove('active');
+        }
+
+        // --- OTP Resend Timer Function ---
+        function startOtpResendTimer() {
+            otpResendTimer = 60;
+            const resendBtn = document.getElementById('resendOtpBtn');
+            const timerSpan = document.getElementById('otpTimer');
+            
+            resendBtn.disabled = true;
+            
+            otpResendInterval = setInterval(() => {
+                otpResendTimer--;
+                if (otpResendTimer > 0) {
+                    timerSpan.textContent = `(${otpResendTimer}s)`;
+                } else {
+                    clearInterval(otpResendInterval);
+                    resendBtn.disabled = false;
+                    timerSpan.textContent = '';
+                }
+            }, 1000);
+        }
+
+        // --- Resend OTP Function ---
+        async function resendOTP() {
+            const resendBtn = document.getElementById('resendOtpBtn');
+            resendBtn.disabled = true;
+            
+            try {
+                const res = await fetch('/admin/resend-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: userEmail })
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    showNotification('OTP has been resent to your email!', 'success', 'OTP Resent');
+                    startOtpResendTimer();
+                } else {
+                    showNotification(result.message || 'Failed to resend OTP', 'error', 'Error');
+                    resendBtn.disabled = false;
+                }
+            } catch (error) {
+                showNotification('Server error. Please try again.', 'error', 'Error');
+                resendBtn.disabled = false;
+            }
+        }
+
+        // --- Fetch & Modal Logic for Forgot Password ---
+        
+        function openAdminModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function closeAdminModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // 1. Submit Email for OTP
+        document.getElementById('forgotEmailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.admin-btn-submit');
+            const emailInput = e.target.querySelector('input[name="email"]');
+            btn.textContent = 'Sending...'; btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            userEmail = data.email; // Store email for resend functionality
+
+            try {
+                const res = await fetch('/admin/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeAdminModal('forgotModal');
+                    openAdminModal('otpModal');
+                    startOtpResendTimer();
+                    emailInput.value = '';
+                } else {
+                    showNotification(result.message, 'error', 'Error');
+                }
+            } catch (error) {
+                showNotification('Server error. Please try again.', 'error', 'Error');
+            } finally {
+                btn.textContent = 'Send OTP'; btn.disabled = false;
+            }
+        });
+
+        // 2. Submit OTP for Verification
+        document.getElementById('forgotOtpForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.admin-btn-submit');
+            btn.textContent = 'Verifying...'; btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(e.target).entries());
+
+            try {
+                const res = await fetch('/admin/verify-forgot-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeAdminModal('otpModal');
+                    openAdminModal('resetModal');
+                    clearInterval(otpResendInterval);
+                } else {
+                    showNotification(result.message, 'error', 'Error');
+                }
+            } catch (error) {
+                showNotification('Server error. Please try again.', 'error', 'Error');
+            } finally {
+                btn.textContent = 'Verify OTP'; btn.disabled = false;
+            }
+        });
+
+        // 3. Submit New Password
+        document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('.admin-btn-submit');
+            btn.textContent = 'Updating...'; btn.disabled = true;
+
+            const data = Object.fromEntries(new FormData(e.target).entries());
+
+            try {
+                const res = await fetch('/admin/reset-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                const result = await res.json();
+
+                if (result.success) {
+                    closeAdminModal('resetModal');
+                    showNotification('Password updated successfully! Please log in.', 'success', 'Success');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    showNotification(result.message, 'error', 'Error');
+                }
+            } catch (error) {
+                showNotification('Server error. Please try again.', 'error', 'Error');
+            } finally {
+                btn.textContent = 'Update Password'; btn.disabled = false;
+            }
+        });
+    </script>
 </body>
 </html>
