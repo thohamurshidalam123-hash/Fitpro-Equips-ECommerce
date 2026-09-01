@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Admin Dashboard | Fitpro Equips</title>
+	<link rel="stylesheet" href="/css/admin-dashboard.css">
+	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	<script>
+		// Set browser zoom to 75%
+		document.body.style.zoom = "75%";
+	</script>
+</head>
+<body>
+	<div class="admin-dashboard">
+		<!-- Sidebar -->
+		<aside class="sidebar">
+			<div class="sidebar-header">
+				<div class="logo">
+					<span class="logo-icon">📦</span>
+					<div class="logo-text">
+						<h1>Fitpro Equips</h1>
+						<p>ENTERPRISE ADMIN</p>
+					</div>
+				</div>
+			</div>
+
+			<nav class="sidebar-nav">
+				<a href="/admin/dashboard" class="nav-item active">
+					<span class="nav-icon">📊</span>
+					<span class="nav-label">Dashboard</span>
+				</a>
+				<a href="/admin/products" class="nav-item">
+					<span class="nav-icon">🛍️</span>
+					<span class="nav-label">Products</span>
+				</a>
+				<a href="/admin/categories" class="nav-item">
+					<span class="nav-icon">📂</span>
+					<span class="nav-label">Categories</span>
+				</a>
+				<a href="/admin/brands" class="nav-item">
+					<span class="nav-icon">🏷️</span>
+					<span class="nav-label">Brands</span>
+				</a>
+				<a href="/admin/orders" class="nav-item">
+					<span class="nav-icon">📦</span>
+					<span class="nav-label">Orders</span>
+				</a>
+				<a href="/admin/customers" class="nav-item">
+					<span class="nav-icon">👥</span>
+					<span class="nav-label">Customers</span>
+				</a>
+				<a href="/admin/coupons" class="nav-item">
+					<span class="nav-icon">🎟️</span>
+					<span class="nav-label">Coupons</span>
+				</a>
+				<a href="/admin/sales-reports" class="nav-item">
+					<span class="nav-icon">📈</span>
+					<span class="nav-label">Sales Reports</span>
+				</a>
+				<a href="/admin/settings" class="nav-item">
+					<span class="nav-icon">⚙️</span>
+					<span class="nav-label">Settings</span>
+				</a>
+			</nav>
+
+			<div class="sidebar-footer">
+				<div class="admin-profile">
+					<div class="admin-avatar">👤</div>
+					<div class="admin-info">
+						<p class="admin-name">Admin User</p>
+						<p class="admin-email">admin@fitpro.com</p>
+					</div>
+				</div>
+				<a href="/admin/logout" class="logout-btn">
+					<span class="logout-icon">🚪</span>
+					<span>Logout</span>
+				</a>
+			</div>
+		</aside>
+
+		<!-- Main Content -->
+		<main class="main-content">
+			<!-- Header -->
+			<header class="dashboard-header">
+				<div class="header-left">
+					<h2>Good Morning, Admin</h2>
+					<p>Here's what's happening with your business today</p>
+				</div>
+				<div class="header-right">
+					<button class="notification-btn">🔔</button>
+					<button class="profile-btn">⚙️</button>
+				</div>
+			</header>
+
+			<!-- Stats Grid -->
+			<section class="stats-grid">
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon revenue">₹</span>
+						<span class="stat-change up">↑ 12.5%</span>
+					</div>
+					<p class="stat-label">Total Revenue</p>
+					<p class="stat-value">₹12,48,560</p>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon sales">💰</span>
+						<span class="stat-change up">↑ 8.2%</span>
+					</div>
+					<p class="stat-label">Today's Sales</p>
+					<p class="stat-value">₹48,900</p>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon orders">📦</span>
+						<span class="stat-change down">↓ 2.4%</span>
+					</div>
+					<p class="stat-label">Total Orders</p>
+					<p class="stat-value">1,842</p>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon pending">⏳</span>
+						<span class="stat-change">→</span>
+					</div>
+					<p class="stat-label">Pending Orders</p>
+					<p class="stat-value">42</p>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon users">👥</span>
+						<span class="stat-label-small">120 Active</span>
+					</div>
+					<p class="stat-label">Total Users</p>
+					<p class="stat-value">3,240</p>
+				</div>
+
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon stock">📊</span>
+						<span class="stat-label-small">18 RMA</span>
+					</div>
+					<p class="stat-label">Last Return</p>
+					<p class="stat-value">0 Orders</p>
+				</div>
+			</section>
+
+			<!-- Charts Section -->
+			<section class="charts-section">
+				<!-- Revenue Overview -->
+				<div class="chart-card revenue-card">
+					<div class="card-header">
+						<h3>Revenue Overview</h3>
+						<a href="#" class="view-link">Last 6 Months</a>
+					</div>
+					<div class="chart-container">
+						<canvas id="revenueChart"></canvas>
+					</div>
+				</div>
+			</section>
+
+			<!-- Recent Orders & Top Selling -->
+			<section class="content-grid">
+				<!-- Recent Orders -->
+				<div class="card">
+					<div class="card-header">
+						<h3>Recent Orders</h3>
+						<div class="header-actions">
+							<select class="filter-select">
+								<option>Today</option>
+								<option>This Week</option>
+								<option>This Month</option>
+							</select>
+							<a href="/admin/orders" class="view-all-link">View All</a>
+						</div>
+					</div>
+					<div class="table-container">
+						<table class="orders-table">
+							<thead>
+								<tr>
+									<th>ORDER ID</th>
+									<th>CUSTOMER</th>
+									<th>AMOUNT</th>
+									<th>STATUS</th>
+									<th>ACTION</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr>
+									<td class="order-id">#ORD-8002</td>
+									<td class="customer-name">
+										<span class="avatar">RP</span>
+										Rahul Kapoor
+									</td>
+									<td class="amount">₹4,450.00</td>
+									<td><span class="badge completed">COMPLETED</span></td>
+									<td><button class="action-btn">👁️</button></td>
+								</tr>
+								<tr>
+									<td class="order-id">#ORD-8001</td>
+									<td class="customer-name">
+										<span class="avatar">PS</span>
+										Priya Sharma
+									</td>
+									<td class="amount">₹7,280.00</td>
+									<td><span class="badge processing">PROCESSING</span></td>
+									<td><button class="action-btn">👁️</button></td>
+								</tr>
+								<tr>
+									<td class="order-id">#ORD-8000</td>
+									<td class="customer-name">
+										<span class="avatar">AD</span>
+										Anil Dastirath
+									</td>
+									<td class="amount">₹4,099.00</td>
+									<td><span class="badge cancelled">CANCELLED</span></td>
+									<td><button class="action-btn">👁️</button></td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+
+				<!-- Category Performance & Top Selling -->
+				<aside class="sidebar-cards">
+					<!-- Category Performance -->
+					<div class="card category-card">
+						<div class="card-header">
+							<h3>Category Performance</h3>
+							<button class="menu-btn">⋯</button>
+						</div>
+						<div class="chart-small">
+							<canvas id="categoryChart"></canvas>
+						</div>
+						<div class="legend">
+							<div class="legend-item">
+								<span class="dot strong"></span>
+								<span>Strength</span>
+								<span class="percent">45%</span>
+							</div>
+							<div class="legend-item">
+								<span class="dot nutrition"></span>
+								<span>Nutrition</span>
+								<span class="percent">38%</span>
+							</div>
+							<div class="legend-item">
+								<span class="dot accessories"></span>
+								<span>Accessories</span>
+								<span class="percent">18%</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Top Selling -->
+					<div class="card top-selling-card">
+						<div class="card-header">
+							<h3>Top Selling</h3>
+						</div>
+						<div class="product-list">
+							<div class="product-item">
+								<div class="product-image">🏋️</div>
+								<div class="product-info">
+									<p class="product-name">Whey Isolate Pro</p>
+									<div class="progress-bar">
+										<div class="progress" style="width: 100%;"></div>
+									</div>
+								</div>
+							</div>
+							<div class="product-item">
+								<div class="product-image">🏋️</div>
+								<div class="product-info">
+									<p class="product-name">Sonic Runner X1</p>
+									<div class="progress-bar">
+										<div class="progress" style="width: 85%;"></div>
+									</div>
+								</div>
+							</div>
+							<div class="product-item">
+								<div class="product-image">🏋️</div>
+								<div class="product-info">
+									<p class="product-name">Pro Hex Dumbbells</p>
+									<div class="progress-bar">
+										<div class="progress" style="width: 72%;"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</aside>
+			</section>
+		</main>
+	</div>
+
+	<!-- Logout Confirmation Modal -->
+	<div id="logoutModal" class="modal-overlay">
+		<div class="modal-container">
+			<div class="modal-header">
+				<h2 class="modal-title">Logout?</h2>
+				<button class="modal-close" aria-label="Close modal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p class="modal-message">Are you sure?</p>
+			</div>
+			<div class="modal-footer">
+				<button id="cancelLogout" class="btn btn-cancel">Cancel</button>
+				<button id="confirmLogout" class="btn btn-confirm">Yes</button>
+			</div>
+		</div>
+	</div>
+
+	<script src="/js/admin-dashboard.js"></script>
+</body>
+</html>
