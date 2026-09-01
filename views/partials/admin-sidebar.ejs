@@ -1,0 +1,65 @@
+<!-- Admin Sidebar Partial -->
+<aside class="sidebar">
+	<div class="sidebar-header">
+		<div class="logo">
+			<span class="logo-icon">📦</span>
+			<div class="logo-text">
+				<h1>Fitpro Equips</h1>
+				<p>ENTERPRISE ADMIN</p>
+			</div>
+		</div>
+	</div>
+
+	<nav class="sidebar-nav">
+		<a href="/admin/dashboard" class="nav-item <%= currentPage === 'dashboard' ? 'active' : '' %>">
+			<span class="nav-icon">📊</span>
+			<span class="nav-label">Dashboard</span>
+		</a>
+		<a href="/admin/products" class="nav-item <%= currentPage === 'products' ? 'active' : '' %>">
+			<span class="nav-icon">🛍️</span>
+			<span class="nav-label">Products</span>
+		</a>
+		<a href="/admin/categories" class="nav-item <%= currentPage === 'categories' ? 'active' : '' %>">
+			<span class="nav-icon">📂</span>
+			<span class="nav-label">Categories</span>
+		</a>
+		<a href="/admin/brands" class="nav-item <%= currentPage === 'brands' ? 'active' : '' %>">
+			<span class="nav-icon">🏷️</span>
+			<span class="nav-label">Brands</span>
+		</a>
+		<a href="/admin/orders" class="nav-item <%= currentPage === 'orders' ? 'active' : '' %>">
+			<span class="nav-icon">📦</span>
+			<span class="nav-label">Orders</span>
+		</a>
+		<a href="/admin/customers" class="nav-item <%= currentPage === 'customers' ? 'active' : '' %>">
+			<span class="nav-icon">👥</span>
+			<span class="nav-label">Customers</span>
+		</a>
+		<a href="/admin/coupons" class="nav-item <%= currentPage === 'coupons' ? 'active' : '' %>">
+			<span class="nav-icon">🎟️</span>
+			<span class="nav-label">Coupons</span>
+		</a>
+		<a href="/admin/sales-reports" class="nav-item <%= currentPage === 'sales-reports' ? 'active' : '' %>">
+			<span class="nav-icon">📈</span>
+			<span class="nav-label">Sales Reports</span>
+		</a>
+		<a href="/admin/settings" class="nav-item <%= currentPage === 'settings' ? 'active' : '' %>">
+			<span class="nav-icon">⚙️</span>
+			<span class="nav-label">Settings</span>
+		</a>
+	</nav>
+
+	<div class="sidebar-footer">
+		<div class="admin-profile">
+			<div class="admin-avatar">👤</div>
+			<div class="admin-info">
+				<p class="admin-name">Admin User</p>
+				<p class="admin-email">admin@fitpro.com</p>
+			</div>
+		</div>
+		<a href="/admin/logout" class="logout-btn">
+			<span class="logout-icon">🚪</span>
+			<span>Logout</span>
+		</a>
+	</div>
+</aside>

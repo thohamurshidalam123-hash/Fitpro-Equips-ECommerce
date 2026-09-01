@@ -60,7 +60,7 @@ const adminLogout = async (req,res) => {
 
 const loadDashboard = async (req,res) => {
     if(!req.session.adminId) return res.redirect('/admin/login');
-    res.render('admin/dashboard'); 
+    res.render('admin/dashboard', { currentPage: 'dashboard' }); 
 };
 
 // Sending otp for forgot password
@@ -176,6 +176,57 @@ const resendForgotOtp = async (req,res) => {
     }
 };
 
+// Load Customers Page
+const loadCustomers = async (req, res) => {
+    try{
+        if(!req.session.adminId) return res.redirect('/admin/login');
+
+        //Setting up pagination
+        let page = parseInt(req.query.page) || 1;
+        let limit = 10;
+        let searchQuery = req.query.search || '';
+
+        // For search logic
+        let query = { role: 'user'};
+
+        if(searchQuery){
+            query.$or = [
+                { name: { $regex: searchQuery, $options: 'i'}},
+                { email: { $regex: searchQuery, $options: 'i'}}
+            ];
+        }
+        // Execute query with sorting
+        const userData = await User.find(query)
+            .sort({ createdAt: -1})
+            .skip((page-1) * limit)
+            .limit(limit)
+            .lean();
+
+        // Get total count for pagination
+        const totalUsers = await User.countDocuments(query);
+        const totalPages = Math.ceil(totalUsers / limit);
+
+        // Calculating the user status counts
+        const activeCount = await User.countDocuments({ role: 'user', isBlocked: false});
+        const blockedCount = await User.countDocuments({ role: 'user', isBlocked: true});
+
+        // For showing customer management page
+        res.render('admin/customers', {
+            users: userData,
+            page: page,
+            totalPages: totalPages,
+            searchQuery: searchQuery,
+            totalUsers: totalUsers,
+            activeCount: activeCount,
+            blockedCount: blockedCount,
+            currentPage: 'customers'
+        });
+    }catch(error){
+        console.log('Error in loading customer management page:', error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 module.exports = {
     loadLogin,
     adminLogin,
@@ -184,6 +235,7 @@ module.exports = {
     forgotPassword,
     verifyForgotOtp,
     resetPassword,
-    resendForgotOtp
+    resendForgotOtp,
+    loadCustomers
 
 }

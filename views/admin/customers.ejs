@@ -1,198 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Management</title>
-    <link rel="stylesheet" href="/css/style.css">
-    <!-- Using FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Customers | Fitpro Equips</title>
+	<link rel="stylesheet" href="/css/admin-dashboard.css">
+	<link rel="stylesheet" href="/css/customers.css">
 </head>
 <body>
+	<div class="admin-dashboard">
+		<!-- Sidebar Partial -->
+		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'customers' }) %>
 
-<div class="dashboard-layout">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-        <div class="logo">
-            <h2>Fitpro Equips</h2>
-            <span>ENTERPRISE ADMIN</span>
-        </div>
-        <nav class="nav-menu">
-            <a href="#"><i class="fas fa-border-all"></i> Dashboard</a>
-            <a href="#"><i class="fas fa-box"></i> Products</a>
-            <a href="#"><i class="fas fa-list"></i> Categories</a>
-            <a href="#"><i class="fas fa-tags"></i> Brands</a>
-            <a href="#"><i class="fas fa-shopping-cart"></i> Orders</a>
-            <a href="#" class="active"><i class="fas fa-users"></i> Customers</a>
-            <a href="#"><i class="fas fa-ticket-alt"></i> Coupons</a>
-            <a href="#"><i class="fas fa-chart-bar"></i> Sales Reports</a>
-            <a href="#"><i class="fas fa-cog"></i> Settings</a>
-        </nav>
-        <div class="sidebar-bottom">
-            <div class="user-profile">
-                <img src="/avatar-placeholder.png" alt="Admin" class="avatar">
-                <div>
-                    <strong>Admin User</strong>
-                    <small>admin@apexvitality.com</small>
-                </div>
-            </div>
-            <a href="#" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Logout</a>
-        </div>
-    </aside>
+		<!-- Main Content -->
+		<main class="main-content">
+			<!-- Page Title Section -->
+			<div class="page-header">
+				<div>
+					<h1>Customer Management</h1>
+					<p>Monitor customer accounts, purchase history, and engagement analytics.</p>
+				</div>
+			</div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-        <!-- Topbar -->
-        <header class="topbar">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search categories, slugs, or IDs...">
-            </div>
-            <div class="topbar-actions">
-                <i class="fas fa-bell"></i>
-                <a href="#">Support</a>
-            </div>
-        </header>
+			<!-- Stats Grid -->
+			<section class="stats-grid">
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon customers">👥</span>
+						<span class="stat-change up">+12.5%</span>
+					</div>
+					<p class="stat-label">TOTAL CUSTOMERS</p>
+					<p class="stat-value"><%= totalUsers || 0 %></p>
+				</div>
 
-        <!-- Page Header -->
-        <div class="page-header">
-            <h1>Customer Management</h1>
-            <p>Monitor customer accounts, purchase history, and engagement analytics.</p>
-        </div>
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon new">👤</span>
+						<span class="stat-change up">+8.2%</span>
+					</div>
+					<p class="stat-label">NEW TODAY</p>
+					<p class="stat-value">18</p>
+				</div>
 
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-icon blue"><i class="fas fa-users"></i></div>
-                <div class="stat-info">
-                    <span class="label">TOTAL CUSTOMERS</span>
-                    <h2>3,240</h2>
-                </div>
-                <span class="trend positive">+12.5%</span>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon green"><i class="fas fa-user-plus"></i></div>
-                <div class="stat-info">
-                    <span class="label">NEW TODAY</span>
-                    <h2>18</h2>
-                </div>
-                <span class="trend positive">+8%</span>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon light-blue"><i class="fas fa-bolt"></i></div>
-                <div class="stat-info">
-                    <span class="label">ACTIVE USERS</span>
-                    <h2>2,980</h2>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon red"><i class="fas fa-ban"></i></div>
-                <div class="stat-info">
-                    <span class="label">BLOCKED</span>
-                    <h2>12</h2>
-                </div>
-                <span class="trend negative">-2%</span>
-            </div>
-        </div>
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon active">⚡</span>
+						<span class="stat-change">90% of total</span>
+					</div>
+					<p class="stat-label">ACTIVE USERS</p>
+					<p class="stat-value"><%= activeCount || 0 %></p>
+				</div>
 
-        <!-- Table Controls -->
-        <div class="table-controls">
-            <div class="search-bar">
-                <i class="fas fa-search"></i>
-                <input type="text" placeholder="Search by Name, Email, ID...">
-            </div>
-            <div class="filters">
-                <button>Status: All <i class="fas fa-chevron-down"></i></button>
-                <button>Membership: All <i class="fas fa-chevron-down"></i></button>
-                <button class="more-filters"><i class="fas fa-sliders-h"></i> More Filters</button>
-            </div>
-        </div>
+				<div class="stat-card">
+					<div class="stat-header">
+						<span class="stat-icon blocked">🚫</span>
+						<span class="stat-change down">-2.4%</span>
+					</div>
+					<p class="stat-label">BLOCKED</p>
+					<p class="stat-value"><%= blockedCount || 0 %></p>
+				</div>
+			</section>
 
-        <!-- Data Table -->
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>CUSTOMER</th>
-                        <th>CUSTOMER ID</th>
-                        <th>JOINED DATE</th>
-                        <th>ORDERS</th>
-                        <th>STATUS</th>
-                        <th>ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Mock EJS Loop Example -->
-                    <!-- <% customers.forEach(customer => { %> -->
-                    <tr>
-                        <td class="customer-cell">
-                            <img src="/avatar1.png" class="avatar" alt="">
-                            <div>
-                                <strong>Arjun Sharma</strong>
-                                <small>arjun.s@example.com</small>
-                            </div>
-                        </td>
-                        <td>#AV-88421</td>
-                        <td>12 Oct, 2023</td>
-                        <td><strong>14</strong></td>
-                        <td><span class="badge active">ACTIVE</span></td>
-                        <td class="actions-cell">
-                            <button class="btn-icon"><i class="far fa-eye"></i></button>
-                            <button class="btn-icon btn-block"><i class="far fa-times-circle"></i></button>
-                        </td>
-                    </tr>
-                    <tr>
-                        <td class="customer-cell">
-                            <img src="/avatar2.png" class="avatar" alt="">
-                            <div>
-                                <strong>Rohan Verma</strong>
-                                <small>rohan.v@tech.in</small>
-                            </div>
-                        </td>
-                        <td>#AV-88390</td>
-                        <td>05 Sep, 2023</td>
-                        <td><strong>2</strong></td>
-                        <td><span class="badge blocked">BLOCKED</span></td>
-                        <td class="actions-cell">
-                            <button class="btn-icon"><i class="far fa-eye"></i></button>
-                            <button class="btn-icon btn-block"><i class="far fa-times-circle"></i></button>
-                        </td>
-                    </tr>
-                    <!-- <% }) %> -->
-                </tbody>
-            </table>
-            
-            <div class="pagination">
-                <span>Showing 1-10 of 3,240 customers</span>
-                <div class="page-numbers">
-                    <button>Previous</button>
-                    <button class="active">1</button>
-                    <button>2</button>
-                    <button>3</button>
-                    <button>Next</button>
-                </div>
-            </div>
-        </div>
-    </main>
-</div>
+			<!-- Customers Table Section -->
+			<section class="content-section">
+				<div class="card">
+					<!-- Search and Filter Bar -->
+					<div class="filter-section">
+					<form id="searchForm" method="GET" action="/admin/customers" class="search-box">
+						<span class="search-icon">🔍</span>
+						<input type="text" id="searchInput" name="search" placeholder="Search by Name, Email, ID..." class="search-input" value="<%= searchQuery || '' %>">
+						<button type="submit" class="search-btn">Search</button>					<% if (searchQuery) { %>
+						<button type="button" id="clearSearchBtn" class="clear-btn" title="Clear search">✕ Clear</button>
+					<% } %>					</form>
+					<select id="statusFilter" class="filter-select">
+						<option value="">Status: All</option>
+						<option value="active">Active</option>
+						<option value="inactive">Inactive</option>
+						<option value="blocked">Blocked</option>
+					</select>
+					</div>
 
-<!-- Block Confirmation Modal -->
-<div id="blockModal" class="modal-overlay hidden">
-    <div class="modal-content">
-        <div class="modal-body">
-            <div class="modal-icon">
-                <i class="fas fa-exclamation-triangle"></i>
-            </div>
-            <h2>Are you sure you want to block this customer?</h2>
-            <p>This action will prevent the customer from logging in or placing new orders. You can unblock them later from the customer management page.</p>
-        </div>
-        <div class="modal-footer">
-            <button id="cancelBlockBtn" class="btn-secondary">Cancel</button>
-            <button id="confirmBlockBtn" class="btn-danger">Yes, Block</button>
-        </div>
-    </div>
-</div>
+					<!-- Customers Table -->
+					<table class="customers-table">
+						<thead>
+							<tr>
+								<th>CUSTOMER</th>
+								<th>CUSTOMER ID</th>
+								<th>JOINED DATE</th>
+								<th>ORDERS</th>
+								<th>STATUS</th>
+								<th>ACTIONS</th>
+							</tr>
+						</thead>
+						<tbody>
+							<% if (users && users.length > 0) { %>
+								<% users.forEach((user, index) => { %>
+									<tr>
+										<td>
+											<div class="customer-cell">
+												<div class="customer-avatar">👤</div>
+												<div class="customer-info">
+													<strong><%= user.name || 'N/A' %></strong>
+													<small><%= user.email || 'N/A' %></small>
+												</div>
+											</div>
+										</td>
+										<td>#AV-<%= String(index + 1).padStart(5, '0') %></td>
+										<td><%= user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A' %></td>
+										<td><%= user.orders ? user.orders.length : 0 %></td>
+										<td>
+											<span class="status-badge <%= user.isBlocked ? 'blocked' : 'active' %>">
+												<%= user.isBlocked ? 'BLOCKED' : 'ACTIVE' %>
+											</span>
+										</td>
+										<td>
+											<div class="action-buttons">
+												<button class="action-btn view-btn" title="View" data-userid="<%= user._id %>">👁️</button>
+												<button class="action-btn edit-status-btn" title="Edit Status" data-userid="<%= user._id %>" data-currentstatus="<%= user.isBlocked ? 'blocked' : 'active' %>">✎</button>
+												<button class="action-btn block-btn" title="Block/Unblock" data-userid="<%= user._id %>" data-isblocked="<%= user.isBlocked %>">🚫</button>
+											</div>
+										</td>
+									</tr>
+								<% }); %>
+							<% } else { %>
+								<tr>
+									<td colspan="6" style="text-align: center; padding: 30px;">No customers found</td>
+								</tr>
+							<% } %>
+						</tbody>
+					</table>
 
-<script src="/js/script.js"></script>
+					<!-- Pagination -->
+					<div class="pagination-section">
+						<span class="pagination-info">Showing 1-10 of <%= totalUsers || 0 %> customers</span>
+						<div class="pagination">
+							<% if (page > 1) { %>
+								<button class="page-btn">Previous</button>
+							<% } else { %>
+								<button class="page-btn" disabled>Previous</button>
+							<% } %>
+							
+							<% for (let i = 1; i <= totalPages; i++) { %>
+								<% if (i === page) { %>
+									<button class="page-btn active"><%= i %></button>
+								<% } else { %>
+									<a href="/admin/customers?page=<%= i %><%= searchQuery ? '&search=' + searchQuery : '' %>" class="page-btn"><%= i %></a>
+								<% } %>
+							<% } %>
+							
+							<% if (page < totalPages) { %>
+								<button class="page-btn">Next</button>
+							<% } else { %>
+								<button class="page-btn" disabled>Next</button>
+							<% } %>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+	</div>
+
+	<!-- Edit Status Modal -->
+	<div id="editStatusModal" class="modal-overlay hidden">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title">Edit Customer Status</h3>
+				<button class="modal-close" id="closeEditStatusModal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p>Change customer status to:</p>
+				<div class="status-options">
+					<label>
+						<input type="radio" name="status" value="active"> Active
+					</label>
+					<label>
+						<input type="radio" name="status" value="inactive"> Inactive
+					</label>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button id="cancelEditStatus" class="btn-secondary">Cancel</button>
+				<button id="confirmEditStatus" class="btn-primary">Update Status</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Block/Unblock Modal -->
+	<div id="blockUnblockModal" class="modal-overlay hidden">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h3 class="modal-title" id="blockModalTitle">Block Customer</h3>
+				<button class="modal-close" id="closeBlockModal">&times;</button>
+			</div>
+			<div class="modal-body">
+				<p id="blockModalMessage">Are you sure you want to block this customer?</p>
+			</div>
+			<div class="modal-footer">
+				<button id="cancelBlock" class="btn-secondary">Cancel</button>
+				<button id="confirmBlock" class="btn-danger">Yes, Proceed</button>
+			</div>
+		</div>
+	</div>
+
+	<!-- Footer Partial (Logout Modal) -->
+	<%- include('../partials/admin-footer.ejs') %>
+	<script src="/js/customers.js"></script>
 </body>
 </html>

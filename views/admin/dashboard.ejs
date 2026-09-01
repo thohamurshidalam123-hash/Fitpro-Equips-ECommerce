@@ -6,92 +6,16 @@
 	<title>Admin Dashboard | Fitpro Equips</title>
 	<link rel="stylesheet" href="/css/admin-dashboard.css">
 	<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-	<script>
-		// Set browser zoom to 75%
-		document.body.style.zoom = "75%";
-	</script>
 </head>
 <body>
 	<div class="admin-dashboard">
-		<!-- Sidebar -->
-		<aside class="sidebar">
-			<div class="sidebar-header">
-				<div class="logo">
-					<span class="logo-icon">📦</span>
-					<div class="logo-text">
-						<h1>Fitpro Equips</h1>
-						<p>ENTERPRISE ADMIN</p>
-					</div>
-				</div>
-			</div>
-
-			<nav class="sidebar-nav">
-				<a href="/admin/dashboard" class="nav-item active">
-					<span class="nav-icon">📊</span>
-					<span class="nav-label">Dashboard</span>
-				</a>
-				<a href="/admin/products" class="nav-item">
-					<span class="nav-icon">🛍️</span>
-					<span class="nav-label">Products</span>
-				</a>
-				<a href="/admin/categories" class="nav-item">
-					<span class="nav-icon">📂</span>
-					<span class="nav-label">Categories</span>
-				</a>
-				<a href="/admin/brands" class="nav-item">
-					<span class="nav-icon">🏷️</span>
-					<span class="nav-label">Brands</span>
-				</a>
-				<a href="/admin/orders" class="nav-item">
-					<span class="nav-icon">📦</span>
-					<span class="nav-label">Orders</span>
-				</a>
-				<a href="/admin/customers" class="nav-item">
-					<span class="nav-icon">👥</span>
-					<span class="nav-label">Customers</span>
-				</a>
-				<a href="/admin/coupons" class="nav-item">
-					<span class="nav-icon">🎟️</span>
-					<span class="nav-label">Coupons</span>
-				</a>
-				<a href="/admin/sales-reports" class="nav-item">
-					<span class="nav-icon">📈</span>
-					<span class="nav-label">Sales Reports</span>
-				</a>
-				<a href="/admin/settings" class="nav-item">
-					<span class="nav-icon">⚙️</span>
-					<span class="nav-label">Settings</span>
-				</a>
-			</nav>
-
-			<div class="sidebar-footer">
-				<div class="admin-profile">
-					<div class="admin-avatar">👤</div>
-					<div class="admin-info">
-						<p class="admin-name">Admin User</p>
-						<p class="admin-email">admin@fitpro.com</p>
-					</div>
-				</div>
-				<a href="/admin/logout" class="logout-btn">
-					<span class="logout-icon">🚪</span>
-					<span>Logout</span>
-				</a>
-			</div>
-		</aside>
+		<!-- Sidebar Partial -->
+		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'dashboard' }) %>
 
 		<!-- Main Content -->
 		<main class="main-content">
-			<!-- Header -->
-			<header class="dashboard-header">
-				<div class="header-left">
-					<h2>Good Morning, Admin</h2>
-					<p>Here's what's happening with your business today</p>
-				</div>
-				<div class="header-right">
-					<button class="notification-btn">🔔</button>
-					<button class="profile-btn">⚙️</button>
-				</div>
-			</header>
+			<!-- Header Partial -->
+			<%- include('../partials/admin-header.ejs', { pageTitle: 'Good Morning, Admin', pageSubtitle: 'Here\'s what\'s happening with your business today' }) %>
 
 			<!-- Stats Grid -->
 			<section class="stats-grid">
@@ -296,23 +220,7 @@
 		</main>
 	</div>
 
-	<!-- Logout Confirmation Modal -->
-	<div id="logoutModal" class="modal-overlay">
-		<div class="modal-container">
-			<div class="modal-header">
-				<h2 class="modal-title">Logout?</h2>
-				<button class="modal-close" aria-label="Close modal">&times;</button>
-			</div>
-			<div class="modal-body">
-				<p class="modal-message">Are you sure?</p>
-			</div>
-			<div class="modal-footer">
-				<button id="cancelLogout" class="btn btn-cancel">Cancel</button>
-				<button id="confirmLogout" class="btn btn-confirm">Yes</button>
-			</div>
-		</div>
-	</div>
-
-	<script src="/js/admin-dashboard.js"></script>
+	<!-- Footer Partial (Logout Modal) -->
+	<%- include('../partials/admin-footer.ejs') %>
 </body>
 </html>
