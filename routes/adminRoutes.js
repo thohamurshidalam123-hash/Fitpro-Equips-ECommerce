@@ -13,7 +13,7 @@ router.post('/reset-password',adminController.resetPassword);
 router.post('/resend-otp',adminController.resendForgotOtp);
 
 router.get('/customers',adminController.loadCustomers)
-
+router.post('/toggle-block/:id',adminController.toggleBlockUser);
 
 
 

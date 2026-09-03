@@ -116,7 +116,7 @@
 										<td>
 											<div class="action-buttons">
 												<button class="action-btn view-btn" title="View" data-userid="<%= user._id %>">👁️</button>
-												<button class="action-btn edit-status-btn" title="Edit Status" data-userid="<%= user._id %>" data-currentstatus="<%= user.isBlocked ? 'blocked' : 'active' %>">✎</button>
+
 												<button class="action-btn block-btn" title="Block/Unblock" data-userid="<%= user._id %>" data-isblocked="<%= user.isBlocked %>">🚫</button>
 											</div>
 										</td>
@@ -158,31 +158,6 @@
 				</div>
 			</section>
 		</main>
-	</div>
-
-	<!-- Edit Status Modal -->
-	<div id="editStatusModal" class="modal-overlay hidden">
-		<div class="modal-content">
-			<div class="modal-header">
-				<h3 class="modal-title">Edit Customer Status</h3>
-				<button class="modal-close" id="closeEditStatusModal">&times;</button>
-			</div>
-			<div class="modal-body">
-				<p>Change customer status to:</p>
-				<div class="status-options">
-					<label>
-						<input type="radio" name="status" value="active"> Active
-					</label>
-					<label>
-						<input type="radio" name="status" value="inactive"> Inactive
-					</label>
-				</div>
-			</div>
-			<div class="modal-footer">
-				<button id="cancelEditStatus" class="btn-secondary">Cancel</button>
-				<button id="confirmEditStatus" class="btn-primary">Update Status</button>
-			</div>
-		</div>
 	</div>
 
 	<!-- Block/Unblock Modal -->

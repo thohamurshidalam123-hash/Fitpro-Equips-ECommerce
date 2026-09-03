@@ -210,11 +210,11 @@
                         window.location.reload();
                     } else {
                         // Show error message
-                        alert(result.message || 'An error occurred.');
+                        window.showAppModal(result.message || 'An error occurred.', 'error');
                     }
                 } catch (error) {
                     console.error('Fetch error:', error);
-                    alert('Something went wrong. Please try again.');
+                    window.showAppModal('Something went wrong. Please try again.', 'error');
                 } finally {
                     // Reset button state
                     submitBtn.innerHTML = originalBtnText;
@@ -252,17 +252,23 @@
                     if (result.success && result.redirectUrl) {
                         window.location.href = result.redirectUrl; // Redirects to login page
                     } else {
-                        alert(result.message || 'Invalid OTP');
+                        window.showAppModal(result.message || 'Invalid OTP', 'error');
                     }
                 } catch (error) {
                     console.error('Fetch error:', error);
-                    alert('Verification failed. Please try again.');
+                    window.showAppModal('Verification failed. Please try again.', 'error');
                 } finally {
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.disabled = false;
                 }
             });
         }
+
+        const profileHistoryState = { authenticatedProfile: true };
+        history.pushState(profileHistoryState, '', window.location.href);
+        window.addEventListener('popstate', () => {
+            history.pushState(profileHistoryState, '', window.location.href);
+        });
     </script>
 </body>
 </html>

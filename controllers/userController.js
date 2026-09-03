@@ -2,6 +2,8 @@ const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const { sendOtpEmail } = require('../services/emailServices');
 const Address= require('../models/addressModel');
+const { OAuth2Client } = require('google-auth-library');
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 // Render the login page
@@ -174,7 +176,6 @@ const verifyOtp = async (req, res) => {
                 gender: userData.gender,
                 dateOfBirth: userData.dateOfBirth,
                 role: 'user', 
-                status: 'active',
                 isBlocked: false
             });
 
@@ -271,7 +272,7 @@ const loginUser = async (req, res) => {
 const logout=async (req, res) => {
     req.session.destroy((err) => {
         if (err) console.log('Error destroying session:', err);
-        res.redirect('/');
+        res.redirect('/login');
     });
 }
 // render forget password page
@@ -333,19 +334,6 @@ const processForgotPassword = async (req, res) => {
         res.status(500).send('Server Error');
     }
 };
-
-// // Rendering the reset password page
-// const loadResetPassword=async (req,res)=>{
-//     try{
-//     // if there is no emial submitted
-//     if(!req.session.resetEmail){
-//         return res.redirect('forgot password page');
-//     }
-//     }catch(error){
-//         console.log(error.message);
-//         res.status(500).send('Server Error');
-//     }
-// };
 
 // verify Otp and update password in one step
 const updatePassword = async (req, res) => {
@@ -548,6 +536,61 @@ const loadAddressPage = async (req, res)=>{
     }
 }
 
+// Google authentication controller
+const googleLogin = async (req,res) => {
+    try{
+        // The token send from the frontend fetch request
+        const { credential } = req.body;
+
+        if(!credential){
+            return res.status(400).json({ success: false, message: 'No credential provided'})
+        }
+
+        // Verifying token with google
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        // Extract user info from Google's verified payload
+        const payload = ticket.getPayload();
+        const { email, name, sub: googleId } = payload;
+
+        // check if the user already exist
+        let user = await User.findOne({ email });
+
+        if (user){
+            // Checking if the user is blocked, the deny entry
+            if(user.isBlocked){
+                return res.status(403).json({ success: false, message:'Your account has been blocked'});
+            }
+
+            // If they previously signed up manually link thier new google id
+            if(!user.googleId){
+                user.googleId = googleId;
+                await user.save();
+            }
+        } else {
+            // If there is a new user, create their account
+            user = new User({
+                name: name,
+                email: email,
+                googleId: googleId,
+            });
+            await user.save();
+        }
+
+        //Log them in using your standard Express Session
+        req.session.userId = user._id;
+
+        return res.json({ success: true, message: 'Google Login successful!' });
+
+    } catch (error) {
+        console.error('Google Auth Error:', error.message);
+        console.error('Full Error:', error);
+        res.status(500).json({ success: false, message: `Google authentication failed: ${error.message}` });
+    }
+};
 
 module.exports = {
     loadLogin,
@@ -565,6 +608,7 @@ module.exports = {
     updateProfile,
     loadProfileOtpModal,
     verifyProfileOtp,
-    loadAddressPage
+    loadAddressPage,
+    googleLogin
 };
 

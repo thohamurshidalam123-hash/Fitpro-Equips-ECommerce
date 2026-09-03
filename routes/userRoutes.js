@@ -75,4 +75,7 @@ router.post('/add-address', addressController.addAddress);
 router.post('/edit-address/:id', addressController.editAddress);
 router.delete('/delete-address/:id', addressController.deleteAddress);
 
+router.post('/google-login', userController.googleLogin);
+
+
 module.exports = router;

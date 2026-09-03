@@ -227,6 +227,36 @@ const loadCustomers = async (req, res) => {
     }
 };
 
+// Block/Unblock user
+const toggleBlockUser = async (req,res) => {
+    try{
+        if(!req.session.adminId){
+            return res.status(401).json({ success: false, message:'Unauthorized'});
+        }
+
+        const userId = req.params.id;
+        const user= await User.findById(userId);
+
+        if(!user){
+            return res.status(404).json({ success: false, message: 'Customer not found'})
+        }
+        //Toggle the blocked status
+        user.isBlocked = !user.isBlocked;
+        await user.save();
+
+        res.json({
+            success: true,
+            isBlocked: user.isBlocked,
+            message: user.isBlocked ? 'Customer blocked successfully' : 'Customer unblocked successfully'
+        });
+    }catch(error){
+        console.error('Block/Unblock error:',error.message);
+        res.status(500).json({ success: false, message:'Server Error'});
+    }
+};
+
+
+
 module.exports = {
     loadLogin,
     adminLogin,
@@ -236,6 +266,7 @@ module.exports = {
     verifyForgotOtp,
     resetPassword,
     resendForgotOtp,
-    loadCustomers
+    loadCustomers,
+    toggleBlockUser,
 
 }

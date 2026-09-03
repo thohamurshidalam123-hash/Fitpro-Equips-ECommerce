@@ -1,10 +1,9 @@
-// server.js
+const dotenv = require('dotenv');
+dotenv.config();
+
+// Load environment variables before importing modules that use them.
 const app = require('./app');
 const connectDB = require('./configuration/db');
-const dotenv = require('dotenv');
-
-// Load environment variables
-dotenv.config();
 
 // Connect to Database
 connectDB();

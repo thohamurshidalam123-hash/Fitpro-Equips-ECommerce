@@ -308,9 +308,9 @@
                 });
                 const result = await res.json();
                 if(result.success) window.location.reload();
-                else alert(result.message);
+                else window.showAppModal(result.message, 'error');
             } catch (err) {
-                alert('Something went wrong.');
+                window.showAppModal('Something went wrong.', 'error');
             } finally {
                 btn.innerText = 'Save Address'; btn.disabled = false;
             }
@@ -337,9 +337,9 @@
                     closeModal('editAddressModal');
                     openModal('addressSuccessModal');
                 }
-                else alert(result.message);
+                else window.showAppModal(result.message, 'error');
             } catch (err) {
-                alert('Something went wrong.');
+                window.showAppModal('Something went wrong.', 'error');
             } finally {
                 btn.innerText = 'Update Address'; btn.disabled = false;
             }
@@ -357,9 +357,9 @@
                 const res = await fetch(`/delete-address/${addressId}`, { method: 'DELETE' });
                 const result = await res.json();
                 if(result.success) window.location.reload();
-                else alert(result.message);
+                else window.showAppModal(result.message, 'error');
             } catch (err) {
-                alert('Failed to delete address.');
+                window.showAppModal('Failed to delete address.', 'error');
             }
         }
     </script>

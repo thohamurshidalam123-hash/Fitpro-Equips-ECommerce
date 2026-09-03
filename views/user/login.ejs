@@ -5,6 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Login | Fitpro Equips</title>
 	<link rel="stylesheet" href="/css/login.css">
+	<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 	<div class="page-shell">
@@ -44,7 +45,23 @@
 							<button class="sign-in-button" type="submit">Login</button>
 						</form>
 						<div class="divider"><span>OR</span></div>
-						<button class="google-button" type="button"><span class="google-mark">G</span> Google</button>
+						<!-- Google Identity Services Button Container -->
+<div id="g_id_onload"
+     data-client_id="<%= process.env.GOOGLE_CLIENT_ID || '822907466188-71ha5a3b1co64t0mf3o9e01tqskme85m.apps.googleusercontent.com' %>"
+     data-context="signin"
+     data-ux_mode="popup"
+     data-callback="handleGoogleLogin"
+     data-auto_prompt="false">
+</div>
+<div class="g_id_signin"
+     data-type="standard"
+     data-shape="rectangular"
+     data-theme="outline"
+     data-text="signin_with"
+     data-size="large"
+     data-logo_alignment="center"
+     style="display: flex; justify-content: center; width: 100%; margin-bottom: 15px;">
+</div>
 						<p class="register-prompt">Don't have an account? <a href="/register">Register</a></p>
 					</div>
 
@@ -65,5 +82,47 @@
 		<%- include('../partials/user-footer') %>
 	</div>
 	<script src="/js/login.js"></script>
+	<script>
+        async function handleGoogleLogin(response) {
+            try {
+                // Send the secure credential token to your backend
+                const res = await fetch('/google-login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ credential: response.credential })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    // Success! Redirect to the home page or dashboard
+                    window.location.href = '/'; 
+                } else {
+					window.showAppModal(data.message || 'Login failed.', 'error');
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+				window.showAppModal('Something went wrong connecting to the server. Please try again.', 'error');
+            }
+        }
+    </script>
+	<script>
+		window.addEventListener('pageshow', async () => {
+			try {
+				const response = await fetch('/userProfile', {
+					cache: 'no-store',
+					credentials: 'same-origin'
+				});
+
+				if (response.ok && new URL(response.url).pathname === '/userProfile') {
+					window.location.replace('/userProfile');
+				}
+			} catch (error) {
+				console.error('User session check failed:', error);
+			}
+		});
+	</script>
 </body>
 </html>

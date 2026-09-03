@@ -1,0 +1,85 @@
+.app-notification-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(17, 24, 39, 0.52);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 180ms ease, visibility 180ms ease;
+}
+
+.app-notification-overlay.is-visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+.app-notification-modal {
+    width: min(100%, 390px);
+    padding: 28px 26px 24px;
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 14px;
+    background: #ffffff;
+    color: #1f2937;
+    text-align: center;
+    box-shadow: 0 22px 55px rgba(15, 23, 42, 0.22);
+    transform: translateY(10px) scale(0.98);
+    transition: transform 180ms ease;
+}
+
+.app-notification-overlay.is-visible .app-notification-modal {
+    transform: translateY(0) scale(1);
+}
+
+.app-notification-icon {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: #e8f5ee;
+    color: #16804b;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.app-notification-modal.is-error .app-notification-icon {
+    background: #fff0ef;
+    color: #c7372f;
+}
+
+.app-notification-title {
+    margin: 0 0 8px;
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.app-notification-message {
+    margin: 0 0 22px;
+    color: #5b6472;
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.app-notification-close {
+    min-width: 92px;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 7px;
+    background: #1f5edb;
+    color: #ffffff;
+    cursor: pointer;
+    font: inherit;
+    font-weight: 600;
+}
+
+.app-notification-close:hover {
+    background: #174aa9;
+}
+
+body.app-modal-open {
+    overflow: hidden;
+}

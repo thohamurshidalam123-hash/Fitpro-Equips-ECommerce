@@ -565,6 +565,21 @@
                 btn.textContent = 'Update Password'; btn.disabled = false;
             }
         });
+
+        window.addEventListener('pageshow', async () => {
+            try {
+                const response = await fetch('/admin/dashboard', {
+                    cache: 'no-store',
+                    credentials: 'same-origin'
+                });
+
+                if (response.ok && new URL(response.url).pathname === '/admin/dashboard') {
+                    window.location.replace('/admin/dashboard');
+                }
+            } catch (error) {
+                console.error('Admin session check failed:', error);
+            }
+        });
     </script>
 </body>
 </html>

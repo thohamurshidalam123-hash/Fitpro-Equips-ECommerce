@@ -17,20 +17,15 @@ const userSchema = new mongoose.Schema({
     },
     password: { 
         type: String, 
-        required: true
+        required: function() { return !this.googleId; }
     },
     gender: { 
         type: String,
-        required: true
+        required:function() { return !this.googleId; }
     },
     dateOfBirth: { 
         type: Date,
-        required: true
-    },
-    status: { 
-        type: String, 
-        enum: ['active', 'inactive'], 
-        default: 'active' 
+        required: function() { return !this.googleId; }
     },
     isBlocked: { 
         type: Boolean, 

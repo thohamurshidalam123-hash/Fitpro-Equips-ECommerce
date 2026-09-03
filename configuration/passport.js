@@ -19,7 +19,7 @@ passport.use(new GoogleStrategy({
                 googleId: profile.id,
                 authProvider: 'google',
                 role: 'user',
-                status: 'active'
+                // status: 'active'
                 // Note: phone, gender, and dateOfBirth are missing here.
             });
             // Bypass strict validation temporarily since Google doesn't provide phone/DOB
@@ -30,3 +30,18 @@ passport.use(new GoogleStrategy({
         return done(error, false);
     }
 }));
+
+// Serialize user to session
+passport.serializeUser((user, done) => {
+    done(null, user.id);
+});
+
+// Deserialize user from session
+passport.deserializeUser(async (id, done) => {
+    try {
+        const user = await User.findById(id);
+        done(null, user);
+    } catch (error) {
+        done(error, null);
+    }
+});
