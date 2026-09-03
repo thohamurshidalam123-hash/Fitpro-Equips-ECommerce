@@ -55,7 +55,7 @@ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString()
 // Handle the signup form submission
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, confirmPassword, phone, gender, dateOfBirth } = req.body;
+        const { name, email, password, confirmPassword, phone, gender, dateOfBirth, consent } = req.body;
         const trimmedName = name ? name.trim() : '';
         const trimmedEmail = email ? email.trim() : '';
         const trimmedPassword = password ? password.trim() : '';
@@ -67,42 +67,97 @@ const registerUser = async (req, res) => {
         const emailPattern = /^[^\s@]+@gmail\.com$/i;
         const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
 
-        if (!trimmedName || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword || !rawPhone || !gender || !dateOfBirth) {
-            return res.render('user/register', { message: 'Please fill in all required fields before creating your account.', currentPage: 'register' });
+        const errors = {};
+
+        // Validate all fields
+        if (!trimmedName) {
+            errors.name = 'Full Name is required';
         }
 
-        if (!emailPattern.test(trimmedEmail)) {
-            return res.render('user/register', { message: 'Please enter a valid Gmail address (example: name@gmail.com).', currentPage: 'register' });
+        if (!trimmedEmail) {
+            errors.email = 'Email Address is required';
+        } else if (!emailPattern.test(trimmedEmail)) {
+            errors.email = 'Please enter a valid Gmail address (example: name@gmail.com)';
         }
 
-        if (!passwordPattern.test(trimmedPassword)) {
-            return res.render('user/register', { message: 'Password must be at least 8 characters long and include uppercase, lowercase, and a number.', currentPage: 'register' });
+        if (!rawPhone) {
+            errors.phone = 'Phone Number is required';
+        } else if (!sanitizedPhone || !/^[6-9]\d{9}$/.test(sanitizedPhone)) {
+            errors.phone = 'Please enter a valid Indian mobile number';
         }
 
-        if (trimmedPassword !== trimmedConfirmPassword) {
-            return res.render('user/register', { message: 'Password and confirm password do not match.', currentPage: 'register' });
+        if (!dateOfBirth) {
+            errors.dateOfBirth = 'Date of Birth is required';
         }
 
-        if (!sanitizedPhone || !/^[6-9]\d{9}$/.test(sanitizedPhone)) {
-            return res.render('user/register', { message: 'Please enter a valid Indian mobile number in the format +91 98765 43210.', currentPage: 'register' });
+        if (!gender) {
+            errors.gender = 'Gender is required';
         }
 
-        if (!phonePattern.test(normalizedPhone)) {
-            return res.render('user/register', { message: 'Please enter a valid Indian mobile number in the format +91 98765 43210.', currentPage: 'register' });
+        if (!trimmedPassword) {
+            errors.password = 'Password is required';
+        } else if (!passwordPattern.test(trimmedPassword)) {
+            errors.password = 'Password must be at least 8 characters long and include uppercase, lowercase, and a number';
         }
 
-        //Check if user already exists by login credential or phone duplication
+        if (!trimmedConfirmPassword) {
+            errors.confirmPassword = 'Confirm Password is required';
+        } else if (trimmedPassword !== trimmedConfirmPassword) {
+            errors.confirmPassword = 'Passwords do not match';
+        }
+
+        if (!consent || consent !== 'on') {
+            errors.consent = 'You must agree to the Privacy Policy and Terms of Service';
+        }
+
+        // If there are validation errors, return them
+        if (Object.keys(errors).length > 0) {
+            return res.json({
+                success: false,
+                errors: errors,
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
+        }
+
+        // Check if user already exists by email
         const emailExists = await User.findOne({ email: trimmedEmail });
         if (emailExists) {
-            return res.render('user/register', { message: 'Email already registered', currentPage: 'register' });
+            return res.json({
+                success: false,
+                errors: { email: 'Email already registered' },
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
+        // Check if phone already exists
         const phoneExists = await User.findOne({ phone: normalizedPhone });
         if (phoneExists) {
-            return res.render('user/register', { message: 'This phone number is already registered', currentPage: 'register' });
+            return res.json({
+                success: false,
+                errors: { phone: 'This phone number is already registered' },
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
-        //Hash the password
+        // Hash the password
         const securePassword = await bcrypt.hash(trimmedPassword, 10);
 
         // Generate OTP
@@ -112,11 +167,20 @@ const registerUser = async (req, res) => {
         const emailSent = await sendOtpEmail(trimmedEmail, otp);
 
         if (!emailSent) {
-            return res.render('user/register', { message: 'Failed to send OTP. Please try again.', currentPage: 'register' });
+            return res.json({
+                success: false,
+                errors: { form: 'Failed to send OTP. Please try again.' },
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
-        // Store user data AND the OTP in the session temporarily
-        // This is where express-session shines since we aren't using JWT
+        // Store user data and OTP in session
         req.session.userData = {
             name: trimmedName,
             email: trimmedEmail,
@@ -128,12 +192,20 @@ const registerUser = async (req, res) => {
         req.session.otp = otp;
         req.session.otpExpiry = Date.now() + 180000; // OTP valid for 3 minutes
 
-        // 6. Redirect to the OTP verification page
-        res.redirect('/verify-otp');
+        // Return success response
+        return res.json({
+            success: true,
+            message: 'OTP sent to your email. Please verify to complete registration.',
+            redirectUrl: '/verify-otp'
+        });
 
     } catch (error) {
         console.log(error.message);
-        res.status(500).send('Server Error');
+        return res.json({
+            success: false,
+            errors: { form: 'Server error. Please try again.' },
+            formData: {}
+        });
     }
 };
 
@@ -150,6 +222,7 @@ const loadOtpPage = async (req, res) => {
 // Handle OTP Verification
 const verifyOtp = async (req, res) => {
     try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
         const { otp } = req.body;
         const sessionOtp = req.session.otp;
         const sessionOtpExpiry = req.session.otpExpiry;
@@ -157,11 +230,13 @@ const verifyOtp = async (req, res) => {
 
         // 1. Check if the session data still exists
         if (!sessionOtp || !userData) {
+            if (wantsJson) return res.json({ success: false, message: 'Session expired. Please sign up again.' });
             return res.render('user/otpVerification', { message: 'Session expired. Please sign up again.', currentPage: 'otp' });
         }
 
         // 2. Check if the OTP has expired
         if (Date.now() > sessionOtpExpiry) {
+            if (wantsJson) return res.json({ success: false, message: 'OTP has expired. Please try again.' });
             return res.render('user/otpVerification', { message: 'OTP has expired. Please try again.', currentPage: 'otp' });
         }
 
@@ -189,9 +264,20 @@ const verifyOtp = async (req, res) => {
             // Automatically log the user in using express-session
             req.session.userId = newUser._id;
 
+            if (wantsJson) {
+                return req.session.save((saveError) => {
+                    if (saveError) {
+                        console.error('Error saving user session:', saveError.message);
+                        return res.status(500).json({ success: false, message: 'Unable to start your login session. Please try again.' });
+                    }
+                    return res.json({ success: true, message: 'Registration successful.', redirectUrl: '/userProfile' });
+                });
+            }
+
             // Show confirmation before opening the user's profile
             return res.render('user/otpVerification', { registrationSuccess: true, currentPage: 'otp' });
         } else {
+            if (wantsJson) return res.json({ success: false, message: 'Invalid OTP. Please try again.' });
             return res.render('user/otpVerification', { message: 'Invalid OTP. Please try again.', currentPage: 'otp' });
         }
 
@@ -207,7 +293,7 @@ const resendOtp = async (req, res) => {
         const userData = req.session.userData;
 
         if (!userData) {
-            return res.redirect('/signup'); // Session lost, start over
+            return res.redirect('/register'); // Session lost, start over
         }
 
         // Generate a new OTP and expiry
@@ -397,6 +483,48 @@ const updatePassword = async (req, res) => {
 }
 
 // For submitting updated profile data
+const validateProfileUpdate = (data) => {
+    const errors = {};
+    
+    // Name validation
+    if (!data.name || !data.name.trim()) {
+        errors.name = 'Username is required';
+    } else if (data.name.trim().length < 2) {
+        errors.name = 'Username must be at least 2 characters long';
+    } else if (data.name.trim().length > 50) {
+        errors.name = 'Username cannot exceed 50 characters';
+    } else if (!/^[a-zA-Z\s]+$/.test(data.name.trim())) {
+        errors.name = 'Username can only contain letters and spaces';
+    }
+    
+    // Email validation
+    if (!data.email || !data.email.trim()) {
+        errors.email = 'Email is required';
+    } else {
+        const emailPattern = /^[^\s@]+@gmail\.com$/i;
+        if (!emailPattern.test(data.email.trim())) {
+            errors.email = 'Please enter a valid Gmail address (example: name@gmail.com)';
+        }
+    }
+    
+    // Phone validation
+    if (!data.phone || !data.phone.trim()) {
+        errors.phone = 'Phone Number is required';
+    } else {
+        const sanitizedPhone = data.phone.trim().replace(/\s+/g, '').replace(/^\+91/, '');
+        if (!/^[6-9]\d{9}$/.test(sanitizedPhone)) {
+            errors.phone = 'Please enter a valid Indian mobile number (e.g., 98765 43210)';
+        }
+    }
+    
+    // Gender validation
+    if (!data.gender || !['Male', 'Female', 'Other'].includes(data.gender)) {
+        errors.gender = 'Please select a valid gender';
+    }
+    
+    return errors;
+};
+
 const updateProfile = async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -406,11 +534,23 @@ const updateProfile = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
 
+        // Validate profile data
+        const errors = validateProfileUpdate({ name, email, phone, gender });
+        
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Please correct the errors below',
+                errors,
+                formData: { name, email, phone, gender, dateOfBirth }
+            });
+        }
+
         const normalizedEmail = email ? email.trim() : '';
         const normalizedPhone = phone ? phone.trim() : '';
 
         const updateData = {
-            name,
+            name: name.trim(),
             email: normalizedEmail,
             phone: normalizedPhone,
             gender,
@@ -592,6 +732,129 @@ const googleLogin = async (req,res) => {
     }
 };
 
+// Load profile reset password page - sends OTP automatically
+const loadProfileResetPassword = async (req, res) => {
+    try {
+        if (!req.session.userId) {
+            return res.redirect('/login');
+        }
+
+        const user = await User.findById(req.session.userId).lean();
+        if (!user) {
+            req.session.destroy(() => res.redirect('/login'));
+            return;
+        }
+
+        const otp = generateOtp();
+        const emailSent = await sendOtpEmail(user.email, otp);
+
+        if (!emailSent) {
+            return res.render('user/profileResetPassword', {
+                currentPage: 'profile-reset-password',
+                message: 'Failed to send OTP. Please try again later.',
+                userEmail: user.email,
+                otpSent: false
+            });
+        }
+
+        req.session.profileResetEmail = user.email;
+        req.session.profileResetOtp = otp;
+        req.session.profileResetOtpExpiry = Date.now() + 180000;
+
+        return res.render('user/profileResetPassword', {
+            currentPage: 'profile-reset-password',
+            message: `OTP sent to your ${user.email}`,
+            userEmail: user.email,
+            otpSent: true
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// Update password from profile reset
+const updateProfilePassword = async (req, res) => {
+    try {
+        const { otp, newPassword, confirmPassword } = req.body;
+        const errors = {};
+
+        if (!req.session.profileResetEmail || !req.session.profileResetOtp) {
+            return res.status(400).json({ success: false, message: 'Session expired. Please try again.' });
+        }
+
+        if (!otp || !otp.trim()) {
+            errors.otp = 'OTP is required';
+        } else if (otp !== req.session.profileResetOtp) {
+            errors.otp = 'Invalid OTP. Please try again.';
+        }
+
+        if (!newPassword || !newPassword.trim()) {
+            errors.newPassword = 'New password is required';
+        } else if (newPassword.trim().length < 8) {
+            errors.newPassword = 'Password must be at least 8 characters long';
+        }
+
+        if (!confirmPassword || !confirmPassword.trim()) {
+            errors.confirmPassword = 'Confirm password is required';
+        } else if (newPassword !== confirmPassword) {
+            errors.confirmPassword = 'Passwords do not match.';
+        }
+
+        if (Date.now() > req.session.profileResetOtpExpiry) {
+            errors.otp = 'OTP expired. Please request a new one.';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the errors below',
+                errors,
+                formData: { otp, newPassword, confirmPassword }
+            });
+        }
+
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(400).json({ success: false, message: 'User not found.' });
+        }
+
+        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the errors below',
+                errors: { newPassword: 'Enter a new password' },
+                formData: { otp, newPassword, confirmPassword }
+            });
+        }
+
+        const securePassword = await bcrypt.hash(newPassword, 10);
+
+        await User.updateOne(
+            { _id: req.session.userId },
+            { $set: { password: securePassword } }
+        );
+
+        // Clean up session variables
+        delete req.session.profileResetEmail;
+        delete req.session.profileResetOtp;
+        delete req.session.profileResetOtpExpiry;
+
+        // Destroy session and return success JSON
+        req.session.destroy((err) => {
+            if (err) {
+                console.log('Session destroy error:', err.message);
+            }
+        });
+
+        return res.json({ success: true, message: 'Password changed successfully.' });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 module.exports = {
     loadLogin,
     registerUser,
@@ -608,6 +871,8 @@ module.exports = {
     updateProfile,
     loadProfileOtpModal,
     verifyProfileOtp,
+    loadProfileResetPassword,
+    updateProfilePassword,
     loadAddressPage,
     googleLogin
 };

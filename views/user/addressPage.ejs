@@ -253,6 +253,15 @@
         </div>
     </div>
 
+    <!-- ERROR MODAL -->
+    <div id="errorAddressModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="errorAddressTitle">
+        <div class="modal-content success-modal-content">
+            <h2 id="errorAddressTitle">Please correct the errors</h2>
+            <div id="errorAddressMessage" style="text-align: left; margin: 15px 0; color: #d32f2f; font-size: 13px; max-height: 300px; overflow-y: auto;"></div>
+            <button class="btn-save" type="button" onclick="closeModal('errorAddressModal')">OK</button>
+        </div>
+    </div>
+
     <script>
         let addressIdToDelete = null;
 
@@ -291,6 +300,14 @@
             });
         });
 
+        // --- Display Validation Errors ---
+        function showValidationErrors(errors, modalId) {
+            const errorDiv = document.getElementById('errorAddressMessage');
+            const errorList = Object.values(errors).map(msg => `<div style="margin-bottom: 8px;">• ${msg}</div>`).join('');
+            errorDiv.innerHTML = errorList;
+            openModal('errorAddressModal');
+        }
+
         // --- AJAX Add Address ---
         const addForm = document.getElementById('addAddressForm');
         addForm.addEventListener('submit', async (e) => {
@@ -307,8 +324,25 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
-                if(result.success) window.location.reload();
-                else window.showAppModal(result.message, 'error');
+                
+                if(result.success) {
+                    window.location.reload();
+                } else if (result.errors) {
+                    // Show validation errors without refreshing
+                    showValidationErrors(result.errors);
+                    
+                    // Keep the form values that are correct (ones without errors)
+                    if (result.formData) {
+                        const formData = result.formData;
+                        // Only clear fields with errors, keep others
+                        Object.keys(result.errors).forEach(field => {
+                            const input = document.querySelector(`#addAddressForm input[name="${field}"], #addAddressForm select[name="${field}"]`);
+                            if (input) input.value = '';
+                        });
+                    }
+                } else {
+                    window.showAppModal(result.message, 'error');
+                }
             } catch (err) {
                 window.showAppModal('Something went wrong.', 'error');
             } finally {
@@ -316,7 +350,7 @@
             }
         });
 
-        // --- AJAX Edit Address ---
+        // Edit Address
         const editForm = document.getElementById('editAddressForm');
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -333,11 +367,24 @@
                     body: JSON.stringify(data)
                 });
                 const result = await res.json();
+                
                 if(result.success) {
                     closeModal('editAddressModal');
                     openModal('addressSuccessModal');
+                } else if (result.errors) {
+                    // Show validation errors without closing modal
+                    showValidationErrors(result.errors);
+                    
+                    // Only clear fields with errors, keep others
+                    if (result.formData) {
+                        Object.keys(result.errors).forEach(field => {
+                            const input = document.querySelector(`#editAddressForm input[name="${field}"], #editAddressForm select[name="${field}"]`);
+                            if (input) input.value = '';
+                        });
+                    }
+                } else {
+                    window.showAppModal(result.message, 'error');
                 }
-                else window.showAppModal(result.message, 'error');
             } catch (err) {
                 window.showAppModal('Something went wrong.', 'error');
             } finally {

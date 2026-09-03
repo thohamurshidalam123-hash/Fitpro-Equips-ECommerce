@@ -69,14 +69,14 @@
 					<form id="searchForm" method="GET" action="/admin/customers" class="search-box">
 						<span class="search-icon">🔍</span>
 						<input type="text" id="searchInput" name="search" placeholder="Search by Name, Email, ID..." class="search-input" value="<%= searchQuery || '' %>">
+						<input type="hidden" id="statusQuery" name="status" value="<%= status || '' %>">
 						<button type="submit" class="search-btn">Search</button>					<% if (searchQuery) { %>
 						<button type="button" id="clearSearchBtn" class="clear-btn" title="Clear search">✕ Clear</button>
 					<% } %>					</form>
-					<select id="statusFilter" class="filter-select">
-						<option value="">Status: All</option>
-						<option value="active">Active</option>
-						<option value="inactive">Inactive</option>
-						<option value="blocked">Blocked</option>
+					<select id="statusFilter" class="filter-select" name="status" aria-label="Filter customers by status">
+						<option value="" <%= !status ? 'selected' : '' %>>Status: All</option>
+						<option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+						<option value="blocked" <%= status === 'blocked' ? 'selected' : '' %>>Blocked</option>
 					</select>
 					</div>
 
@@ -144,7 +144,7 @@
 								<% if (i === page) { %>
 									<button class="page-btn active"><%= i %></button>
 								<% } else { %>
-									<a href="/admin/customers?page=<%= i %><%= searchQuery ? '&search=' + searchQuery : '' %>" class="page-btn"><%= i %></a>
+									<a href="/admin/customers?page=<%= i %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %><%= status ? '&status=' + status : '' %>" class="page-btn"><%= i %></a>
 								<% } %>
 							<% } %>
 							

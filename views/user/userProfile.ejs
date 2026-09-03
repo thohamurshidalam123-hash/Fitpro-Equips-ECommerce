@@ -30,7 +30,7 @@
                 </div>
                 <div class="account-actions">
                     <button type="button" class="details-button" data-open-user-details-modal>User Details</button>
-                    <a href="/forgot-password">Reset Password</a>
+                    <a href="/profile-reset-password">Reset Password</a>
                     <button type="button" class="edit-profile-btn" data-open-profile-modal>Edit Profile</button>
                     <a class="logout-link" href="/logout"><span aria-hidden="true">↪</span> Logout</a>
                 </div>
@@ -197,7 +197,18 @@
 
                     const result = await response.json();
 
-                    if (result.requireOtp) {
+                    if (result.errors) {
+                        // Show validation errors without refreshing
+                        showProfileValidationErrors(result.errors);
+                        
+                        // Only clear fields with errors, keep others
+                        if (result.formData) {
+                            Object.keys(result.errors).forEach(field => {
+                                const input = profileUpdateForm.querySelector(`input[name="${field}"], select[name="${field}"]`);
+                                if (input) input.value = '';
+                            });
+                        }
+                    } else if (result.requireOtp) {
                         const otpEmail = document.getElementById('profileOtpEmail');
                         if (otpEmail && result.pendingEmail) {
                             otpEmail.textContent = result.pendingEmail;
@@ -223,8 +234,19 @@
             });
         }
 
+        function showProfileValidationErrors(errors) {
+            const errorDiv = document.getElementById('profileErrorMessage');
+            const errorList = Object.values(errors).map(msg => `<div style="margin-bottom: 8px;">• ${msg}</div>`).join('');
+            errorDiv.innerHTML = errorList;
+            openModal(document.getElementById('profileErrorModal'));
+        }
+
+        function closeErrorModal() {
+            closeModal(document.getElementById('profileErrorModal'));
+        }
+
         // --- Fetch AJAX Implementation for Profile OTP ---
-        const otpForm = document.querySelector('.profile-otp-modal form');
+        const otpForm = document.getElementById('profileOtpForm');
         
         if (otpForm) {
             otpForm.addEventListener('submit', async (e) => {
@@ -236,7 +258,6 @@
                 submitBtn.innerHTML = 'Verifying...';
                 submitBtn.disabled = true;
 
-                // Collect JSON data (OTP forms don't have files)
                 const formData = new FormData(otpForm);
                 const data = Object.fromEntries(formData.entries());
 
@@ -250,7 +271,7 @@
                     const result = await response.json();
 
                     if (result.success && result.redirectUrl) {
-                        window.location.href = result.redirectUrl; // Redirects to login page
+                        window.location.href = result.redirectUrl;
                     } else {
                         window.showAppModal(result.message || 'Invalid OTP', 'error');
                     }

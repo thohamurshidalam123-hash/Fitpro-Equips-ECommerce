@@ -21,7 +21,7 @@
 		.otp-meta { display: flex; justify-content: space-between; margin-bottom: 11px; color: #596579; font-size: 9px; }.otp-meta strong, .resend-button { color: var(--blue); }.resend-button { padding: 0; border: 0; background: transparent; cursor: pointer; }.verify-button { width: 100%; height: 36px; border: 0; border-radius: 5px; color: #fff; background: var(--blue); font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(40,100,232,.25); }.verify-button:hover { background: var(--deep-blue); }.wrong-email { margin: 15px 0 0; text-align: center; color: #596579; font-size: 9px; }.wrong-email a { color: #202a3a; font-weight: 600; text-decoration: underline; }
 		.security-box { display: flex; gap: 10px; margin-top: 22px; padding: 14px; border: 1px solid #dce7fb; border-radius: 6px; background: #edf4ff; }.security-icon { flex: 0 0 17px; display: grid; width: 17px; height: 17px; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); font-size: 10px; }.security-box strong, .security-box p { display: block; }.security-box strong { margin-bottom: 3px; font-size: 9px; }.security-box p { margin: 0; color: #68758a; font-size: 8px; line-height: 1.35; }
 		.help-area { display: flex; justify-content: center; padding: 0 clamp(26px, 5vw, 64px) 30px; background: var(--pale); }.help-content { text-align: center; }.help-content h3 { margin: 0 0 12px; color: #596579; font-size: 8px; font-weight: 500; letter-spacing: 1px; }.help-links { display: flex; gap: 8px; }.help-links a { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 64px; height: 42px; border-radius: 5px; color: #34425d; background: #eaf1ff; font-size: 7px; }.help-links span { margin-bottom: 3px; font-size: 11px; }
-		.success-modal { position: fixed; z-index: 10; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(17,29,43,.42); }.success-dialog { width: min(100%, 350px); padding: 30px 26px 25px; border-radius: 8px; text-align: center; background: #fff; box-shadow: 0 10px 30px rgba(17,29,43,.2); }.success-icon { display: grid; width: 38px; height: 38px; margin: 0 auto 12px; place-items: center; border-radius: 50%; color: #fff; background: #18a968; font-size: 20px; }.success-dialog h2 { margin: 0 0 7px; color: var(--ink); font-size: 16px; }.success-dialog p { margin: 0 0 18px; color: var(--muted); font-size: 10px; }.success-dialog a { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 36px; border-radius: 5px; color: #fff; background: var(--blue); font-size: 11px; font-weight: 600; }
+		.success-modal { position: fixed; z-index: 10; inset: 0; display: flex; align-items: center; justify-content: center; padding: 20px; background: rgba(17,29,43,.42); }.success-modal.hidden { display: none; }.success-dialog { width: min(100%, 350px); padding: 30px 26px 25px; border-radius: 8px; text-align: center; background: #fff; box-shadow: 0 10px 30px rgba(17,29,43,.2); }.success-icon { display: grid; width: 38px; height: 38px; margin: 0 auto 12px; place-items: center; border-radius: 50%; color: #fff; background: #18a968; font-size: 20px; }.success-dialog h2 { margin: 0 0 7px; color: var(--ink); font-size: 16px; }.success-dialog p { margin: 0 0 18px; color: var(--muted); font-size: 10px; }.success-dialog a { display: inline-flex; align-items: center; justify-content: center; width: 100%; height: 36px; border-radius: 5px; color: #fff; background: var(--blue); font-size: 11px; font-weight: 600; }
 		.site-footer { padding: 32px clamp(18px, 5vw, 64px) 12px; color: #c2cad7; background: var(--navy); }.footer-columns { display: grid; grid-template-columns: 1.5fr 1fr 1fr 1fr; gap: 25px; }.site-footer h3 { margin: 0 0 10px; color: #fff; font-size: 14px; }.site-footer h4 { margin: 0 0 10px; color: #fff; font-size: 10px; font-weight: 500; }.site-footer p, .site-footer a { display: block; margin: 0 0 7px; color: #aeb8c8; font-size: 9px; line-height: 1.45; }.copyright { margin: 18px calc(clamp(18px, 5vw, 64px) * -1) 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.07); text-align: center; color: #8290a5; font-size: 9px; }
 		@media (max-width: 700px) { .otp-main { grid-template-columns: 1fr; }.welcome-panel { min-height: 300px; align-items: flex-end; }.form-panel { padding: 35px 20px 30px; }.help-area { padding-bottom: 25px; }.footer-columns { grid-template-columns: repeat(2, 1fr); } }
 		@media (max-width: 420px) { .welcome-panel { min-height: 270px; padding: 28px 24px; }.welcome-copy h1 { font-size: 30px; }.welcome-copy p { font-size: 11px; }.verification-card { padding: 24px 18px 22px; }.otp-inputs { gap: 5px; }.otp-input { height: 36px; }.footer-columns { grid-template-columns: 1fr 1fr; gap: 18px 12px; }.site-footer { padding-right: 16px; padding-left: 16px; }.copyright { margin-right: -16px; margin-left: -16px; } }
@@ -36,7 +36,7 @@
 			</section>
 			<section class="form-panel">
 				<div class="form-content">
-					<form class="verification-card" action="/verify-otp" method="POST">
+					<form class="verification-card" action="/verify-otp" method="POST" id="verification-form">
 						<h2>Email Verification</h2>
 						<p class="intro">Enter the 6-digit verification code sent to your email.</p>
 						<span class="email-chip"><span aria-hidden="true">&#9993;</span> j•••@example.com</span>
@@ -61,18 +61,43 @@
 		<section class="help-area"><div class="help-content"><h3>NEED HELP?</h3><div class="help-links"><a href="#contact"><span>&#9742;</span>Support</a><a href="#contact"><span>&#9635;</span>FAQs</a></div></div></section>
 		<%- include('../partials/user-footer') %>
 	</div>
-	<% if (typeof registrationSuccess !== 'undefined' && registrationSuccess) { %>
-		<div class="success-modal" role="dialog" aria-modal="true" aria-labelledby="success-title">
+		<div class="success-modal <%= typeof registrationSuccess !== 'undefined' && registrationSuccess ? '' : 'hidden' %>" role="dialog" aria-modal="true" aria-labelledby="success-title">
 			<div class="success-dialog"><div class="success-icon" aria-hidden="true">&#10003;</div><h2 id="success-title">You have registered successfully</h2><p>Your account is ready. Welcome to Fitpro Equips.</p><a href="/userProfile">OK</a></div>
 		</div>
-	<% } %>
 	<script>
 		(function () {
 			var inputs = Array.from(document.querySelectorAll('.otp-input'));
 			var hiddenOtp = document.getElementById('otp-value');
 			var resendButton = document.getElementById('resend-button');
 			var countdown = document.getElementById('countdown');
+			var verificationForm = document.getElementById('verification-form');
+			var successModal = document.querySelector('.success-modal');
+			var errorMessage = document.querySelector('.error-message');
 			function syncOtp() { hiddenOtp.value = inputs.map(function (input) { return input.value; }).join(''); }
+			verificationForm.addEventListener('submit', function (event) {
+				if (event.submitter && event.submitter.id === 'resend-button') return;
+				event.preventDefault();
+				syncOtp();
+				fetch('/verify-otp', { method: 'POST', headers: { Accept: 'application/json' }, body: new URLSearchParams(new FormData(verificationForm)) })
+					.then(function (response) { return response.json(); })
+					.then(function (result) {
+						if (result.success) {
+							successModal.style.display = 'flex';
+							window.setTimeout(function () {
+								window.location.href = result.redirectUrl || '/userProfile';
+							}, 900);
+						} else if (errorMessage) {
+							errorMessage.textContent = result.message || 'Invalid OTP. Please try again.';
+							errorMessage.style.display = 'block';
+						}
+					})
+					.catch(function () {
+						if (errorMessage) {
+							errorMessage.textContent = 'Unable to verify OTP. Please try again.';
+							errorMessage.style.display = 'block';
+						}
+					});
+			});
 			inputs.forEach(function (input, index) {
 				input.addEventListener('input', function () { input.value = input.value.replace(/\D/g, '').slice(-1); syncOtp(); if (input.value && inputs[index + 1]) inputs[index + 1].focus(); });
 				input.addEventListener('keydown', function (event) { if (event.key === 'Backspace' && !input.value && inputs[index - 1]) inputs[index - 1].focus(); });
