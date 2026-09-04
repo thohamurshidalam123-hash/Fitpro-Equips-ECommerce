@@ -69,6 +69,9 @@ router.get('/forgot-password', userController.loadForgotPassword);
 router.post('/forgot-password', userController.processForgotPassword);
 router.get('/reset-password', userController.loadResetPassword);
 router.post('/reset-password', userController.updatePassword);
+router.post('/resend-reset-otp', userController.resendResetOtp);
+router.get('/profile-reset-password', userController.loadProfileResetPassword);
+router.post('/profile-reset-password', userController.updateProfilePassword);
 
 router.get('/addresses', userController.loadAddressPage);
 router.post('/add-address', addressController.addAddress);

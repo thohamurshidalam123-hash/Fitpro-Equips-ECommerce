@@ -185,9 +185,13 @@ const loadCustomers = async (req, res) => {
         let page = parseInt(req.query.page) || 1;
         let limit = 10;
         let searchQuery = req.query.search || '';
+        let status = ['active', 'blocked'].includes(req.query.status) ? req.query.status : '';
 
         // For search logic
         let query = { role: 'user'};
+
+        if (status === 'active') query.isBlocked = false;
+        if (status === 'blocked') query.isBlocked = true;
 
         if(searchQuery){
             query.$or = [
@@ -216,6 +220,7 @@ const loadCustomers = async (req, res) => {
             page: page,
             totalPages: totalPages,
             searchQuery: searchQuery,
+            status: status,
             totalUsers: totalUsers,
             activeCount: activeCount,
             blockedCount: blockedCount,

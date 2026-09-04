@@ -23,6 +23,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    const statusFilter = document.getElementById('statusFilter');
+    const statusQuery = document.getElementById('statusQuery');
+    if (statusFilter) {
+        statusFilter.addEventListener('change', () => {
+            if (statusQuery) statusQuery.value = statusFilter.value;
+            const params = new URLSearchParams();
+            const search = searchInput ? searchInput.value.trim() : '';
+            if (search) params.set('search', search);
+            if (statusFilter.value) params.set('status', statusFilter.value);
+            window.location.href = `/admin/customers?${params.toString()}`;
+        });
+    }
+
     // ============ BLOCK/UNBLOCK MODAL ============
     const blockUnblockModal = document.getElementById('blockUnblockModal');
     const blockBtns = document.querySelectorAll('.block-btn');

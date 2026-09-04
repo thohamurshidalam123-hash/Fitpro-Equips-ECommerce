@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const { sendOtpEmail } = require('../services/emailServices');
 const Address= require('../models/addressModel');
 const { OAuth2Client } = require('google-auth-library');
+const { validateName, validateEmail, validatePhone, validatePassword, validateDateOfBirth } = require('../validators/userValidators');
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
@@ -14,8 +15,11 @@ const loadLogin = async (req, res) => {
             return res.redirect('/userProfile');
         }
 
-        const message = req.query.message || null;
-        return res.render('user/login', { currentPage: 'login', message });
+        const message = req.session.message || null;
+        const messageType = req.session.messageType || 'error';
+        delete req.session.message;
+        delete req.session.messageType;
+        return res.render('user/login', { currentPage: 'login', message, messageType });
     } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
@@ -36,12 +40,15 @@ const loadProfile = async (req, res) => {
 
         const showOtpVerification = req.query.emailOtp === 'true';
         const pendingEmail = req.session.pendingProfileUpdate ? req.session.pendingProfileUpdate.email : null;
+        const message = req.session.message || null;
+        delete req.session.message;
 
         res.render('user/userProfile', {
             user,
             currentPage: 'profile',
             showOtpVerification,
-            pendingEmail
+            pendingEmail,
+            message
         });
     } catch (error) {
         console.log(error.message);
@@ -55,54 +62,73 @@ const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString()
 // Handle the signup form submission
 const registerUser = async (req, res) => {
     try {
-        const { name, email, password, confirmPassword, phone, gender, dateOfBirth } = req.body;
+        const { name, email, password, confirmPassword, phone, gender, dateOfBirth, consent } = req.body;
         const trimmedName = name ? name.trim() : '';
-        const trimmedEmail = email ? email.trim() : '';
+        const trimmedEmail = email ? email.trim().toLowerCase() : '';
         const trimmedPassword = password ? password.trim() : '';
         const trimmedConfirmPassword = confirmPassword ? confirmPassword.trim() : '';
         const rawPhone = phone ? phone.trim() : '';
         const sanitizedPhone = rawPhone.replace(/\s+/g, '').replace(/^\+91/, '');
         const normalizedPhone = '+91 ' + sanitizedPhone;
-        const phonePattern = /^\+91\s?[6-9]\d{9}$/;
-        const emailPattern = /^[^\s@]+@gmail\.com$/i;
-        const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+        const errors = {};
+        const fieldErrors = { name: validateName(trimmedName, 'Full Name'), email: validateEmail(trimmedEmail), phone: validatePhone(rawPhone), dateOfBirth: validateDateOfBirth(dateOfBirth), password: validatePassword(trimmedPassword) };
+        Object.keys(fieldErrors).forEach((field) => { if (fieldErrors[field]) errors[field] = fieldErrors[field]; });
+        if (!gender || !['male', 'female', 'other', 'Male', 'Female', 'Other'].includes(gender)) errors.gender = 'Please select a valid gender';
+        if (!trimmedConfirmPassword) errors.confirmPassword = 'Confirm Password is required';
+        else if (trimmedPassword !== trimmedConfirmPassword) errors.confirmPassword = 'Passwords do not match';
 
-        if (!trimmedName || !trimmedEmail || !trimmedPassword || !trimmedConfirmPassword || !rawPhone || !gender || !dateOfBirth) {
-            return res.render('user/register', { message: 'Please fill in all required fields before creating your account.', currentPage: 'register' });
+        if (!consent || consent !== 'on') {
+            errors.consent = 'You must agree to the Privacy Policy and Terms of Service';
         }
 
-        if (!emailPattern.test(trimmedEmail)) {
-            return res.render('user/register', { message: 'Please enter a valid Gmail address (example: name@gmail.com).', currentPage: 'register' });
+        // If there are validation errors, return them
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({
+                success: false,
+                errors: errors,
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
-        if (!passwordPattern.test(trimmedPassword)) {
-            return res.render('user/register', { message: 'Password must be at least 8 characters long and include uppercase, lowercase, and a number.', currentPage: 'register' });
-        }
-
-        if (trimmedPassword !== trimmedConfirmPassword) {
-            return res.render('user/register', { message: 'Password and confirm password do not match.', currentPage: 'register' });
-        }
-
-        if (!sanitizedPhone || !/^[6-9]\d{9}$/.test(sanitizedPhone)) {
-            return res.render('user/register', { message: 'Please enter a valid Indian mobile number in the format +91 98765 43210.', currentPage: 'register' });
-        }
-
-        if (!phonePattern.test(normalizedPhone)) {
-            return res.render('user/register', { message: 'Please enter a valid Indian mobile number in the format +91 98765 43210.', currentPage: 'register' });
-        }
-
-        //Check if user already exists by login credential or phone duplication
+        // Check if user already exists by email
         const emailExists = await User.findOne({ email: trimmedEmail });
         if (emailExists) {
-            return res.render('user/register', { message: 'Email already registered', currentPage: 'register' });
+            return res.json({
+                success: false,
+                errors: { email: 'Email already registered' },
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
+        // Check if phone already exists
         const phoneExists = await User.findOne({ phone: normalizedPhone });
         if (phoneExists) {
-            return res.render('user/register', { message: 'This phone number is already registered', currentPage: 'register' });
+            return res.json({
+                success: false,
+                errors: { phone: 'This phone number is already registered' },
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
-        //Hash the password
+        // Hash the password
         const securePassword = await bcrypt.hash(trimmedPassword, 10);
 
         // Generate OTP
@@ -112,11 +138,20 @@ const registerUser = async (req, res) => {
         const emailSent = await sendOtpEmail(trimmedEmail, otp);
 
         if (!emailSent) {
-            return res.render('user/register', { message: 'Failed to send OTP. Please try again.', currentPage: 'register' });
+            return res.json({
+                success: false,
+                errors: { form: 'Failed to send OTP. Please try again.' },
+                formData: {
+                    name: trimmedName,
+                    email: trimmedEmail,
+                    phone: rawPhone,
+                    gender: gender,
+                    dateOfBirth: dateOfBirth
+                }
+            });
         }
 
-        // Store user data AND the OTP in the session temporarily
-        // This is where express-session shines since we aren't using JWT
+        // Store user data and OTP in session
         req.session.userData = {
             name: trimmedName,
             email: trimmedEmail,
@@ -128,12 +163,19 @@ const registerUser = async (req, res) => {
         req.session.otp = otp;
         req.session.otpExpiry = Date.now() + 180000; // OTP valid for 3 minutes
 
-        // 6. Redirect to the OTP verification page
-        res.redirect('/verify-otp');
+        // Return success response
+        return res.json({
+            success: true,
+            redirectUrl: '/verify-otp'
+        });
 
     } catch (error) {
         console.log(error.message);
-        res.status(500).send('Server Error');
+        return res.status(500).json({
+            success: false,
+            errors: { form: 'Server error. Please try again.' },
+            formData: {}
+        });
     }
 };
 
@@ -150,6 +192,7 @@ const loadOtpPage = async (req, res) => {
 // Handle OTP Verification
 const verifyOtp = async (req, res) => {
     try {
+        const wantsJson = req.headers.accept && req.headers.accept.includes('application/json');
         const { otp } = req.body;
         const sessionOtp = req.session.otp;
         const sessionOtpExpiry = req.session.otpExpiry;
@@ -157,11 +200,13 @@ const verifyOtp = async (req, res) => {
 
         // 1. Check if the session data still exists
         if (!sessionOtp || !userData) {
+            if (wantsJson) return res.json({ success: false, message: 'Session expired. Please sign up again.' });
             return res.render('user/otpVerification', { message: 'Session expired. Please sign up again.', currentPage: 'otp' });
         }
 
         // 2. Check if the OTP has expired
         if (Date.now() > sessionOtpExpiry) {
+            if (wantsJson) return res.json({ success: false, message: 'OTP has expired. Please try again.' });
             return res.render('user/otpVerification', { message: 'OTP has expired. Please try again.', currentPage: 'otp' });
         }
 
@@ -189,9 +234,20 @@ const verifyOtp = async (req, res) => {
             // Automatically log the user in using express-session
             req.session.userId = newUser._id;
 
+            if (wantsJson) {
+                return req.session.save((saveError) => {
+                    if (saveError) {
+                        console.error('Error saving user session:', saveError.message);
+                        return res.status(500).json({ success: false, message: 'Unable to start your login session. Please try again.' });
+                    }
+                    return res.json({ success: true, message: 'Registration successful.', redirectUrl: '/userProfile' });
+                });
+            }
+
             // Show confirmation before opening the user's profile
             return res.render('user/otpVerification', { registrationSuccess: true, currentPage: 'otp' });
         } else {
+            if (wantsJson) return res.json({ success: false, message: 'Invalid OTP. Please try again.' });
             return res.render('user/otpVerification', { message: 'Invalid OTP. Please try again.', currentPage: 'otp' });
         }
 
@@ -207,7 +263,7 @@ const resendOtp = async (req, res) => {
         const userData = req.session.userData;
 
         if (!userData) {
-            return res.redirect('/signup'); // Session lost, start over
+            return res.redirect('/register'); // Session lost, start over
         }
 
         // Generate a new OTP and expiry
@@ -293,18 +349,54 @@ const loadResetPassword = async (req, res) => {
 
         res.render('user/resetPassword', {
             currentPage: 'reset-password',
-            message: ''
+            message: req.session.resetMessage || ''
         });
+        delete req.session.resetMessage;
     } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
     }
 };
 
+const resendResetOtp = async (req, res) => {
+    try {
+        const email = req.session.resetEmail;
+        if (!email) return res.redirect('/forgot-password');
+
+        const otp = generateOtp();
+        const emailSent = await sendOtpEmail(email, otp);
+        if (!emailSent) {
+            return res.status(500).render('user/resetPassword', {
+                currentPage: 'reset-password',
+                message: 'Failed to send OTP. Please try again later.'
+            });
+        }
+
+        req.session.resetOtp = otp;
+        req.session.resetOtpExpiry = Date.now() + 180000;
+        req.session.resetMessage = 'A new OTP has been sent to your email.';
+        return res.redirect('/reset-password');
+    } catch (error) {
+        console.log(error.message);
+        return res.status(500).render('user/resetPassword', {
+            currentPage: 'reset-password',
+            message: 'Server error. Please try again later.'
+        });
+    }
+};
+
 // handling email submission & send OTP
 const processForgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
+        const email = String(req.body.email || '').trim().toLowerCase();
+        const emailError = validateEmail(email);
+        if (emailError) {
+            return res.status(400).render('user/forgotPassword', {
+                currentPage: 'forgot-password',
+                message: emailError
+            });
+        }
+
         const user = await User.findOne({ email });
 
         if (!user) {
@@ -321,6 +413,7 @@ const processForgotPassword = async (req, res) => {
             req.session.resetEmail = email;
             req.session.resetOtp = otp;
             req.session.resetOtpExpiry = Date.now() + 180000;
+            req.session.resetMessage = 'OTP sent successfully. Please check your email.';
 
             return res.redirect('/reset-password');
         }
@@ -342,6 +435,11 @@ const updatePassword = async (req, res) => {
 
         if (!req.session.resetEmail || !req.session.resetOtp) {
             return res.redirect('/forgot-password');
+        }
+
+        const passwordError = validatePassword(newPassword, 'New password');
+        if (passwordError) {
+            return res.render('user/resetPassword', { currentPage: 'reset-password', message: passwordError });
         }
 
         if (newPassword !== confirmPassword) {
@@ -383,13 +481,15 @@ const updatePassword = async (req, res) => {
                 if (err) {
                     console.log('Session destroy error:', err.message);
                 }
-                return res.redirect('/login?message=' + encodeURIComponent('Password changed successfully. Please login.'));
+                return res.render('user/login', { currentPage: 'login', message: 'Password changed successfully. Please login.', messageType: 'success' });
             });
             return;
         }
 
         // Redirect to login page upon success
-        return res.redirect('/login?message=' + encodeURIComponent('Password changed successfully. Please login.'));
+        req.session.message = 'Password changed successfully. Please login.';
+        req.session.messageType = 'success';
+        return res.redirect('/login');
     }catch(error){
         console.log(error.message);
         res.status(500).send('Server Error');
@@ -397,6 +497,19 @@ const updatePassword = async (req, res) => {
 }
 
 // For submitting updated profile data
+const validateProfileUpdate = (data) => {
+    const errors = {};
+    const fieldErrors = {
+        name: validateName(data.name, 'Username'),
+        email: validateEmail(data.email),
+        phone: validatePhone(data.phone),
+        dateOfBirth: validateDateOfBirth(data.dateOfBirth)
+    };
+    Object.keys(fieldErrors).forEach((field) => { if (fieldErrors[field]) errors[field] = fieldErrors[field]; });
+    if (!['Male', 'Female', 'Other', 'male', 'female', 'other'].includes(data.gender)) errors.gender = 'Please select a valid gender';
+    return errors;
+};
+
 const updateProfile = async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -406,11 +519,23 @@ const updateProfile = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
 
+        // Validate profile data
+        const errors = validateProfileUpdate({ name, email, phone, gender, dateOfBirth });
+        
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Please correct the errors below',
+                errors,
+                formData: { name, email, phone, gender, dateOfBirth }
+            });
+        }
+
         const normalizedEmail = email ? email.trim() : '';
         const normalizedPhone = phone ? phone.trim() : '';
 
         const updateData = {
-            name,
+            name: name.trim(),
             email: normalizedEmail,
             phone: normalizedPhone,
             gender,
@@ -495,14 +620,10 @@ const verifyProfileOtp = async (req, res) => {
             delete req.session.profileOtp;
             delete req.session.profileOtpExpiry;
 
-            req.session.destroy((err) => {
-                if (err) {
-                    console.log('Session destroy error:', err.message);
-                }
-                // Send JSON telling frontend to redirect the user to login
-                const redirectUrl = '/login?message=' + encodeURIComponent('Your email was updated. Please log in with your new email.');
-                return res.json({ success: true, redirectUrl });
-            });
+            delete req.session.userId;
+            req.session.message = 'Your email was updated. Please log in with your new email.';
+            req.session.messageType = 'success';
+            return res.json({ success: true, redirectUrl: '/login' });
         } else {
             return res.status(400).json({ success: false, message: 'Invalid OTP. Please try again.' });
         }
@@ -592,6 +713,94 @@ const googleLogin = async (req,res) => {
     }
 };
 
+// Load the logged-in user's change-password page
+const loadProfileResetPassword = async (req, res) => {
+    try {
+        if (!req.session.userId) {
+            return res.redirect('/login');
+        }
+
+        const user = await User.findById(req.session.userId).lean();
+        if (!user) {
+            return req.session.destroy(() => res.redirect('/login'));
+        }
+
+        return res.render('user/profileResetPassword', {
+            currentPage: 'profile-reset-password'
+        });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// Change password for a logged-in user
+const updateProfilePassword = async (req, res) => {
+    try {
+        const { currentPassword, newPassword, confirmPassword } = req.body;
+        const errors = {};
+
+        if (!req.session.userId) return res.status(401).json({ success: false, message: 'Please log in first.' });
+        if (!currentPassword || !currentPassword.trim()) errors.currentPassword = 'Current password is required';
+
+        const passwordError = validatePassword(newPassword, 'New password');
+        if (passwordError) errors.newPassword = passwordError;
+
+        if (!confirmPassword || !confirmPassword.trim()) {
+            errors.confirmPassword = 'Confirm password is required';
+        } else if (newPassword !== confirmPassword) {
+            errors.confirmPassword = 'Passwords do not match.';
+        }
+
+        if (Object.keys(errors).length > 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the errors below',
+                errors,
+                formData: { currentPassword, newPassword, confirmPassword }
+            });
+        }
+
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Please log in again.' });
+        }
+
+        const currentPasswordMatches = await bcrypt.compare(currentPassword, user.password);
+        if (!currentPasswordMatches) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the errors below',
+                errors: { currentPassword: 'Current password is incorrect' },
+                formData: { currentPassword, newPassword, confirmPassword }
+            });
+        }
+
+        const isSamePassword = await bcrypt.compare(newPassword, user.password);
+        if (isSamePassword) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please correct the errors below',
+                errors: { newPassword: 'Enter a new password' },
+                formData: { currentPassword, newPassword, confirmPassword }
+            });
+        }
+
+        const securePassword = await bcrypt.hash(newPassword, 10);
+
+        await User.updateOne(
+            { _id: req.session.userId },
+            { $set: { password: securePassword } }
+        );
+
+        req.session.message = 'Password changed !';
+        return res.json({ success: true, message: 'Password changed !', redirectUrl: '/userProfile' });
+    } catch (error) {
+        console.log(error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
 module.exports = {
     loadLogin,
     registerUser,
@@ -603,11 +812,14 @@ module.exports = {
     loadForgotPassword,
     processForgotPassword,
     loadResetPassword,
+    resendResetOtp,
     updatePassword,
     loadProfile,
     updateProfile,
     loadProfileOtpModal,
     verifyProfileOtp,
+    loadProfileResetPassword,
+    updateProfilePassword,
     loadAddressPage,
     googleLogin
 };

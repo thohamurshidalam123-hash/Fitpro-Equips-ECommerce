@@ -50,6 +50,7 @@ a { color: inherit; text-decoration: none; }
 .forgot-link { color: var(--blue); }
 .sign-in-button { width: 100%; height: 42px; border: 0; border-radius: 5px; color: #fff; background: var(--blue); font-size: 11px; cursor: pointer; box-shadow: 0 2px 4px rgba(36,99,233,.25); }
 .error-message { margin: -10px 0 12px; color: #d73535; font-size: 10px; }
+.success-message { margin: -10px 0 12px; color: #16833b; font-size: 10px; }
 .divider { display: flex; align-items: center; gap: 10px; margin: 24px 0 18px; color: #8a92a1; font-size: 9px; }
 .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: #e3e7ef; }
 .google-button { width: 100%; height: 42px; border: 1px solid #dce2ec; border-radius: 5px; color: #3b4351; background: #fff; font-size: 11px; cursor: pointer; }

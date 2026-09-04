@@ -74,7 +74,7 @@
       <button type="button" class="profile-close-btn" aria-label="Close email verification" data-close-profile-otp-modal>&times;</button>
     </div>
 
-    <form class="profile-update-form" method="POST" action="/verify-profile-otp">
+    <form class="profile-update-form" id="profileOtpForm">
       <p class="otp-message">We sent a 6-digit OTP to <strong id="profileOtpEmail"><%= pendingEmail || user.email %></strong>. Enter it below to confirm the new email.</p>
       <% if (typeof message !== 'undefined' && message) { %>
         <p class="error-message"><%= message %></p>
@@ -90,5 +90,19 @@
         <button type="submit" class="btn-primary">Verify OTP</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div class="profile-update-modal" id="profileErrorModal" aria-hidden="true">
+  <div class="profile-update-backdrop"></div>
+  <div class="profile-update-dialog" role="dialog" aria-modal="true" aria-labelledby="profileErrorTitle">
+    <div class="profile-update-header">
+      <h2 id="profileErrorTitle">Please correct the errors</h2>
+      <button type="button" class="profile-close-btn" aria-label="Close error modal" onclick="closeErrorModal()">&times;</button>
+    </div>
+    <div id="profileErrorMessage" style="padding: 20px; color: #d32f2f; font-size: 13px; max-height: 300px; overflow-y: auto;"></div>
+    <div style="padding: 0 20px 20px; text-align: right;">
+      <button type="button" class="btn-primary" onclick="closeErrorModal()">OK</button>
+    </div>
   </div>
 </div>

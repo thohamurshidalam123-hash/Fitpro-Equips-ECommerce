@@ -55,9 +55,10 @@ app.use(async (req, res, next) => {
         const user = await User.findById(req.session.userId).select('isBlocked');
 
         if (!user || user.isBlocked) {
-            return req.session.destroy(() => {
-                res.redirect('/login?message=' + encodeURIComponent('Account is blocked'));
-            });
+            delete req.session.userId;
+            req.session.message = 'Account is blocked';
+            req.session.messageType = 'error';
+            return res.redirect('/login');
         }
 
         next();
