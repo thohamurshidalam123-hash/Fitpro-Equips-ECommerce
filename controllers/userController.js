@@ -7,7 +7,7 @@ const { validateName, validateEmail, validatePhone, validatePassword, validateDa
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
-// Render the login page
+// Rendering login page
 const loadLogin = async (req, res) => {
     try {
         // If user is already logged in, redirect them to profile
@@ -59,7 +59,7 @@ const loadProfile = async (req, res) => {
 // Generate a random 6-digit OTP
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-// Handle the signup form submission
+// Handle the registeration form submission
 const registerUser = async (req, res) => {
     try {
         const { name, email, password, confirmPassword, phone, gender, dateOfBirth, consent } = req.body;
@@ -80,7 +80,7 @@ const registerUser = async (req, res) => {
         if (!consent || consent !== 'on') {
             errors.consent = 'You must agree to the Privacy Policy and Terms of Service';
         }
-
+                                                    
         // If there are validation errors, return them
         if (Object.keys(errors).length > 0) {
             return res.status(400).json({

@@ -10,7 +10,6 @@ const normalizePhone = (value) => String(value || '').trim().replace(/\s+/g, '')
 const validateEmail = (value) => {
     const email = normalizeEmail(value);
     if (!email) return 'Email Address is required';
-    if (apostrophePattern.test(email)) return 'Email address cannot contain apostrophes';
     if (!emailPattern.test(email)) return 'Please enter a valid email address';
     return null;
 };

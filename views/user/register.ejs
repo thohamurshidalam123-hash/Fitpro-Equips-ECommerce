@@ -129,19 +129,34 @@
 			var email = document.getElementById('email').value.trim();
 			var phone = document.getElementById('phone').value.replace(/\s+/g, '').replace(/^\+91/, '');
 			var date = document.getElementById('dateOfBirthDisplay').value.trim();
+			var gender = document.getElementById('gender').value;
 			var password = document.getElementById('password').value.trim();
 			var confirmPassword = document.getElementById('confirmPassword').value.trim();
 			if (!name) errors.name = 'Full Name is required';
+			else if (name.length < 2) errors.name = 'Full Name must be at least 2 characters long';
+			else if (name.length > 50) errors.name = 'Full Name cannot exceed 50 characters';
+			else if (!/^[A-Za-z]+(?:[ -][A-Za-z]+)*$/.test(name)) errors.name = 'Full Name can contain only letters, spaces, and hyphens';
 			if (!email) errors.email = 'Email Address is required';
 			else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email)) errors.email = 'Please enter a valid email address';
 			if (!phone) errors.phone = 'Phone Number is required';
 			else if (!/^[6-9]\d{9}$/.test(phone)) errors.phone = 'Please enter a valid Indian mobile number';
 			if (!date) errors.dateOfBirth = 'Date of Birth is required';
 			else if (!/^\d{2}\/\d{2}\/\d{4}$/.test(date)) errors.dateOfBirth = 'Please enter a valid date in DD/MM/YYYY format';
-			else if (Number(date.split('/')[2]) === new Date().getFullYear()) errors.dateOfBirth = 'Year of birth cannot be the current year';
-			if (!document.getElementById('gender').value) errors.gender = 'Gender is required';
+			else {
+				var dateParts = date.split('/');
+				var birthDate = new Date(Date.UTC(Number(dateParts[2]), Number(dateParts[1]) - 1, Number(dateParts[0])));
+				var today = new Date();
+				var todayUtc = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate()));
+				var minimumBirthDate = new Date(Date.UTC(today.getFullYear() - 13, today.getMonth(), today.getDate()));
+				var maximumBirthDate = new Date(Date.UTC(today.getFullYear() - 120, today.getMonth(), today.getDate()));
+				var validCalendarDate = birthDate.getUTCFullYear() === Number(dateParts[2]) && birthDate.getUTCMonth() === Number(dateParts[1]) - 1 && birthDate.getUTCDate() === Number(dateParts[0]);
+				if (!validCalendarDate) errors.dateOfBirth = 'Please enter a valid date of birth';
+				else if (birthDate > minimumBirthDate) errors.dateOfBirth = 'You must be at least 13 years old';
+				else if (birthDate < maximumBirthDate || birthDate >= todayUtc) errors.dateOfBirth = 'Please enter a valid date of birth';
+			}
+			if (!['male', 'female', 'other'].includes(gender)) errors.gender = 'Please select a valid gender';
 			if (!password) errors.password = 'Password is required';
-			else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d])[^\s]{8,}$/.test(password)) errors.password = 'Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character';
+			else if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/.test(password)) errors.password = 'Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character';
 			if (!confirmPassword) errors.confirmPassword = 'Confirm Password is required';
 			else if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match';
 			if (!document.querySelector('input[name="consent"]').checked) errors.consent = 'You must agree to the Privacy Policy and Terms of Service';

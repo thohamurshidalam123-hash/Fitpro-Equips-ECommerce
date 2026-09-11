@@ -132,10 +132,10 @@
 
 					<!-- Pagination -->
 					<div class="pagination-section">
-						<span class="pagination-info">Showing 1-10 of <%= totalUsers || 0 %> customers</span>
+						<span class="pagination-info">Showing <%= totalUsers ? ((page - 1) * 10) + 1 : 0 %>-<%= Math.min(page * 10, totalUsers || 0) %> of <%= totalUsers || 0 %> customers</span>
 						<div class="pagination">
 							<% if (page > 1) { %>
-								<button class="page-btn">Previous</button>
+								<a href="/admin/customers?page=<%= page - 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %><%= status ? '&status=' + encodeURIComponent(status) : '' %>" class="page-btn">Previous</a>
 							<% } else { %>
 								<button class="page-btn" disabled>Previous</button>
 							<% } %>
@@ -149,7 +149,7 @@
 							<% } %>
 							
 							<% if (page < totalPages) { %>
-								<button class="page-btn">Next</button>
+								<a href="/admin/customers?page=<%= page + 1 %><%= searchQuery ? '&search=' + encodeURIComponent(searchQuery) : '' %><%= status ? '&status=' + encodeURIComponent(status) : '' %>" class="page-btn">Next</a>
 							<% } else { %>
 								<button class="page-btn" disabled>Next</button>
 							<% } %>

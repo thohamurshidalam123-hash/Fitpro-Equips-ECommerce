@@ -25,6 +25,12 @@
                         <% } else { %>
                             <div class="profile-avatar avatar-fallback" aria-hidden="true"><%= user.name.charAt(0).toUpperCase() %></div>
                         <% } %>
+
+                        <!-- <% if (user.lastLogin) { %>
+                            <p>Last login: <%= new Date(user.lastLogin).toLocaleString() %></p>
+                        <% } else { %>
+                            <p>Last login: First login</p>
+                        <% } %> -->
                     </button>
                     <span class="online-dot" aria-label="Active account"></span>
                     <div>
@@ -177,7 +183,7 @@
             openModal(otpModal);
         }
 
-        // --- Fetch AJAX Implementation for Profile Edit ---
+        // Fetch AJAX Implementation for Profile Edit
         const profileUpdateForm = document.getElementById('profileUpdateForm');
         
         if (profileUpdateForm) {
