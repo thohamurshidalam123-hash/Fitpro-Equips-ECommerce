@@ -11,41 +11,32 @@
 	<div class="admin-dashboard product-page">
 		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'products' }) %>
 		<main class="main-content">
-			<header class="product-topbar">
-				<form class="product-search" method="GET" action="/admin/products">
-					<span aria-hidden="true">⌕</span>
-					<input type="search" name="search" value="<%= searchQuery || '' %>" placeholder="Search categories, slugs, or IDs..." aria-label="Search products">
-				</form>
-				<div class="support-area"><span class="notification">♧<i></i></span><strong>Support</strong></div>
-			</header>
-
 			<section class="product-heading">
 				<div><p class="breadcrumb">Dashboard <span>›</span> Products</p><h1>Product Management</h1></div>
-				<button class="add-product" type="button">＋ Add Product</button>
+				<button class="add-product" id="openAddProduct" type="button">＋ Add Product</button>
 			</section>
 
 			<section class="product-stats" aria-label="Product summary">
 				<div><span>Total<br>Products</span><strong><%= metrics && metrics.total || 0 %></strong><em class="positive">⌁</em></div>
 				<div><span>Active</span><strong class="green"><%= metrics && metrics.active || 0 %></strong></div>
 				<div><span>Out of Stock</span><strong class="red"><%= metrics && metrics.outOfStock || 0 %></strong></div>
-				<div><span>Inactive</span><strong class="orange"><%= metrics && metrics.inactive || 0 %></strong></div>
+				<div><span>Low Stock</span><strong class="orange"><%= metrics && metrics.lowStock || 0 %></strong></div>
 				<div><span>Total<br>Inventory<br>Value</span><strong class="value">₹<%= Number(metrics && metrics.totalValue || 0).toLocaleString('en-IN') %></strong></div>
 			</section>
 
 			<section class="products-card">
-				<form class="product-filters" method="GET" action="/admin/products">
-					<input type="hidden" name="search" value="<%= searchQuery || '' %>">
-					<select name="category" aria-label="Filter by category"><option value="">All Categories</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>" <%= categoryFilter === String(category._id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select>
-					<select name="brand" aria-label="Filter by brand"><option value="">All Brands</option><% (brands || []).forEach(brand => { %><option value="<%= brand._id %>" <%= brandFilter === String(brand._id) ? 'selected' : '' %>><%= brand.name %></option><% }) %></select>
-					<select name="status" aria-label="Filter by stock status"><option value="">Stock Status</option><option value="Active" <%= statusFilter === 'Active' ? 'selected' : '' %>>Active</option><option value="Inactive" <%= statusFilter === 'Inactive' ? 'selected' : '' %>>Inactive</option><option value="Out of Stock" <%= statusFilter === 'Out of Stock' ? 'selected' : '' %>>Out of Stock</option></select>
-					<button type="submit" class="filter-submit" aria-label="Apply filters">⌄</button>
-				</form>
+				<div class="product-filters">
+					<form class="product-list-search" method="GET" action="/admin/products">
+						<span aria-hidden="true">⌕</span><input type="search" name="search" value="<%= searchQuery || '' %>" placeholder="Search products..." aria-label="Search products"><button type="submit" class="product-search-button">Search</button><% if (searchQuery) { %><a href="/admin/products" class="product-clear-button">Clear</a><% } %>
+					</form>
+					<button type="button" class="advanced-filter-button" id="openAdvancedFilters"><span>⚙</span> Advanced Filters</button>
+				</div>
 				<div class="table-wrap">
 					<table class="products-table">
 						<thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>PRICE</th><th>STOCK</th><th>OFFERS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
 						<tbody>
 						<% if (products && products.length) { products.forEach(product => { const stock = Number(product.availableStock || 0); %>
-							<tr><td class="product-name"><% if (product.images && product.images[0]) { %><img src="<%= product.images[0] %>" alt="<%= product.productName %>"><% } else { %><span class="image-placeholder">▦</span><% } %><strong><%= product.productName %></strong></td><td><%= product.categoryId && product.categoryId.name || 'Uncategorized' %></td><td class="price">₹<%= Number(product.salePrice || product.regularPrice || 0).toLocaleString('en-IN') %></td><td><span class="stock-number <%= stock < 20 ? 'low' : stock < 50 ? 'medium' : '' %>"><%= stock %></span><span class="stock-bar"><i style="width:<%= Math.min(stock, 100) %>%"></i></span></td><td><% if (product.offerPercentage) { %><span class="offer"><%= product.offerPercentage %>% OFF</span><% } else { %><span class="no-offer">No Offer</span><% } %></td><td><span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Inactive' ? 'inactive' : 'out' %>"><%= product.status || 'Active' %></span></td><td class="actions"><button type="button" title="View product">◈</button><button type="button" title="Edit product">✎</button><button type="button" title="More actions">⋮</button></td></tr>
+							<tr><td class="product-name"><% if (product.images && product.images[0]) { %><img src="<%= product.images[0] %>" alt="<%= product.productName %>"><% } else { %><span class="image-placeholder">▦</span><% } %><strong><%= product.productName %></strong></td><td><%= product.categoryId && product.categoryId.name || 'Uncategorized' %></td><td class="price">₹<%= Number(product.salePrice || product.regularPrice || 0).toLocaleString('en-IN') %></td><td><span class="stock-number <%= stock < 20 ? 'low' : stock < 50 ? 'medium' : '' %>"><%= stock %></span><span class="stock-bar"><i style="width:<%= Math.min(stock, 100) %>%"></i></span></td><td><% if (product.offerPercentage) { %><span class="offer"><%= product.offerPercentage %>% OFF</span><% } else { %><span class="no-offer">No Offer</span><% } %></td><td><span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Low Stock' ? 'low' : 'out' %>"><%= product.status || 'Active' %></span></td><td class="actions"><button type="button" title="View product">◈</button><button class="edit-product" type="button" title="Edit product" data-id="<%= product._id %>" data-name="<%= product.productName %>" data-category="<%= product.categoryId && product.categoryId._id || '' %>" data-price="<%= product.regularPrice || 0 %>" data-stock="<%= stock %>" data-description="<%= product.description || '' %>" data-status="<%= product.status || 'Active' %>">✎</button><button type="button" title="More actions">⋮</button></td></tr>
 						<% }) } else { %><tr><td colspan="7" class="empty-state">No products found.</td></tr><% } %>
 						</tbody>
 					</table>
@@ -54,6 +45,51 @@
 			</section>
 		</main>
 	</div>
+
+	<div class="product-modal hidden" id="addProductModal" role="dialog" aria-modal="true" aria-labelledby="addProductTitle">
+		<div class="product-modal-panel add-modal-panel">
+			<button class="modal-close" type="button" data-close-modal aria-label="Close">×</button>
+			<h2 id="addProductTitle">Add New Product</h2><p class="modal-subtitle">Create a new entry in your global inventory system.</p>
+			<form id="addProductForm" enctype="multipart/form-data">
+				<label for="addProductName">Product Name</label><input id="addProductName" name="productName" placeholder="e.g. Ultra Vitality Multi-Vitamin" required>
+				<div class="form-grid three"><div><label for="addCategory">Category</label><select id="addCategory" name="categoryId" required><option value="">Select category</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select></div><div><label for="addPrice">Price</label><input id="addPrice" name="regularPrice" type="number" min="0" step="0.01" placeholder="₹ 0.00" required></div><div><label for="addStock">Initial Stock</label><input id="addStock" name="availableStock" type="number" min="0" placeholder="0" required></div></div>
+				<label for="addDescription">Description</label><textarea id="addDescription" name="description" placeholder="e.g. A daily supplement designed to support energy, immunity, and overall well-being." required></textarea>
+				<label>Product Image</label><label class="image-dropzone" for="addImages">▧<span>Click to upload or drag and drop</span><small>SVG, PNG, JPG or GIF (max. 800×800px)</small><input id="addImages" name="images" type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml" multiple required></label><p class="file-note">Select at least 3 images.</p>
+				<label>Status</label><div class="status-options"><label><input type="radio" name="status" value="Active" checked><span>◉<b>ACTIVE</b></span></label><label><input type="radio" name="status" value="Out of Stock"><span>⊘<b>OUT OF STOCK</b></span></label><label><input type="radio" name="status" value="Low Stock"><span>◌<b>LOW STOCK</b></span></label></div>
+				<p class="modal-error" data-form-error></p><div class="modal-actions"><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">＋ Add Product</button></div>
+			</form>
+		</div>
+	</div>
+
+	<div class="product-modal hidden" id="editProductModal" role="dialog" aria-modal="true" aria-labelledby="editProductTitle">
+		<div class="product-modal-panel edit-modal-panel">
+			<button class="modal-close" type="button" data-close-modal aria-label="Close">×</button>
+			<h2 id="editProductTitle">Edit Product</h2><p class="modal-subtitle">Update the inventory details and status for your product.</p>
+			<form id="editProductForm">
+				<input type="hidden" name="productId" id="editProductId"><label for="editProductName">Product Name</label><input id="editProductName" name="productName" required>
+				<div class="form-grid"><div><label for="editCategory">Category</label><select id="editCategory" name="categoryId" required><option value="">Select category</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select></div><div><label for="editStock">Stock</label><input id="editStock" name="availableStock" type="number" min="0" required></div></div>
+				<label for="editPrice">Price</label><input class="short-input" id="editPrice" name="regularPrice" type="number" min="0" step="0.01" required>
+				<label for="editDescription">Description</label><textarea id="editDescription" name="description" required></textarea>
+				<label>Status</label><div class="status-options"><label><input type="radio" name="status" value="Active"><span>◉<b>ACTIVE</b></span></label><label><input type="radio" name="status" value="Out of Stock"><span>⊘<b>OUT OF STOCK</b></span></label><label><input type="radio" name="status" value="Low Stock"><span>◌<b>LOW STOCK</b></span></label></div>
+				<p class="modal-error" data-form-error></p><div class="modal-actions"><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">▣ Save Changes</button></div>
+			</form>
+		</div>
+	</div>
+
+	<div class="product-modal hidden" id="advancedFiltersModal" role="dialog" aria-modal="true" aria-labelledby="advancedFiltersTitle">
+		<div class="product-modal-panel advanced-filter-panel">
+			<button class="modal-close" type="button" data-close-modal aria-label="Close">×</button>
+			<h2 id="advancedFiltersTitle">Advanced Filters</h2><p class="modal-subtitle">Refine the products shown in your inventory.</p>
+			<form id="advancedFiltersForm" method="GET" action="/admin/products">
+				<input type="hidden" name="search" value="<%= searchQuery || '' %>">
+				<label for="advancedCategories">Categories</label><select class="category-multi-select" id="advancedCategories" name="category" multiple size="5" aria-label="Select categories"><% (categories || []).forEach(category => { const selectedCategory = Array.isArray(categoryFilter) ? categoryFilter.includes(String(category._id)) : categoryFilter === String(category._id); %><option value="<%= category._id %>" <%= selectedCategory ? 'selected' : '' %>><%= category.name %></option><% }) %></select>
+				<label for="advancedStatus">Status</label><select id="advancedStatus" name="status"><option value="">All statuses</option><option value="Active" <%= statusFilter === 'Active' ? 'selected' : '' %>>Active</option><option value="Low Stock" <%= statusFilter === 'Low Stock' ? 'selected' : '' %>>Low Stock</option><option value="Out of Stock" <%= statusFilter === 'Out of Stock' ? 'selected' : '' %>>Out of Stock</option></select>
+				<label>Price Range</label><div class="price-range-fields"><input name="minPrice" type="number" min="0" step="0.01" value="<%= minPrice || '' %>" placeholder="Min price"><span>to</span><input name="maxPrice" type="number" min="0" step="0.01" value="<%= maxPrice || '' %>" placeholder="Max price"></div>
+				<div class="modal-actions"><button type="button" class="clear-filter-button" id="clearAdvancedFilters">Clear Filters</button><span class="modal-actions-spacer"></span><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">Apply Filters</button></div>
+			</form>
+		</div>
+	</div>
 	<%- include('../partials/admin-footer.ejs') %>
+	<script src="/js/product.js"></script>
 </body>
 </html>

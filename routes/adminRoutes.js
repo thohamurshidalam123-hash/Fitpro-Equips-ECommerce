@@ -7,6 +7,16 @@ const adminController = require('../controllers/adminController');
 const categoryController = require('../controllers/categoryControllers')
 const productController = require('../controllers/productController');
 
+const productUploadDir = path.join(__dirname, '..', 'uploads', 'products');
+fs.mkdirSync(productUploadDir, { recursive: true });
+const productUpload = multer({
+	limits: { fileSize: 5 * 1024 * 1024 },
+	storage: multer.diskStorage({
+		destination: productUploadDir,
+		filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`)
+	})
+});
+
 const categoryUploadDir = path.join(__dirname, '..', 'uploads', 'categories');
 fs.mkdirSync(categoryUploadDir, { recursive: true });
 const categoryUpload = multer({
@@ -51,7 +61,8 @@ router.patch('/category/status/:id',categoryController.toggleCategoryStatus);
 
 // Product management routes
 router.get('/products', productController.loadProducts);
-
+router.post('/products/add',productUpload.array('images', 8), productController.addProduct);
+router.post('/products/edit/:id',productController.editProduct);
 
 
 module.exports = router;

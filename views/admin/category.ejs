@@ -40,7 +40,7 @@
 							<% categories.forEach(category => { %>
 								<tr>
 									<td><% if (category.image) { %><img class="category-image" src="<%= category.image %>" alt="<%= category.name %>"><% } else { %><div class="category-image"><%= category.name.charAt(0).toUpperCase() %></div><% } %></td>
-									<td><strong><%= category.name %></strong><small><%= category.description || 'Top-level Category' %></small></td>
+									<td><strong><%= category.name %></strong></td>
 									<td class="product-count">0</td><td><span class="muted-pill"><%= category.featured ? 'Featured' : 'No' %></span></td><td><span class="muted-text">No Offer</span></td>
 									<td><span class="status <%= category.status === 'Active' ? 'status-active' : 'status-inactive' %>"><%= category.status === 'Active' ? '● Active' : '● Inactive' %></span></td>
 									<td><div class="row-actions"><button type="button" class="icon-button edit-category" title="Edit category" data-id="<%= category._id %>" data-name="<%= category.name %>" data-description="<%= category.description || '' %>" data-featured="<%= category.featured ? 'true' : 'false' %>" data-image="<%= category.image || '' %>">✎</button><button type="button" class="icon-button toggle-category" title="Toggle category status" data-id="<%= category._id %>">◉</button></div></td>

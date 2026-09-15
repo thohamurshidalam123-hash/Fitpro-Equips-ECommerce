@@ -3,7 +3,7 @@ const mongoose = require ('mongoose');
 const productSchema = new mongoose.Schema({
     productName : { type:String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
-    brandId: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand', required: true },
+    brandId: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand' },
     categoryId: { type: mongoose.Schema.Types.ObjectId, ref:'Category', required: true },
     regularPrice: { type: Number, required: true, min: 0},
     salePrice: { type: Number, default:0, min: 0},
@@ -23,8 +23,8 @@ const productSchema = new mongoose.Schema({
 
     status:{
         type: String,
-        enum:['Active', 'Inactive', 'Out of Stock'],
-        defualt:'Active'
+        enum:['Active', 'Out of Stock', 'Low Stock'],
+        default:'Active'
     }
 },{ timestamps: true});
 

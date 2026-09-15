@@ -30,14 +30,7 @@ const loadProducts = async (req, res) => {
 
         // For handling Stock Status logic from Advanced Filters modal
         if (statusFilter && statusFilter !== 'All') {
-            if (statusFilter === 'In Stock') {
-                query.availableStock = { $gt: 5 }; // Customizing threshold
-                query.status = 'Active';
-            } else if (statusFilter === 'Low Stock') {
-                query.availableStock = { $lte: 5, $gt: 0 };
-            } else if (statusFilter === 'Out of Stock') {
-                query.availableStock = 0;
-            }
+            query.status = statusFilter;
         }
 
         // Handle Price Range logic from Advanced Filters modal
@@ -59,7 +52,7 @@ const loadProducts = async (req, res) => {
         const [ totalProducts, activeCount, inactiveCount, outOfStock, inventoryValueResult, categories, brands ] = await Promise.all([
             Product.countDocuments(query),
             Product.countDocuments({ status:'Active'}),
-            Product.countDocuments({ status:'Inactive'}),
+            Product.countDocuments({ status:'Low Stock'}),
             Product.countDocuments({ status:'Out of Stock'}),
             // For calculating total inventory value
             Product.aggregate([{ $group: { _id: null, totalValue: { $sum: { $multiply: ['$regularPrice', '$availableStock'] } } } }]),
@@ -79,11 +72,11 @@ const loadProducts = async (req, res) => {
             categoryFilter,
             brandFilter,
             statusFilter,
-            minPrice,  // Pass to UI to keep fields filled
-            maxPrice,  // Pass to UI to keep fields filled
+            minPrice,  // For passing to UI to keep fields filled
+            maxPrice,  // For passing to UI to keep fields filled
             metrics:{
                 active: activeCount,
-                inactive: inactiveCount,
+                lowStock: inactiveCount,
                 outOfStock,
                 totalValue: totalInventoryValue,
                 total: totalProducts
@@ -98,4 +91,73 @@ const loadProducts = async (req, res) => {
     }
 };
 
-module.exports = { loadProducts };
+// For adding a new product
+const addProduct = async (req, res) => {
+    try{
+        // Enforcing the 3 image requirment
+        if(!req.files || req.files.length < 3){
+            return res.status(400).json({ success:false, message:'Please upload atleast 3 images'});
+        }
+
+        const { productName, description, categoryId, regularPrice, availableStock, status } = req.body;
+
+        // For mapping the Multer filenames to paths for MongoDB
+        const imagePaths = req.files.map(file => `/uploads/products/${file.filename}`);
+
+        // For detemining the final status based on stock
+        let finalStatus = status || 'Active';
+        const newProduct = new Product({
+            productName: productName.trim(),
+            description: description.trim(),
+            categoryId : categoryId,
+            regularPrice: Number(regularPrice),
+            availableStock: Number(availableStock),
+            images: imagePaths,
+            status: finalStatus
+        });
+
+        await newProduct.save();
+        return res.json({ success: true, message: 'Product added successfully'});
+
+    }catch(error){
+        console.error('Error in adding product:',error.message);
+        res.status(500).json({ success: false, message: 'Server Error'});
+    }
+};
+
+const editProduct = async (req, res) => {
+    try{
+        const productId = req.params.id;
+        const { productName, categoryId, regularPrice, availableStock, description, status} = req.body;
+
+        const product = await Product.findById(productId);
+        if(!product){
+            return res.status(404).json({ success: false, message: 'Product not found'});
+        }
+
+        // For updating product details (text and numerical fields)
+        const updateData = {
+            productName: productName.trim(),
+            categoryId: categoryId,
+            regularPrice: Number(regularPrice),
+            availableStock: Number(availableStock),
+            description: description.trim(),
+            status: status
+        };
+
+        await Product.findByIdAndUpdate( productId, updateData);
+
+        return res.json({ success:true, message: 'Product updated successfully'});
+
+    }catch(error){
+        console.error('Error in editing product',error.message);
+        res.status(500).json({ success: false, message: 'Server Error'});
+    }
+};
+
+module.exports = {
+    loadProducts ,
+    addProduct,
+    editProduct
+
+};

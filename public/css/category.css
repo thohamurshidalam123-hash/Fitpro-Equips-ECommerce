@@ -25,3 +25,6 @@
 .category-modal-panel input.has-error, .category-modal-panel textarea.has-error { border-color: #c62828; }
 .image-upload:has(input.has-error) { border-color: #c62828; }
 .primary-button:disabled { cursor: wait; opacity: .65; }
+
+.row-actions { display: flex; align-items: center; gap: .65rem; white-space: nowrap; }
+.row-actions .icon-button { width: 1.35rem; height: 1.35rem; display: grid; place-items: center; padding: 0; }
