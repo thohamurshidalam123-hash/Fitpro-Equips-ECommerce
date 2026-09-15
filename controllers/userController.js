@@ -519,6 +519,14 @@ const updateProfile = async (req, res) => {
         const user = await User.findById(userId);
         if (!user) return res.status(401).json({ success: false, message: 'Unauthorized. Please log in.' });
 
+        if (user.isBlocked) {
+            return res.status(403).json({
+                success: false,
+                blocked: true,
+                message: 'Your account has been blocked by the administrator. Profile changes cannot be saved.'
+            });
+        }
+
         // Validate profile data
         const errors = validateProfileUpdate({ name, email, phone, gender, dateOfBirth });
         

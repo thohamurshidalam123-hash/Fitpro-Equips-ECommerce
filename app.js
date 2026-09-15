@@ -58,6 +58,13 @@ app.use(async (req, res, next) => {
             delete req.session.userId;
             req.session.message = 'Account is blocked';
             req.session.messageType = 'error';
+            if (req.method !== 'GET' || (req.headers.accept && req.headers.accept.includes('application/json'))) {
+                return res.status(403).json({
+                    success: false,
+                    blocked: true,
+                    message: 'Account is blocked'
+                });
+            }
             return res.redirect('/login');
         }
 

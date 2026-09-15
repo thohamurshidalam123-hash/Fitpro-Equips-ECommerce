@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Products | Fitpro Equips</title>
+	<link rel="stylesheet" href="/css/admin-dashboard.css">
+	<link rel="stylesheet" href="/css/product.css">
+</head>
+<body>
+	<div class="admin-dashboard product-page">
+		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'products' }) %>
+		<main class="main-content">
+			<header class="product-topbar">
+				<form class="product-search" method="GET" action="/admin/products">
+					<span aria-hidden="true">⌕</span>
+					<input type="search" name="search" value="<%= searchQuery || '' %>" placeholder="Search categories, slugs, or IDs..." aria-label="Search products">
+				</form>
+				<div class="support-area"><span class="notification">♧<i></i></span><strong>Support</strong></div>
+			</header>
+
+			<section class="product-heading">
+				<div><p class="breadcrumb">Dashboard <span>›</span> Products</p><h1>Product Management</h1></div>
+				<button class="add-product" type="button">＋ Add Product</button>
+			</section>
+
+			<section class="product-stats" aria-label="Product summary">
+				<div><span>Total<br>Products</span><strong><%= metrics && metrics.total || 0 %></strong><em class="positive">⌁</em></div>
+				<div><span>Active</span><strong class="green"><%= metrics && metrics.active || 0 %></strong></div>
+				<div><span>Out of Stock</span><strong class="red"><%= metrics && metrics.outOfStock || 0 %></strong></div>
+				<div><span>Inactive</span><strong class="orange"><%= metrics && metrics.inactive || 0 %></strong></div>
+				<div><span>Total<br>Inventory<br>Value</span><strong class="value">₹<%= Number(metrics && metrics.totalValue || 0).toLocaleString('en-IN') %></strong></div>
+			</section>
+
+			<section class="products-card">
+				<form class="product-filters" method="GET" action="/admin/products">
+					<input type="hidden" name="search" value="<%= searchQuery || '' %>">
+					<select name="category" aria-label="Filter by category"><option value="">All Categories</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>" <%= categoryFilter === String(category._id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select>
+					<select name="brand" aria-label="Filter by brand"><option value="">All Brands</option><% (brands || []).forEach(brand => { %><option value="<%= brand._id %>" <%= brandFilter === String(brand._id) ? 'selected' : '' %>><%= brand.name %></option><% }) %></select>
+					<select name="status" aria-label="Filter by stock status"><option value="">Stock Status</option><option value="Active" <%= statusFilter === 'Active' ? 'selected' : '' %>>Active</option><option value="Inactive" <%= statusFilter === 'Inactive' ? 'selected' : '' %>>Inactive</option><option value="Out of Stock" <%= statusFilter === 'Out of Stock' ? 'selected' : '' %>>Out of Stock</option></select>
+					<button type="submit" class="filter-submit" aria-label="Apply filters">⌄</button>
+				</form>
+				<div class="table-wrap">
+					<table class="products-table">
+						<thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>PRICE</th><th>STOCK</th><th>OFFERS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+						<tbody>
+						<% if (products && products.length) { products.forEach(product => { const stock = Number(product.availableStock || 0); %>
+							<tr><td class="product-name"><% if (product.images && product.images[0]) { %><img src="<%= product.images[0] %>" alt="<%= product.productName %>"><% } else { %><span class="image-placeholder">▦</span><% } %><strong><%= product.productName %></strong></td><td><%= product.categoryId && product.categoryId.name || 'Uncategorized' %></td><td class="price">₹<%= Number(product.salePrice || product.regularPrice || 0).toLocaleString('en-IN') %></td><td><span class="stock-number <%= stock < 20 ? 'low' : stock < 50 ? 'medium' : '' %>"><%= stock %></span><span class="stock-bar"><i style="width:<%= Math.min(stock, 100) %>%"></i></span></td><td><% if (product.offerPercentage) { %><span class="offer"><%= product.offerPercentage %>% OFF</span><% } else { %><span class="no-offer">No Offer</span><% } %></td><td><span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Inactive' ? 'inactive' : 'out' %>"><%= product.status || 'Active' %></span></td><td class="actions"><button type="button" title="View product">◈</button><button type="button" title="Edit product">✎</button><button type="button" title="More actions">⋮</button></td></tr>
+						<% }) } else { %><tr><td colspan="7" class="empty-state">No products found.</td></tr><% } %>
+						</tbody>
+					</table>
+				</div>
+				<footer class="table-footer"><span>Showing <%= products && products.length ? ((page - 1) * limit) + 1 : 0 %> to <%= Math.min(page * limit, metrics && metrics.total || 0) %> of <%= metrics && metrics.total || 0 %> products</span><span>Rows per page: <%= limit %>⌄</span><nav><% if (page > 1) { %><a href="?page=<%= page - 1 %>">‹</a><% } %><b><%= page %></b><% if (page < totalPages) { %><a href="?page=<%= page + 1 %>">›</a><% } %></nav></footer>
+			</section>
+		</main>
+	</div>
+	<%- include('../partials/admin-footer.ejs') %>
+</body>
+</html>

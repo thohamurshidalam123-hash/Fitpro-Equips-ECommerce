@@ -207,7 +207,15 @@
 
                     const result = await response.json();
 
-                    if (result.errors) {
+                    if (result.blocked) {
+                        const notificationCloseButton = document.querySelector('.app-notification-close');
+                        if (notificationCloseButton) {
+                            notificationCloseButton.addEventListener('click', () => {
+                                window.location.href = '/login';
+                            }, { once: true });
+                        }
+                        window.showAppModal('Account is blocked', 'error');
+                    } else if (result.errors) {
                         // Show validation errors without refreshing
                         showProfileValidationErrors(result.errors);
                         
