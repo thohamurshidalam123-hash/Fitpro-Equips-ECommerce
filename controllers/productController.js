@@ -1,5 +1,6 @@
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
+const { validateProduct } = require('../validators/productValidators');
 
 const loadProducts = async (req, res) => {
     try{
@@ -94,12 +95,12 @@ const loadProducts = async (req, res) => {
 // For adding a new product
 const addProduct = async (req, res) => {
     try{
-        // Enforcing the 3 image requirment
-        if(!req.files || req.files.length < 3){
-            return res.status(400).json({ success:false, message:'Please upload atleast 3 images'});
-        }
-
         const { productName, description, categoryId, regularPrice, availableStock, status } = req.body;
+        const errors = validateProduct(req.body);
+        if (!req.files || req.files.length < 3) errors.images = 'Please upload at least 3 images';
+        if (Object.keys(errors).length) {
+            return res.status(400).json({ success: false, errors, message: 'Please correct the errors below' });
+        }
 
         // For mapping the Multer filenames to paths for MongoDB
         const imagePaths = req.files.map(file => `/uploads/products/${file.filename}`);
@@ -129,6 +130,10 @@ const editProduct = async (req, res) => {
     try{
         const productId = req.params.id;
         const { productName, categoryId, regularPrice, availableStock, description, status} = req.body;
+        const errors = validateProduct(req.body);
+        if (Object.keys(errors).length) {
+            return res.status(400).json({ success: false, errors, message: 'Please correct the errors below' });
+        }
 
         const product = await Product.findById(productId);
         if(!product){

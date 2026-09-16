@@ -69,7 +69,7 @@
 				<p class="field-error" data-error-for="description"></p>
 				<div class="featured-field"><div><strong>Featured Category</strong><small>Display this category on the homepage gallery</small></div><label class="switch"><input type="checkbox" id="categoryFeatured" name="featured"><span class="slider"></span></label></div>
 				<label for="categoryImage">Category Image</label>
-				<label class="image-upload" for="categoryImage"><span class="upload-icon">♧</span><span>Click to upload or drag and drop</span><small>SVG, PNG, JPG OR GIF MAX (800×400PX)</small><input type="file" id="categoryImage" name="image" accept="image/png,image/jpeg,image/gif,image/svg+xml"></label>
+				<label class="image-upload" for="categoryImage"><span class="upload-icon">♧</span><span>Click to upload or drag and drop</span><small>Crop to 2:1, resized to 800×400px</small><input type="file" id="categoryImage" name="image" accept="image/png,image/jpeg,image/gif,image/svg+xml" data-image-editor data-aspect-ratio="2" data-max-width="800"></label>
 				<div class="selected-image" id="selectedImage"></div>
 				<p class="field-error" data-error-for="image"></p>
 				<p class="form-error" id="categoryFormError"></p>
@@ -78,6 +78,7 @@
 		</div>
 	</div>
 	<%- include('../partials/admin-footer.ejs') %>
+	<script src="/js/image-editor.js"></script>
 	<script src="/js/category.js"></script>
 </body>
 </html>

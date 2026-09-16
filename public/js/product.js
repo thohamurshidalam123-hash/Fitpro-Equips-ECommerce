@@ -18,9 +18,44 @@ function showFormError(form, message) {
 	form.querySelector('[data-form-error]').textContent = message;
 }
 
+function clearFieldErrors(form) {
+	form.querySelectorAll('[data-field-error]').forEach(error => { error.textContent = ''; });
+	form.querySelectorAll('.has-error').forEach(field => {
+		field.classList.remove('has-error');
+		field.removeAttribute('aria-invalid');
+	});
+}
+
+function showFieldErrors(form, errors) {
+	clearFieldErrors(form);
+	Object.entries(errors || {}).forEach(([field, message]) => {
+		const messageElement = form.querySelector(`[data-field-error="${field}"]`);
+		if (messageElement) messageElement.textContent = message;
+		form.querySelectorAll(`[name="${field}"]`).forEach(input => {
+			input.classList.add('has-error');
+			input.setAttribute('aria-invalid', 'true');
+		});
+	});
+}
+
+function validateProductName(form) {
+	const nameInput = form.querySelector('input[name="productName"]');
+	const name = nameInput.value.trim();
+	if (!name) return 'Product name is required';
+	if (!/^[A-Za-z]+(?: +[A-Za-z]+)*$/.test(name)) return 'Product name can contain only letters and spaces';
+	return null;
+}
+
+document.querySelectorAll('input[name="productName"]').forEach(input => {
+	input.addEventListener('input', () => {
+		input.value = input.value.replace(/[^A-Za-z ]/g, '').replace(/ {2,}/g, ' ');
+	});
+});
+
 document.getElementById('openAddProduct').addEventListener('click', () => {
 	addForm.reset();
-	addForm.querySelector('[data-form-error]').textContent = '';
+	clearFieldErrors(addForm);
+	showFormError(addForm, '');
 	openModal(addModal);
 });
 
@@ -56,13 +91,19 @@ document.querySelectorAll('.edit-product').forEach(button => {
 		document.getElementById('editDescription').value = button.dataset.description;
 		const status = editForm.querySelector(`input[name="status"][value="${button.dataset.status}"]`);
 		if (status) status.checked = true;
-		editForm.querySelector('[data-form-error]').textContent = '';
+		clearFieldErrors(editForm);
+		showFormError(editForm, '');
 		openModal(editModal);
 	});
 });
 
 addForm.addEventListener('submit', async event => {
 	event.preventDefault();
+	const nameError = validateProductName(addForm);
+	if (nameError) {
+		showFieldErrors(addForm, { productName: nameError });
+		return;
+	}
 	const submitButton = addForm.querySelector('[type="submit"]');
 	submitButton.disabled = true;
 	showFormError(addForm, '');
@@ -70,16 +111,24 @@ addForm.addEventListener('submit', async event => {
 	try {
 		const response = await fetch('/admin/products/add', { method: 'POST', body: new FormData(addForm) });
 		const result = await response.json();
-		if (!response.ok || !result.success) throw new Error(result.message || 'Unable to add product');
+		if (!response.ok || !result.success) {
+			showFieldErrors(addForm, result.errors);
+			throw new Error(result.errors ? '' : result.message || 'Unable to add product');
+		}
 		window.location.reload();
 	} catch (error) {
-		showFormError(addForm, error.message);
+		if (error.message) showFormError(addForm, error.message);
 		submitButton.disabled = false;
 	}
 });
 
 editForm.addEventListener('submit', async event => {
 	event.preventDefault();
+	const nameError = validateProductName(editForm);
+	if (nameError) {
+		showFieldErrors(editForm, { productName: nameError });
+		return;
+	}
 	const submitButton = editForm.querySelector('[type="submit"]');
 	submitButton.disabled = true;
 	showFormError(editForm, '');
@@ -94,10 +143,13 @@ editForm.addEventListener('submit', async event => {
 			body: JSON.stringify(body)
 		});
 		const result = await response.json();
-		if (!response.ok || !result.success) throw new Error(result.message || 'Unable to update product');
+		if (!response.ok || !result.success) {
+			showFieldErrors(editForm, result.errors);
+			throw new Error(result.errors ? '' : result.message || 'Unable to update product');
+		}
 		window.location.reload();
 	} catch (error) {
-		showFormError(editForm, error.message);
+		if (error.message) showFormError(editForm, error.message);
 		submitButton.disabled = false;
 	}
 });

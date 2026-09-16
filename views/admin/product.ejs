@@ -51,12 +51,12 @@
 			<button class="modal-close" type="button" data-close-modal aria-label="Close">×</button>
 			<h2 id="addProductTitle">Add New Product</h2><p class="modal-subtitle">Create a new entry in your global inventory system.</p>
 			<form id="addProductForm" enctype="multipart/form-data">
-				<label for="addProductName">Product Name</label><input id="addProductName" name="productName" placeholder="e.g. Ultra Vitality Multi-Vitamin" required>
-				<div class="form-grid three"><div><label for="addCategory">Category</label><select id="addCategory" name="categoryId" required><option value="">Select category</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select></div><div><label for="addPrice">Price</label><input id="addPrice" name="regularPrice" type="number" min="0" step="0.01" placeholder="₹ 0.00" required></div><div><label for="addStock">Initial Stock</label><input id="addStock" name="availableStock" type="number" min="0" placeholder="0" required></div></div>
-				<label for="addDescription">Description</label><textarea id="addDescription" name="description" placeholder="e.g. A daily supplement designed to support energy, immunity, and overall well-being." required></textarea>
-				<label>Product Image</label><label class="image-dropzone" for="addImages">▧<span>Click to upload or drag and drop</span><small>SVG, PNG, JPG or GIF (max. 800×800px)</small><input id="addImages" name="images" type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml" multiple required></label><p class="file-note">Select at least 3 images.</p>
+				<label for="addProductName">Product Name</label><input id="addProductName" name="productName" placeholder="e.g. Ultra Vitality Supplement" required maxlength="100" pattern="[A-Za-z]+( [A-Za-z]+)*" title="Product name can contain only letters and spaces"><p class="product-field-error" data-field-error="productName"></p>
+				<div class="form-grid three"><div><label for="addCategory">Category</label><select id="addCategory" name="categoryId" required><option value="">Select category</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select><p class="product-field-error" data-field-error="categoryId"></p></div><div><label for="addPrice">Price</label><input id="addPrice" name="regularPrice" type="number" min="0.01" step="0.01" placeholder="₹ 0.00" required><p class="product-field-error" data-field-error="regularPrice"></p></div><div><label for="addStock">Initial Stock</label><input id="addStock" name="availableStock" type="number" min="0" step="1" placeholder="0" required><p class="product-field-error" data-field-error="availableStock"></p></div></div>
+				<label for="addDescription">Description</label><textarea id="addDescription" name="description" placeholder="e.g. A daily supplement designed to support energy, immunity, and overall well-being." required maxlength="1000"></textarea><p class="product-field-error" data-field-error="description"></p>
+				<label>Product Image</label><label class="image-dropzone" for="addImages">▧<span>Click to upload or drag and drop</span><small>Crop to 1:1, resized to 800×800px</small><input id="addImages" name="images" type="file" accept="image/png,image/jpeg,image/gif,image/svg+xml" multiple required data-image-editor data-aspect-ratio="1" data-max-width="800"></label><p class="file-note">Select at least 3 images. Each image opens in the crop editor.</p>
 				<label>Status</label><div class="status-options"><label><input type="radio" name="status" value="Active" checked><span>◉<b>ACTIVE</b></span></label><label><input type="radio" name="status" value="Out of Stock"><span>⊘<b>OUT OF STOCK</b></span></label><label><input type="radio" name="status" value="Low Stock"><span>◌<b>LOW STOCK</b></span></label></div>
-				<p class="modal-error" data-form-error></p><div class="modal-actions"><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">＋ Add Product</button></div>
+				<p class="product-field-error" data-field-error="images"></p><p class="modal-error" data-form-error></p><div class="modal-actions"><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">＋ Add Product</button></div>
 			</form>
 		</div>
 	</div>
@@ -66,12 +66,12 @@
 			<button class="modal-close" type="button" data-close-modal aria-label="Close">×</button>
 			<h2 id="editProductTitle">Edit Product</h2><p class="modal-subtitle">Update the inventory details and status for your product.</p>
 			<form id="editProductForm">
-				<input type="hidden" name="productId" id="editProductId"><label for="editProductName">Product Name</label><input id="editProductName" name="productName" required>
-				<div class="form-grid"><div><label for="editCategory">Category</label><select id="editCategory" name="categoryId" required><option value="">Select category</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select></div><div><label for="editStock">Stock</label><input id="editStock" name="availableStock" type="number" min="0" required></div></div>
-				<label for="editPrice">Price</label><input class="short-input" id="editPrice" name="regularPrice" type="number" min="0" step="0.01" required>
-				<label for="editDescription">Description</label><textarea id="editDescription" name="description" required></textarea>
+				<input type="hidden" name="productId" id="editProductId"><label for="editProductName">Product Name</label><input id="editProductName" name="productName" required maxlength="100" pattern="[A-Za-z]+( [A-Za-z]+)*" title="Product name can contain only letters and spaces"><p class="product-field-error" data-field-error="productName"></p>
+				<div class="form-grid"><div><label for="editCategory">Category</label><select id="editCategory" name="categoryId" required><option value="">Select category</option><% (categories || []).forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select><p class="product-field-error" data-field-error="categoryId"></p></div><div><label for="editStock">Stock</label><input id="editStock" name="availableStock" type="number" min="0" step="1" required><p class="product-field-error" data-field-error="availableStock"></p></div></div>
+				<label for="editPrice">Price</label><input class="short-input" id="editPrice" name="regularPrice" type="number" min="0.01" step="0.01" required><p class="product-field-error" data-field-error="regularPrice"></p>
+				<label for="editDescription">Description</label><textarea id="editDescription" name="description" required maxlength="1000"></textarea><p class="product-field-error" data-field-error="description"></p>
 				<label>Status</label><div class="status-options"><label><input type="radio" name="status" value="Active"><span>◉<b>ACTIVE</b></span></label><label><input type="radio" name="status" value="Out of Stock"><span>⊘<b>OUT OF STOCK</b></span></label><label><input type="radio" name="status" value="Low Stock"><span>◌<b>LOW STOCK</b></span></label></div>
-				<p class="modal-error" data-form-error></p><div class="modal-actions"><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">▣ Save Changes</button></div>
+				<p class="product-field-error" data-field-error="status"></p><p class="modal-error" data-form-error></p><div class="modal-actions"><button type="button" class="modal-cancel" data-close-modal>Cancel</button><button class="modal-submit" type="submit">▣ Save Changes</button></div>
 			</form>
 		</div>
 	</div>
@@ -90,6 +90,7 @@
 		</div>
 	</div>
 	<%- include('../partials/admin-footer.ejs') %>
+	<script src="/js/image-editor.js"></script>
 	<script src="/js/product.js"></script>
 </body>
 </html>
