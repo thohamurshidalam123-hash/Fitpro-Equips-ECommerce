@@ -14,40 +14,29 @@
 			<div class="shop-breadcrumb"><a href="/">Home</a><span>›</span><strong>Shop</strong></div>
 			<section class="shop-heading">
 				<div><h1>Shop Fitness Equipment</h1><p>Browse premium gym equipment for every fitness goal.</p></div>
-				<span class="results-count">Showing 1–24 of 126 products</span>
+				<span class="results-count"><%= totalProducts %> available product<%= totalProducts === 1 ? '' : 's' %></span>
 			</section>
 
-			<div class="shop-toolbar">
-				<label class="shop-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search equipment, brands, or gear..." aria-label="Search equipment"></label>
-				<div class="view-controls"><span>Sort by</span><button type="button" class="sort-button">Newest <span>⌄</span></button><button type="button" class="view-button active" aria-label="Grid view">▦</button><button type="button" class="view-button" aria-label="List view">▤</button></div>
-			</div>
+			<form class="shop-toolbar" method="get" action="/shop">
+				<div class="shop-search-box"><label class="shop-search"><span aria-hidden="true">⌕</span><input type="search" name="search" value="<%= activeFilters.search %>" placeholder="Search equipment, brands, or gear..." aria-label="Search equipment"></label><div class="search-actions"><button class="search-button" type="submit">Search</button><a class="clear-search" href="/shop?sort=<%= encodeURIComponent(activeFilters.sort) %>&amp;minPrice=<%= encodeURIComponent(activeFilters.minPrice) %>&amp;maxPrice=<%= encodeURIComponent(activeFilters.maxPrice) %><%= activeFilters.category.map(category => '&amp;category=' + encodeURIComponent(category)).join('') %>">Clear</a></div></div>
+				<div class="view-controls"><label for="sort">Sort by</label><select id="sort" name="sort" class="sort-button" onchange="this.form.submit()"><option value="newest" <%= activeFilters.sort === 'newest' ? 'selected' : '' %>>Newest</option><option value="price_asc" <%= activeFilters.sort === 'price_asc' ? 'selected' : '' %>>Price: low to high</option><option value="price_desc" <%= activeFilters.sort === 'price_desc' ? 'selected' : '' %>>Price: high to low</option><option value="a_z" <%= activeFilters.sort === 'a_z' ? 'selected' : '' %>>Name: A-Z</option><option value="z_a" <%= activeFilters.sort === 'z_a' ? 'selected' : '' %>>Name: Z-A</option></select></div>
+			</form>
 
 			<div class="shop-layout">
-				<aside class="filter-panel" aria-label="Product filters">
+				<form class="filter-panel" method="get" action="/shop" aria-label="Product filters">
 					<div class="filter-heading"><strong>Filters</strong><small>Refine your search</small></div>
-					<fieldset><legend>Category</legend><label><input type="checkbox"> Strength Training</label><label><input type="checkbox" checked> Cardio Equipment</label><label><input type="checkbox"> Recovery Gear</label></fieldset>
-					<fieldset><legend>Price Range</legend><div class="price-inputs"><span>₹0</span><span>₹100000+</span></div><input class="range" type="range" min="0" max="100000" value="65000" aria-label="Maximum price"></fieldset>
-					<button type="button" class="clear-filters">Clear All Filters</button>
-				</aside>
+					<input type="hidden" name="search" value="<%= activeFilters.search %>"><input type="hidden" name="sort" value="<%= activeFilters.sort %>">
+					<fieldset><legend>Category</legend><select class="category-select" name="category" multiple size="4" aria-label="Select categories"><% categories.forEach(category => { %><option value="<%= category._id %>" <%= activeFilters.category.includes(category._id.toString()) ? 'selected' : '' %>><%= category.name %></option><% }) %></select><small class="filter-hint">Select one or more</small></fieldset>
+					<fieldset><legend>Price Range</legend><div class="price-inputs"><input name="minPrice" type="number" min="0" value="<%= activeFilters.minPrice %>" placeholder="Min"><input name="maxPrice" type="number" min="0" value="<%= activeFilters.maxPrice %>" placeholder="Max"></div></fieldset>
+					<button class="clear-filters" type="submit">Apply Filters</button> <a class="clear-filters" href="/shop">Clear All Filters</a>
+				</form>
 
 				<section class="shop-results" aria-label="Products">
-					<div class="shop-product-grid">
-						<article class="shop-product-card"><span class="sale-tag">15% OFF</span><button class="wishlist" type="button" aria-label="Add treadmill to wishlist">♡</button><div class="shop-product-image treadmill"></div><small>APEX PRO</small><h2>Apex T-800 Pro Treadmill</h2><div class="product-meta"><span>★ 4.8</span><span>(120 reviews)</span></div><strong class="shop-price">₹299.00</strong><span class="stock-pill">In stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
-						<article class="shop-product-card"><span class="sale-tag">20% OFF</span><button class="wishlist" type="button" aria-label="Add elliptical trainer to wishlist">♡</button><div class="shop-product-image elliptical"></div><small>VITALITY ELITE</small><h2>Elite Adjustable Dumbbells</h2><div class="product-meta"><span>★ 4.7</span><span>(86 reviews)</span></div><strong class="shop-price">₹499.00</strong><span class="stock-pill">In stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
-						<article class="shop-product-card"><span class="sale-tag">20% OFF</span><button class="wishlist" type="button" aria-label="Add bicycle to wishlist">♡</button><div class="shop-product-image bicycle"></div><small>APEX RIDE</small><h2>Summit 03 Cycle</h2><div class="product-meta"><span>★ 4.9</span><span>(64 reviews)</span></div><strong class="shop-price">₹1,299.00</strong><span class="stock-pill">In stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
-						<article class="shop-product-card"><button class="wishlist" type="button" aria-label="Add bench to wishlist">♡</button><div class="shop-product-image bench"></div><small>APEX FORCE</small><h2>Olympic Bench Press 4x</h2><div class="product-meta"><span>★ 4.6</span><span>(38 reviews)</span></div><strong class="shop-price">₹349.00</strong><span class="stock-pill">In stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
-					</div>
-
-					<div class="shop-promo"><div><strong>Upgrade Your<br>Home Gym</strong><button type="button">Shop Now</button></div></div>
-
-					<div class="shop-product-grid secondary-products">
-						<article class="shop-product-card"><button class="wishlist" type="button" aria-label="Add resistance bands to wishlist">♡</button><div class="shop-product-image bands"></div><small>FLEX PRO</small><h2>Basic Flow Sport Bands</h2><div class="product-meta"><span>★ 4.8</span><span>(42 reviews)</span></div><strong class="shop-price">₹179.00</strong><span class="stock-pill">In stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
-						<article class="shop-product-card placeholder-card"><div class="shop-product-image kettlebell"></div></article>
-						<article class="shop-product-card placeholder-card"><div class="shop-product-image mats"></div></article>
-						<article class="shop-product-card placeholder-card"><div class="shop-product-image accessories"></div></article>
-					</div>
-
-					<nav class="pagination" aria-label="Shop pages"><button type="button">‹</button><button type="button" class="current">1</button><button type="button">2</button><button type="button">3</button><button type="button">4</button><button type="button">›</button></nav>
+					<% if (!products.length) { %><p>No available products match your filters.</p><% } %>
+					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; %>
+						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><span class="stock-pill"><%= product.availableStock %> in stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
+					<% }) %></div>
+					<% if (totalPages > 1) { %><nav class="pagination" aria-label="Shop pages"><% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a href="/shop?page=<%= pageNumber %>&search=<%= encodeURIComponent(activeFilters.search) %>&sort=<%= activeFilters.sort %>&minPrice=<%= activeFilters.minPrice %>&maxPrice=<%= activeFilters.maxPrice %><%= activeFilters.category.map(category => '&category=' + encodeURIComponent(category)).join('') %>" class="<%= pageNumber === page ? 'current' : '' %>"><%= pageNumber %></a><% } %></nav><% } %>
 				</section>
 			</div>
 		</main>

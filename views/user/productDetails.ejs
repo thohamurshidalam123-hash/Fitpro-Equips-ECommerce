@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Dynamic Title -->
+    <title><%= product.productName %> | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <link rel="stylesheet" href="/css/product-details.css">
+
+    <!-- Include jQuery and ElevateZoom for Zoomable Images -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
+</head>
+<body>
+    <div class="page-shell product-details-page">
+        <%- include('../partials/user-header', { currentPage: 'shop' }) %>
+
+        <main>
+            <div class="product-details-main">
+                <!-- Dynamic Breadcrumbs -->
+                <nav class="product-breadcrumb" aria-label="Breadcrumb">
+                    <a href="/">Home</a><span>›</span>
+                    <a href="/shop">Shop</a><span>›</span>
+                    <a href="/shop?category=<%= product.categoryId._id %>"><%= product.categoryId.name %></a><span>›</span>
+                    <strong><%= product.productName %></strong>
+                </nav>
+
+                <section class="product-overview" aria-labelledby="productTitle">
+                    <div class="product-gallery">
+                        <!-- Main Zoomable Image -->
+                        <div class="product-gallery-main">
+                            <img id="productImage" src="<%= product.images[0] %>" data-zoom-image="<%= product.images[0] %>" alt="<%= product.productName %>">
+                        </div>
+                        <span class="rotate-hint">↻ &nbsp;Hover to Zoom</span>
+                        
+                        <!-- Dynamic Thumbnails -->
+                        <div class="product-thumbnails" id="product-gallery" aria-label="Product images">
+                            <% product.images.forEach((img, index) => { %>
+                                <a href="#" class="thumbnail <%= index === 0 ? 'active' : '' %>" data-image="<%= img %>" data-zoom-image="<%= img %>" aria-label="View image <%= index + 1 %>">
+                                    <img src="<%= img %>" alt="">
+                                </a>
+                            <% }) %>
+                        </div>
+                    </div>
+
+                    <div class="product-summary">
+                        <!-- Stock Info & Error Handling -->
+                        <% if (product.availableStock > 0) { %>
+                            <span class="stock-label" style="color: #28a745;"><i></i> In Stock (<%= product.availableStock %> available)</span>
+                        <% } else { %>
+                            <span class="stock-label" style="color: #dc3545;"><i></i> Out of Stock</span>
+                        <% } %>
+
+                        <!-- Dynamic Title -->
+                        <h1 id="productTitle"><%= product.productName %></h1>
+                        <div class="product-rating"><span>★</span> 4.8 <a href="#description">(126 reviews)</a></div>
+                        
+                        <!-- Dynamic Price & Discounts -->
+                        <div class="product-price-row">
+                            <strong>₹<%= product.salePrice > 0 ? product.salePrice : product.regularPrice %></strong>
+                            <% if (product.salePrice > 0 && product.salePrice < product.regularPrice) { %>
+                                <del>₹<%= product.regularPrice %></del>
+                                <span><%= Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100) %>% OFF</span>
+                            <% } else if (product.offerPercentage > 0) { %>
+                                <del>₹<%= product.regularPrice %></del>
+                                <span><%= product.offerPercentage %>% OFF</span>
+                            <% } %>
+                        </div>
+
+                        <!-- Product Highlights -->
+                        <div class="feature-grid" aria-label="Product features">
+                            <div><b>⚡</b><span><strong>Adjustable Weight</strong>Easy to adjust</span></div>
+                            <div><b>⌁</b><span><strong>Non-slip Grip</strong>Chrome knurled handle</span></div>
+                            <div><b>▣</b><span><strong>Durable Steel</strong>Built for long use</span></div>
+                            <div><b>⌂</b><span><strong>Home Gym</strong>Space-saving design</span></div>
+                        </div>
+
+                        <% if (product.variants && product.variants.length > 0) { %>
+                            <fieldset class="weight-options">
+                                <legend>Weight Capacity</legend>
+                                <div>
+                                    <% product.variants.forEach((variant, index) => { %>
+                                        <button class="weight-option <%= index === 0 ? 'selected' : '' %>" type="button"><%= variant.name %></button>
+                                    <% }) %>
+                                </div>
+                            </fieldset>
+                        <% } %>
+
+                        <!-- Purchase Row with Out of Stock Handling -->
+                        <div class="purchase-row">
+                            <% if (product.availableStock > 0) { %>
+                                <div class="quantity-control">
+                                    <button type="button" data-quantity-decrease aria-label="Decrease quantity">−</button>
+                                    <output id="quantity">1</output>
+                                    <button type="button" data-quantity-increase aria-label="Increase quantity">＋</button>
+                                </div>
+                                <button class="add-to-cart" type="button" onclick="addToCart('<%= product._id %>')">▣ &nbsp; Add to Cart</button>
+                            <% } else { %>
+                                <button class="add-to-cart" type="button" disabled style="background-color: #ccc; cursor: not-allowed; width: 100%;">▣ &nbsp; Out of Stock</button>
+                            <% } %>
+                        </div>
+                        <button class="wishlist-button" type="button">♡ &nbsp; Add to Wishlist</button>
+                    </div>
+                </section>
+
+                <section class="product-description" id="description">
+                    <div class="section-tab">Description</div>
+                    <h2>Product Overview</h2>
+                    <p><%= product.description %></p>
+                </section>
+
+                <section class="product-benefits" aria-label="Shopping benefits">
+                    <div><span>▣ ◫ G</span><strong>Free Delivery</strong><small>On all orders over ₹150</small></div>
+                    <div><span>♧</span><strong>Secure Payment</strong><small>100% encrypted checkout</small></div>
+                    <div><span>□</span><strong>Easy Returns</strong><small>30-day money-back policy</small></div>
+                    <div><span>▣</span><strong>2-Year Warranty</strong><small>Premium quality guarantee</small></div>
+                </section>
+
+                <!-- TASK C.iv: Related Product Recommendations -->
+                <% if (relatedProducts && relatedProducts.length > 0) { %>
+                    <section style="margin-top: 60px;">
+                        <h2 style="font-size: 24px; margin-bottom: 20px;">You May Also Like</h2>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                            <% relatedProducts.forEach(rel => { %>
+                                <a href="/product/<%= rel._id %>" style="text-decoration: none; color: inherit; display: block;">
+                                    <div style="background-image: url('<%= rel.images[0] %>'); height: 200px; background-size: cover; background-position: center; border-radius: 8px;"></div>
+                                    <h4 style="margin: 10px 0 5px;"><%= rel.productName %></h4>
+                                    <strong style="color: #0056b3;">₹<%= rel.salePrice > 0 ? rel.salePrice : rel.regularPrice %></strong>
+                                </a>
+                            <% }) %>
+                        </div>
+                    </section>
+                <% } %>
+            </div>
+        </main>
+
+        <%- include('../partials/user-footer') %>
+    </div>
+
+    <script>
+        // TASK C.i: Initialize ElevateZoom for Image Zooming
+        $(document).ready(function () {
+            // Initialize main zoom
+            $("#productImage").elevateZoom({
+                gallery: 'product-gallery',
+                cursor: 'crosshair',
+                galleryActiveClass: 'active',
+                imageCrossfade: true,
+                zoomType: "inner" 
+            });
+
+            // Bind thumbnail clicks to swap the zoom image
+            $("#product-gallery a").bind("click", function(e) {
+                e.preventDefault();
+                var ez = $('#productImage').data('elevateZoom');    
+                $.fancybox(ez.getGalleryList());
+                
+                // Update UI active state classes
+                document.querySelectorAll('.thumbnail').forEach((item) => item.classList.remove('active'));
+                this.classList.add('active');
+                return false;
+            });
+        });
+
+        // Toggle variant selection visually
+        document.querySelectorAll('.weight-option').forEach((option) => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.weight-option').forEach((item) => item.classList.remove('selected'));
+                option.classList.add('selected');
+            });
+        });
+
+        // TASK D.v & D.vi: Increment/Decrement Quantity with Strict Stock & Max Limit Validations
+        const quantity = document.getElementById('quantity');
+        const availableStock = <%= product.availableStock %>;
+        const maxLimitPerUser = 5; // Strict business rule limit
+
+        // Calculate the maximum allowed quantity based on stock and arbitrary limit
+        const maxAllowed = Math.min(availableStock, maxLimitPerUser);
+
+        document.querySelector('[data-quantity-decrease]')?.addEventListener('click', () => {
+            quantity.value = Math.max(Number(quantity.value) - 1, 1);
+        });
+
+        document.querySelector('[data-quantity-increase]')?.addEventListener('click', () => {
+            if (Number(quantity.value) < maxAllowed) {
+                quantity.value = Number(quantity.value) + 1;
+            } else {
+                alert(`You can only add a maximum of ${maxAllowed} units for this item.`);
+            }
+        });
+
+        // Cart Submission Placeholder
+        function addToCart(productId) {
+            const selectedQuantity = Number(quantity.value);
+            console.log(`Adding ${selectedQuantity} of product ${productId} to cart.`);
+            // Ready for Task D!
+        }
+    </script>
+</body>
+</html>
