@@ -312,9 +312,9 @@ const loginUser = async (req, res) => {
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if (passwordMatch) {
-            // 5. Set the session and redirect
+            // Set the session and show the landing page after login
             req.session.userId = user._id;
-            return res.redirect('/userProfile');
+            return res.redirect('/');
         } else {
             return res.render('user/login', { message: 'Invalid email or password', currentPage: 'login' });
         }

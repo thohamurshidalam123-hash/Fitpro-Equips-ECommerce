@@ -42,5 +42,14 @@
 		</main>
 		<%- include('../partials/user-footer') %>
 	</div>
+	<% if (typeof message !== 'undefined' && message) { %>
+		<div id="shopNotification" data-message="<%= message %>" data-type="<%= messageType || 'error' %>"></div>
+		<script>
+			document.addEventListener('DOMContentLoaded', () => {
+				const notification = document.getElementById('shopNotification');
+				showAppModal(notification.dataset.message, notification.dataset.type);
+			});
+		</script>
+	<% } %>
 </body>
 </html>

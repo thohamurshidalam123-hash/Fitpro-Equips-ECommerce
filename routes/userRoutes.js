@@ -6,7 +6,9 @@ const router = express.Router();
 const userController = require('../controllers/userController');
 const addressController = require('../controllers/addressController');
 const passport = require('passport');
+const userShopController = require('../controllers/userShopController');
 require('../configuration/passport');
+
 
 const uploadDir = path.join(__dirname, '..', 'uploads', 'profile-pics');
 fs.mkdirSync(uploadDir, { recursive: true });
@@ -32,9 +34,7 @@ const upload = multer({
     }
 });
 
-router.get('/', (req, res) => {
-    res.render('user/landing', { currentPage: 'home' });
-});
+router.get('/', userShopController.loadLandingPage);
 
 // Authentication Routes
 router.get('/login', userController.loadLogin);
@@ -80,5 +80,8 @@ router.delete('/delete-address/:id', addressController.deleteAddress);
 
 router.post('/google-login', userController.googleLogin);
 
+// Shop page routes
+router.get('/shop',userShopController.loadShopPage);
+router.get('/products/:id',userShopController.productDetailsPage)
 
 module.exports = router;

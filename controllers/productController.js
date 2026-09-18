@@ -2,6 +2,10 @@ const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const { validateProduct } = require('../validators/productValidators');
 
+const getHighlights = (data) => Array.from({ length: 4 }, (_, index) => ({
+    title: String(data[`highlightTitle${index + 1}`] || '').trim()
+})).filter(highlight => highlight.title);
+
 const loadProducts = async (req, res) => {
     try{
         if(!req.session.adminId) return res.redirect('/admin/login');
@@ -114,6 +118,7 @@ const addProduct = async (req, res) => {
             regularPrice: Number(regularPrice),
             availableStock: Number(availableStock),
             images: imagePaths,
+            highlights: getHighlights(req.body),
             status: finalStatus
         });
 
@@ -147,6 +152,7 @@ const editProduct = async (req, res) => {
             regularPrice: Number(regularPrice),
             availableStock: Number(availableStock),
             description: description.trim(),
+            highlights: getHighlights(req.body),
             status: status
         };
 

@@ -2,7 +2,7 @@
     <a class="brand" href="/">Fitpro Equips</a>
     <nav class="main-nav" aria-label="Main navigation">
         <a class="<%= currentPage === 'home' ? 'active' : '' %>" href="/">Home</a>
-        <a class="<%= currentPage === 'shop' ? 'active' : '' %>" href="/#shop">Shop</a>
+        <a class="<%= currentPage === 'shop' ? 'active' : '' %>" href="/shop">Shop</a>
         <a href="/#about">About Us</a>
         <a href="/#contact">Contact</a>
     </nav>
@@ -10,6 +10,6 @@
         <span class="icon search-icon" aria-hidden="true"></span>
         <span class="icon heart-icon" aria-hidden="true"></span>
         <span class="cart-wrap"><span class="icon cart-icon" aria-hidden="true"></span><span class="cart-count" data-cart-count>0</span></span>
-        <a class="icon user-icon <%= currentPage === 'login' ? 'active' : '' %>" href="/login" aria-label="Open login page" title="Login"></a>
+        <a class="icon user-icon <%= currentPage === 'login' ? 'active' : '' %>" href="/userProfile" aria-label="Open profile page" title="Profile"></a>
     </div>
 </header>

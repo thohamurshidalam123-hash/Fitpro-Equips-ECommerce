@@ -18,6 +18,13 @@ function showFormError(form, message) {
 	form.querySelector('[data-form-error]').textContent = message;
 }
 
+function showResultModal(message, type, onClose) {
+	const closeButton = document.querySelector('.app-notification-close');
+	if (!window.showAppModal || !closeButton) return;
+	window.showAppModal(message, type);
+	if (onClose) closeButton.addEventListener('click', onClose, { once: true });
+}
+
 function clearFieldErrors(form) {
 	form.querySelectorAll('[data-field-error]').forEach(error => { error.textContent = ''; });
 	form.querySelectorAll('.has-error').forEach(field => {
@@ -46,11 +53,32 @@ function validateProductName(form) {
 	return null;
 }
 
-document.querySelectorAll('input[name="productName"]').forEach(input => {
-	input.addEventListener('input', () => {
-		input.value = input.value.replace(/[^A-Za-z ]/g, '').replace(/ {2,}/g, ' ');
-	});
-});
+function validateHighlightTitles(form) {
+	const errors = {};
+	for (let index = 1; index <= 4; index++) {
+		const input = form.querySelector(`[name="highlightTitle${index}"]`);
+		const title = input.value.trim();
+		if (!title) errors[`highlightTitle${index}`] = `Highlight ${index} title is required`;
+		else if (title.length > 60) errors[`highlightTitle${index}`] = `Highlight ${index} title cannot exceed 60 characters`;
+		else if (!/^[A-Za-z]+(?: +[A-Za-z]+)*$/.test(title)) errors[`highlightTitle${index}`] = `Highlight ${index} title can contain only letters and spaces`;
+	}
+	return errors;
+}
+
+function validateDescription(form) {
+	const description = form.querySelector('textarea[name="description"]').value;
+	return description.includes('_') ? 'Description cannot contain underscores' : null;
+}
+
+function validateFormFields(form) {
+	const errors = {};
+	const nameError = validateProductName(form);
+	if (nameError) errors.productName = nameError;
+	Object.assign(errors, validateHighlightTitles(form));
+	const descriptionError = validateDescription(form);
+	if (descriptionError) errors.description = descriptionError;
+	return errors;
+}
 
 document.getElementById('openAddProduct').addEventListener('click', () => {
 	addForm.reset();
@@ -89,6 +117,9 @@ document.querySelectorAll('.edit-product').forEach(button => {
 		document.getElementById('editPrice').value = button.dataset.price;
 		document.getElementById('editStock').value = button.dataset.stock;
 		document.getElementById('editDescription').value = button.dataset.description;
+		for (let index = 1; index <= 4; index++) {
+			document.getElementById(`editHighlightTitle${index}`).value = button.dataset[`highlightTitle${index}`] || '';
+		}
 		const status = editForm.querySelector(`input[name="status"][value="${button.dataset.status}"]`);
 		if (status) status.checked = true;
 		clearFieldErrors(editForm);
@@ -99,34 +130,42 @@ document.querySelectorAll('.edit-product').forEach(button => {
 
 addForm.addEventListener('submit', async event => {
 	event.preventDefault();
-	const nameError = validateProductName(addForm);
-	if (nameError) {
-		showFieldErrors(addForm, { productName: nameError });
+	const addFieldErrors = validateFormFields(addForm);
+	if (Object.keys(addFieldErrors).length) {
+		showFieldErrors(addForm, addFieldErrors);
 		return;
 	}
 	const submitButton = addForm.querySelector('[type="submit"]');
 	submitButton.disabled = true;
 	showFormError(addForm, '');
 
+	let notificationShown = false;
 	try {
 		const response = await fetch('/admin/products/add', { method: 'POST', body: new FormData(addForm) });
 		const result = await response.json();
 		if (!response.ok || !result.success) {
 			showFieldErrors(addForm, result.errors);
-			throw new Error(result.errors ? '' : result.message || 'Unable to add product');
+			if (result.errors) {
+				submitButton.disabled = false;
+				return;
+			}
+			showResultModal(result.message || 'Unable to add product.', 'error');
+			notificationShown = true;
+			throw new Error(result.message || 'Unable to add product');
 		}
-		window.location.reload();
+		showResultModal(result.message || 'Product added successfully.', 'success', () => window.location.reload());
 	} catch (error) {
 		if (error.message) showFormError(addForm, error.message);
+		if (!notificationShown) showResultModal(error.message || 'Unable to add product.', 'error');
 		submitButton.disabled = false;
 	}
 });
 
 editForm.addEventListener('submit', async event => {
 	event.preventDefault();
-	const nameError = validateProductName(editForm);
-	if (nameError) {
-		showFieldErrors(editForm, { productName: nameError });
+	const editFieldErrors = validateFormFields(editForm);
+	if (Object.keys(editFieldErrors).length) {
+		showFieldErrors(editForm, editFieldErrors);
 		return;
 	}
 	const submitButton = editForm.querySelector('[type="submit"]');
@@ -136,6 +175,7 @@ editForm.addEventListener('submit', async event => {
 	const body = Object.fromEntries(new FormData(editForm));
 	delete body.productId;
 
+	let notificationShown = false;
 	try {
 		const response = await fetch(`/admin/products/edit/${productId}`, {
 			method: 'POST',
@@ -145,11 +185,18 @@ editForm.addEventListener('submit', async event => {
 		const result = await response.json();
 		if (!response.ok || !result.success) {
 			showFieldErrors(editForm, result.errors);
-			throw new Error(result.errors ? '' : result.message || 'Unable to update product');
+			if (result.errors) {
+				submitButton.disabled = false;
+				return;
+			}
+			showResultModal(result.message || 'Unable to update product.', 'error');
+			notificationShown = true;
+			throw new Error(result.message || 'Unable to update product');
 		}
-		window.location.reload();
+		showResultModal(result.message || 'Product updated successfully.', 'success', () => window.location.reload());
 	} catch (error) {
 		if (error.message) showFormError(editForm, error.message);
+		if (!notificationShown) showResultModal(error.message || 'Unable to update product.', 'error');
 		submitButton.disabled = false;
 	}
 });

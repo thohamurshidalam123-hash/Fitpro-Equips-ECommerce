@@ -8,9 +8,6 @@
     <link rel="stylesheet" href="/css/landing.css">
     <link rel="stylesheet" href="/css/product-details.css">
 
-    <!-- Include jQuery and ElevateZoom for Zoomable Images -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/elevatezoom/3.0.8/jquery.elevatezoom.min.js"></script>
 </head>
 <body>
     <div class="page-shell product-details-page">
@@ -28,18 +25,23 @@
 
                 <section class="product-overview" aria-labelledby="productTitle">
                     <div class="product-gallery">
-                        <!-- Main Zoomable Image -->
+                        <!-- Main Product Image -->
                         <div class="product-gallery-main">
                             <img id="productImage" src="<%= product.images[0] %>" data-zoom-image="<%= product.images[0] %>" alt="<%= product.productName %>">
+                            <div class="image-zoom-controls" aria-label="Image zoom controls">
+                                <button type="button" data-zoom-out aria-label="Zoom out">−</button>
+                                <button type="button" data-zoom-reset aria-label="Reset image zoom">Reset</button>
+                                <button type="button" data-zoom-in aria-label="Zoom in">＋</button>
+                            </div>
                         </div>
-                        <span class="rotate-hint">↻ &nbsp;Hover to Zoom</span>
+                        <span class="rotate-hint">↻ &nbsp;Use the controls to zoom</span>
                         
                         <!-- Dynamic Thumbnails -->
                         <div class="product-thumbnails" id="product-gallery" aria-label="Product images">
                             <% product.images.forEach((img, index) => { %>
-                                <a href="#" class="thumbnail <%= index === 0 ? 'active' : '' %>" data-image="<%= img %>" data-zoom-image="<%= img %>" aria-label="View image <%= index + 1 %>">
+                                <button type="button" class="thumbnail <%= index === 0 ? 'active' : '' %>" data-image="<%= img %>" aria-label="View image <%= index + 1 %>">
                                     <img src="<%= img %>" alt="">
-                                </a>
+                                </button>
                             <% }) %>
                         </div>
                     </div>
@@ -69,12 +71,13 @@
                         </div>
 
                         <!-- Product Highlights -->
-                        <div class="feature-grid" aria-label="Product features">
-                            <div><b>⚡</b><span><strong>Adjustable Weight</strong>Easy to adjust</span></div>
-                            <div><b>⌁</b><span><strong>Non-slip Grip</strong>Chrome knurled handle</span></div>
-                            <div><b>▣</b><span><strong>Durable Steel</strong>Built for long use</span></div>
-                            <div><b>⌂</b><span><strong>Home Gym</strong>Space-saving design</span></div>
-                        </div>
+                        <% if (product.highlights && product.highlights.length) { %>
+                            <div class="feature-grid" aria-label="Product features">
+                                <% const highlightIcons = ['⚡', '⌁', '▣', '⌂']; product.highlights.slice(0, 4).forEach((highlight, index) => { %>
+                                    <div><b><%= highlightIcons[index] %></b><span><strong><%= highlight.title %></strong></span></div>
+                                <% }) %>
+                            </div>
+                        <% } %>
 
                         <% if (product.variants && product.variants.length > 0) { %>
                             <fieldset class="weight-options">
@@ -117,17 +120,24 @@
                     <div><span>▣</span><strong>2-Year Warranty</strong><small>Premium quality guarantee</small></div>
                 </section>
 
-                <!-- TASK C.iv: Related Product Recommendations -->
                 <% if (relatedProducts && relatedProducts.length > 0) { %>
-                    <section style="margin-top: 60px;">
-                        <h2 style="font-size: 24px; margin-bottom: 20px;">You May Also Like</h2>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                    <section class="related-products" aria-labelledby="relatedProductsTitle">
+                        <h2 id="relatedProductsTitle">You May Also Like</h2>
+                        <p class="related-products-subtitle">Complete your home gym setup with matching strength and conditioning essentials.</p>
+                        <div class="related-products-grid">
                             <% relatedProducts.forEach(rel => { %>
-                                <a href="/product/<%= rel._id %>" style="text-decoration: none; color: inherit; display: block;">
-                                    <div style="background-image: url('<%= rel.images[0] %>'); height: 200px; background-size: cover; background-position: center; border-radius: 8px;"></div>
-                                    <h4 style="margin: 10px 0 5px;"><%= rel.productName %></h4>
-                                    <strong style="color: #0056b3;">₹<%= rel.salePrice > 0 ? rel.salePrice : rel.regularPrice %></strong>
-                                </a>
+                                <article class="related-product-card">
+                                    <% if (rel.offerPercentage > 0) { %><span class="related-sale-tag"><%= rel.offerPercentage %>% OFF</span><% } %>
+                                    <button class="related-wishlist" type="button" aria-label="Add <%= rel.productName %> to wishlist">♡</button>
+                                    <a class="related-product-link" href="/products/<%= rel._id %>">
+                                        <div class="related-product-image"><% if (rel.images && rel.images[0]) { %><img src="<%= rel.images[0] %>" alt="<%= rel.productName %>"><% } else { %><span>FITPRO</span><% } %></div>
+                                        <small><%= rel.categoryId && rel.categoryId.name ? rel.categoryId.name : product.categoryId.name %></small>
+                                        <h3><%= rel.productName %></h3>
+                                    </a>
+                                    <strong class="related-product-price">₹<%= Number(rel.salePrice > 0 ? rel.salePrice : rel.regularPrice).toFixed(2) %></strong>
+                                    <span class="related-stock-pill"><%= rel.availableStock %> in stock</span>
+                                    <button class="related-cart-button" type="button">▣ Add to Cart</button>
+                                </article>
                             <% }) %>
                         </div>
                     </section>
@@ -139,27 +149,104 @@
     </div>
 
     <script>
-        // TASK C.i: Initialize ElevateZoom for Image Zooming
-        $(document).ready(function () {
-            // Initialize main zoom
-            $("#productImage").elevateZoom({
-                gallery: 'product-gallery',
-                cursor: 'crosshair',
-                galleryActiveClass: 'active',
-                imageCrossfade: true,
-                zoomType: "inner" 
-            });
+        const productImage = document.getElementById('productImage');
+        const galleryFrame = document.querySelector('.product-gallery-main');
+        let imageZoom = 1;
+        let imageOffsetX = 0;
+        let imageOffsetY = 0;
+        let isDraggingImage = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let pendingOffsetX = 0;
+        let pendingOffsetY = 0;
+        let panFrame = 0;
 
-            // Bind thumbnail clicks to swap the zoom image
-            $("#product-gallery a").bind("click", function(e) {
-                e.preventDefault();
-                var ez = $('#productImage').data('elevateZoom');    
-                $.fancybox(ez.getGalleryList());
-                
-                // Update UI active state classes
+        const limitImageOffset = () => {
+            const maxOffsetX = Math.max((productImage.offsetWidth * imageZoom - galleryFrame.clientWidth) / 2, 0);
+            const maxOffsetY = Math.max((productImage.offsetHeight * imageZoom - galleryFrame.clientHeight) / 2, 0);
+            imageOffsetX = Math.max(-maxOffsetX, Math.min(imageOffsetX, maxOffsetX));
+            imageOffsetY = Math.max(-maxOffsetY, Math.min(imageOffsetY, maxOffsetY));
+        };
+
+        const updateImageZoom = () => {
+            limitImageOffset();
+            productImage.style.transform = `translate3d(${imageOffsetX}px, ${imageOffsetY}px, 0) scale(${imageZoom})`;
+            productImage.classList.toggle('is-zoomed', imageZoom > 1);
+        };
+
+        const updateImagePan = () => {
+            panFrame = 0;
+            imageOffsetX = pendingOffsetX;
+            imageOffsetY = pendingOffsetY;
+            updateImageZoom();
+        };
+
+        document.querySelector('[data-zoom-in]').addEventListener('click', () => {
+            imageZoom = Math.min(imageZoom + 0.25, 2.5);
+            updateImageZoom();
+        });
+        document.querySelector('[data-zoom-out]').addEventListener('click', () => {
+            imageZoom = Math.max(imageZoom - 0.25, 1);
+            updateImageZoom();
+        });
+        document.querySelector('[data-zoom-reset]').addEventListener('click', () => {
+            imageZoom = 1;
+            imageOffsetX = 0;
+            imageOffsetY = 0;
+            updateImageZoom();
+        });
+
+        galleryFrame.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            imageZoom = Math.max(1, Math.min(imageZoom + (event.deltaY < 0 ? 0.15 : -0.15), 2.5));
+            if (imageZoom === 1) {
+                imageOffsetX = 0;
+                imageOffsetY = 0;
+            }
+            updateImageZoom();
+        }, { passive: false });
+
+        galleryFrame.addEventListener('pointerdown', (event) => {
+            if (imageZoom <= 1 || event.target !== productImage) return;
+            isDraggingImage = true;
+            dragStartX = event.clientX - imageOffsetX;
+            dragStartY = event.clientY - imageOffsetY;
+            pendingOffsetX = imageOffsetX;
+            pendingOffsetY = imageOffsetY;
+            productImage.setPointerCapture(event.pointerId);
+            productImage.classList.add('is-dragging');
+        });
+
+        galleryFrame.addEventListener('pointermove', (event) => {
+            if (!isDraggingImage) return;
+            pendingOffsetX = event.clientX - dragStartX;
+            pendingOffsetY = event.clientY - dragStartY;
+            if (!panFrame) panFrame = requestAnimationFrame(updateImagePan);
+        });
+
+        const stopDraggingImage = () => {
+            isDraggingImage = false;
+            if (panFrame) {
+                cancelAnimationFrame(panFrame);
+                panFrame = 0;
+                imageOffsetX = pendingOffsetX;
+                imageOffsetY = pendingOffsetY;
+                updateImageZoom();
+            }
+            productImage.classList.remove('is-dragging');
+        };
+        galleryFrame.addEventListener('pointerup', stopDraggingImage);
+        galleryFrame.addEventListener('pointercancel', stopDraggingImage);
+
+        document.querySelectorAll('.thumbnail').forEach((thumbnail) => {
+            thumbnail.addEventListener('click', () => {
+                productImage.src = thumbnail.dataset.image;
+                imageZoom = 1;
+                imageOffsetX = 0;
+                imageOffsetY = 0;
+                updateImageZoom();
                 document.querySelectorAll('.thumbnail').forEach((item) => item.classList.remove('active'));
-                this.classList.add('active');
-                return false;
+                thumbnail.classList.add('active');
             });
         });
 
@@ -195,7 +282,7 @@
         function addToCart(productId) {
             const selectedQuantity = Number(quantity.value);
             console.log(`Adding ${selectedQuantity} of product ${productId} to cart.`);
-            // Ready for Task D!
+
         }
     </script>
 </body>
