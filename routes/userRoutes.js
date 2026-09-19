@@ -3,10 +3,12 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const router = express.Router();
+const User = require('../models/user');
 const userController = require('../controllers/userController');
 const addressController = require('../controllers/addressController');
 const passport = require('passport');
 const userShopController = require('../controllers/userShopController');
+const cartController = require ('../controllers/cartController')
 require('../configuration/passport');
 
 
@@ -34,6 +36,33 @@ const upload = multer({
     }
 });
 
+const requireUserSession = async (req, res, next) => {
+    if (!req.session || !req.session.userId) {
+        req.session.message = 'Your session has expired. Please log in again.';
+        req.session.messageType = 'error';
+        return res.redirect('/login');
+    }
+
+    try {
+        const user = await User.findById(req.session.userId).select('_id isBlocked');
+
+        if (!user || user.isBlocked) {
+            delete req.session.userId;
+            req.session.message = user ? 'Your account has been blocked.' : 'Your session has expired. Please log in again.';
+            req.session.messageType = 'error';
+            return res.redirect('/login');
+        }
+
+        req.user = user;
+        next();
+    } catch (error) {
+        console.error('User session validation error:', error.message);
+        req.session.message = 'Session validation failed. Please log in again.';
+        req.session.messageType = 'error';
+        return res.redirect('/login');
+    }
+};
+
 router.get('/', userShopController.loadLandingPage);
 
 // Authentication Routes
@@ -47,10 +76,10 @@ router.get('/verify-otp', userController.loadOtpPage);
 router.post('/verify-otp', userController.verifyOtp);
 router.post('/resend-otp', userController.resendOtp);
 router.get('/logout', userController.logout);
-router.get('/userProfile', userController.loadProfile);
-router.post('/userProfile', upload.single('profile_image'), userController.updateProfile);
-router.get('/verify-profile-otp', userController.loadProfileOtpModal);
-router.post('/verify-profile-otp', userController.verifyProfileOtp);
+router.get('/userProfile', requireUserSession, userController.loadProfile);
+router.post('/userProfile', requireUserSession, upload.single('profile_image'), userController.updateProfile);
+router.get('/verify-profile-otp', requireUserSession, userController.loadProfileOtpModal);
+router.post('/verify-profile-otp', requireUserSession, userController.verifyProfileOtp);
 
 router.get('/auth/google', 
     passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -70,18 +99,25 @@ router.post('/forgot-password', userController.processForgotPassword);
 router.get('/reset-password', userController.loadResetPassword);
 router.post('/reset-password', userController.updatePassword);
 router.post('/resend-reset-otp', userController.resendResetOtp);
-router.get('/profile-reset-password', userController.loadProfileResetPassword);
-router.post('/profile-reset-password', userController.updateProfilePassword);
+router.get('/profile-reset-password', requireUserSession, userController.loadProfileResetPassword);
+router.post('/profile-reset-password', requireUserSession, userController.updateProfilePassword);
 
-router.get('/addresses', userController.loadAddressPage);
-router.post('/add-address', addressController.addAddress);
-router.post('/edit-address/:id', addressController.editAddress);
-router.delete('/delete-address/:id', addressController.deleteAddress);
+router.get('/addresses', requireUserSession, userController.loadAddressPage);
+router.post('/add-address', requireUserSession, addressController.addAddress);
+router.post('/edit-address/:id', requireUserSession, addressController.editAddress);
+router.delete('/delete-address/:id', requireUserSession, addressController.deleteAddress);
 
 router.post('/google-login', userController.googleLogin);
 
 // Shop page routes
 router.get('/shop',userShopController.loadShopPage);
 router.get('/products/:id',userShopController.productDetailsPage)
+
+// Cart page routes
+router.get('/cart',cartController.loadCartPage);
+router.post('/cart/add',cartController.addToCart);
+router.post('/cart/update',cartController.updateQuantity);
+router.post('/cart/remove',cartController.removeFromCart);
+router.post('/cart/moveToWishlist',cartController.moveToWishlist);
 
 module.exports = router;

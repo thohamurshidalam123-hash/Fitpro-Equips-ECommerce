@@ -34,7 +34,11 @@
 				<section class="shop-results" aria-label="Products">
 					<% if (!products.length) { %><p>No available products match your filters.</p><% } %>
 					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; %>
-						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><span class="stock-pill"><%= product.availableStock %> in stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
+						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
+								<button type="button" data-quantity-action="decrease" aria-label="Decrease quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>−</button>
+								<span class="product-qty-value">1</span>
+								<button type="button" data-quantity-action="increase" data-max-quantity="<%= product.availableStock %>" aria-label="Increase quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>＋</button>
+							</div><span class="stock-pill"><%= product.availableStock %> in stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
 					<% }) %></div>
 					<% if (totalPages > 1) { %><nav class="pagination" aria-label="Shop pages"><% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a href="/shop?page=<%= pageNumber %>&search=<%= encodeURIComponent(activeFilters.search) %>&sort=<%= activeFilters.sort %>&minPrice=<%= activeFilters.minPrice %>&maxPrice=<%= activeFilters.maxPrice %><%= activeFilters.category.map(category => '&category=' + encodeURIComponent(category)).join('') %>" class="<%= pageNumber === page ? 'current' : '' %>"><%= pageNumber %></a><% } %></nav><% } %>
 				</section>
@@ -42,6 +46,22 @@
 		</main>
 		<%- include('../partials/user-footer') %>
 	</div>
+	<script>
+		document.addEventListener('click', (event) => {
+			const button = event.target.closest('[data-quantity-action]');
+			if (!button) return;
+
+			const control = button.closest('.product-qty-control');
+			const valueElement = control.querySelector('.product-qty-value');
+			const currentQuantity = Number(valueElement.textContent);
+			const maximumQuantity = Number(control.querySelector('[data-max-quantity]').dataset.maxQuantity);
+			if (maximumQuantity < 1) return;
+			const change = button.dataset.quantityAction === 'increase' ? 1 : -1;
+			const nextQuantity = Math.min(maximumQuantity, Math.max(1, currentQuantity + change));
+
+			valueElement.textContent = nextQuantity;
+		});
+	</script>
 	<% if (typeof message !== 'undefined' && message) { %>
 		<div id="shopNotification" data-message="<%= message %>" data-type="<%= messageType || 'error' %>"></div>
 		<script>

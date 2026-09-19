@@ -9,7 +9,10 @@
     <div class="header-actions" aria-label="Quick actions">
         <span class="icon search-icon" aria-hidden="true"></span>
         <span class="icon heart-icon" aria-hidden="true"></span>
-        <span class="cart-wrap"><span class="icon cart-icon" aria-hidden="true"></span><span class="cart-count" data-cart-count>0</span></span>
+        <a class="cart-wrap" href="/cart" aria-label="Open cart" title="Cart">
+            <span class="icon cart-icon" aria-hidden="true"></span>
+            <span class="cart-count" data-cart-count>0</span>
+        </a>
         <a class="icon user-icon <%= currentPage === 'login' ? 'active' : '' %>" href="/userProfile" aria-label="Open profile page" title="Profile"></a>
     </div>
 </header>
