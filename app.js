@@ -12,9 +12,9 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-//Body Parsing Middleware (to read form data and JSON)
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Parse text requests here, but leave multipart requests untouched for multer.
+app.use((req, res, next) => req.is('multipart/form-data') ? next() : express.json()(req, res, next));
+app.use((req, res, next) => req.is('multipart/form-data') ? next() : express.urlencoded({ extended: true })(req, res, next));
 
 //Static Files (CSS, JS, frontend images, and user uploads)
 app.use(express.static(path.join(__dirname, 'public')));
@@ -65,7 +65,7 @@ app.use(async (req, res, next) => {
                     message: 'Account is blocked'
                 });
             }
-            return res.redirect('/login');
+            return res.redirect('/login?authMessage=1');
         }
 
         next();

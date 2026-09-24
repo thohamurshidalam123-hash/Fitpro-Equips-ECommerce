@@ -25,7 +25,7 @@
 						<h2>Login</h2>
 						<p class="intro">Welcome back! Please enter your account<br>details.</p>
 						<% if (typeof message !== 'undefined' && message) { %>
-							<p class="<%= (typeof messageType !== 'undefined' && messageType === 'success') ? 'success-message' : 'error-message' %>"><%= message %></p>
+							<div data-session-message="<%= message %>" data-type="<%= typeof messageType !== 'undefined' ? messageType : 'error' %>"></div>
 						<% } %>
 						<form action="/login" method="POST">
 							<div class="form-field">
@@ -108,21 +108,5 @@
             }
         }
     </script>
-	<script>
-		window.addEventListener('pageshow', async () => {
-			try {
-				const response = await fetch('/userProfile', {
-					cache: 'no-store',
-					credentials: 'same-origin'
-				});
-
-				if (response.ok && new URL(response.url).pathname === '/userProfile') {
-					window.location.replace('/userProfile');
-				}
-			} catch (error) {
-				console.error('User session check failed:', error);
-			}
-		});
-	</script>
 </body>
 </html>

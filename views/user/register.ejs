@@ -46,7 +46,7 @@
 						<h2>Register</h2>
 						<p class="intro">Join the Apex community and elevate your potential.</p>
 						<div class="form-rule"></div>
-						<% if (typeof message !== 'undefined' && message) { %><p class="error-message"><%= message %></p><% } %>
+						<% if (typeof message !== 'undefined' && message) { %><div data-session-message="<%= message %>" data-type="<%= typeof messageType !== 'undefined' ? messageType : 'error' %>"></div><% } %>
 						<div class="field"><label for="name">Full Name</label><input id="name" name="name" type="text" placeholder="Full Name" required><p class="field-error" data-error-for="name"></p></div>
 						<div class="field"><label for="email">Email Address</label><input id="email" name="email" type="email" placeholder="Email Address" required><p class="field-error" data-error-for="email"></p></div>
 						<div class="field"><label for="phone">Phone Number</label><div class="phone-input-wrap"><span class="country-code">+91</span><input id="phone" name="phone" type="tel" placeholder="98765 43210" inputmode="tel" pattern="^[6-9]\d{9}$" required></div><p class="field-error" data-error-for="phone"></p></div>
@@ -61,27 +61,6 @@
 									</div>
 								</section>
 							</main>
-							<div id="registerErrorModal" class="error-modal" style="display:none;">
-								<div class="error-modal-content">
-									<div class="error-modal-header">
-										<h3>Registration Error</h3>
-										<button class="error-modal-close" type="button" aria-label="Close">&times;</button>
-									</div>
-									<div class="error-modal-body">
-										<ul id="errorList"></ul>
-									</div>
-								</div>
-							</div>
-							<style>
-								.error-modal { position: fixed; top: 0; left: 0; z-index: 1000; width: 100%; height: 100%; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; }
-								.error-modal-content { background: #fff; border-radius: 7px; box-shadow: 0 10px 40px rgba(0,0,0,.2); max-width: 400px; width: 90%; }
-								.error-modal-header { padding: 20px; border-bottom: 1px solid #e8edf5; display: flex; justify-content: space-between; align-items: center; }
-								.error-modal-header h3 { margin: 0; font-size: 14px; color: #d73535; }
-								.error-modal-close { background: none; border: none; font-size: 24px; color: #596579; cursor: pointer; }
-								.error-modal-body { padding: 20px; }
-								.error-modal-body ul { margin: 0; padding-left: 20px; }
-								.error-modal-body li { color: #d73535; font-size: 10px; margin-bottom: 8px; line-height: 1.4; }
-							</style>
 					<div class="trust-row"><div class="trust-item"><span class="trust-icon">&#9825;</span><span>Secure Registration</span></div><div class="trust-item"><span class="trust-icon">&#9671;</span><span>Protected Data</span></div><div class="trust-item"><span class="trust-icon">&#10003;</span><span>Safe Shopping</span></div></div>
 			</section>
 		</main>
@@ -162,37 +141,11 @@
 			if (!document.querySelector('input[name="consent"]').checked) errors.consent = 'You must agree to the Privacy Policy and Terms of Service';
 			return errors;
 		}
-
-
-		function showRegistrationErrors(errors) {
-			var errorModal = document.getElementById('registerErrorModal');
-			var errorList = document.getElementById('errorList');
-			errorList.innerHTML = '';
-			for (var key in errors) {
-				if (errors.hasOwnProperty(key)) {
-					var li = document.createElement('li');
-					li.textContent = errors[key];
-					errorList.appendChild(li);
-				}
-			}
-			errorModal.style.display = 'flex';
-		}
-
-		function closeRegisterErrorModal() {
-			document.getElementById('registerErrorModal').style.display = 'none';
-		}
-
-		document.querySelector('#registerErrorModal .error-modal-close').addEventListener('click', closeRegisterErrorModal);
-		document.getElementById('registerErrorModal').addEventListener('click', function(event) {
-			if (event.target === this) closeRegisterErrorModal();
-		});
-
 		registerForm.addEventListener('submit', function (event) {
 			event.preventDefault();
 			var validationErrors = validateRegistration();
 			if (Object.keys(validationErrors).length > 0) {
 				applyFieldErrors(validationErrors);
-				showRegistrationErrors(validationErrors);
 				return;
 			}
 
@@ -227,14 +180,10 @@
 							document.getElementById('name').focus();
 						}
 					}
-
-					// Show error modal with all errors
-					showRegistrationErrors(result.errors);
 				}
 			})
 			.catch(function(error) {
 				console.error('Error:', error);
-				showRegistrationErrors({ form: 'An unexpected error occurred. Please try again.' });
 			});
 		});
 

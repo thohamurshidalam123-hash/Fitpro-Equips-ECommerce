@@ -1,0 +1,35 @@
+/* Shared visual scale for authenticated admin pages. */
+body:has(.admin-dashboard) { background: #f7f8ff; color: #172033; }
+.admin-dashboard { grid-template-columns: 198px 1fr; }
+.admin-dashboard .sidebar { width: 198px; box-shadow: none; border-right-color: #dfe4ee; }
+.admin-dashboard .sidebar-header { padding: 25px 26px 20px; }
+.admin-dashboard .logo-icon { display: none; }
+.admin-dashboard .logo-text h1 { font-size: 18px; }
+.admin-dashboard .logo-text p { font-size: 8px; letter-spacing: .8px; }
+.admin-dashboard .sidebar-nav { padding: 20px 0; }
+.admin-dashboard .nav-item { gap: 10px; padding: 10px 25px; font-size: 12px; }
+.admin-dashboard .nav-icon { width: 15px; font-size: 14px; }
+.admin-dashboard .sidebar-footer { padding: 18px 25px; gap: 14px; }
+.admin-dashboard .admin-profile { padding: 8px; }
+.admin-dashboard .admin-avatar { width: 30px; height: 30px; font-size: 13px; }
+.admin-dashboard .admin-name { font-size: 10px; }
+.admin-dashboard .admin-email { font-size: 8px; }
+.admin-dashboard .logout-btn { justify-content: flex-start; padding: 4px 8px; background: transparent; font-size: 11px; }
+.admin-dashboard > .main-content { grid-column: 2; padding: 0 47px 45px; }
+.admin-dashboard .admin-page-topbar { height: 53px; margin: 0 -47px 23px; padding: 0 18px; }
+.admin-dashboard .admin-page-search { width: 332px; height: 31px; }
+.admin-dashboard .brand-topbar { height: 53px; margin: 0 -47px 23px; padding: 0 18px; }
+.admin-dashboard .brand-content { padding: 0 47px 45px; }
+.admin-dashboard .brand-detail-content { padding: 0 47px 35px; }
+.admin-dashboard .product-page .main-content { padding: 0 47px 45px; }
+.admin-dashboard .product-page-topbar { margin: 0 -47px 23px; padding: 0 18px; }
+
+@media (max-width: 800px) {
+	.admin-dashboard { grid-template-columns: 1fr; }
+	.admin-dashboard .sidebar { position: static; width: 100%; height: auto; }
+	.admin-dashboard .sidebar-nav { display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px 0; }
+	.admin-dashboard .sidebar-footer { display: none; }
+	.admin-dashboard > .main-content { grid-column: 1; padding: 0 16px 30px; }
+	.admin-dashboard .admin-page-topbar, .admin-dashboard .brand-topbar { margin: 0 -16px 20px; padding: 0 16px; }
+	.admin-dashboard .admin-page-search, .admin-dashboard .brand-global-search { width: min(100%, 332px); }
+}

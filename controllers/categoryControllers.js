@@ -1,4 +1,5 @@
 const Category = require('../models/categoryModel');
+const Brand = require('../models/brandModel');
 const { validateCategory, validateCategoryImage } = require('../validators/categoryValidators');
 
 // For loading categories, searching, pagination and sorting
@@ -20,6 +21,13 @@ const loadCategories = async (req, res) => {
             .skip((page - 1) * limit)
             .limit(limit)
             .lean();
+
+        const brandCounts = await Brand.aggregate([
+            { $match: { categoryId: { $in: categories.map(category => category._id) } } },
+            { $group: { _id: '$categoryId', count: { $sum: 1 } } }
+        ]);
+        const brandCountMap = new Map(brandCounts.map(item => [String(item._id), item.count]));
+        categories.forEach(category => { category.brandCount = brandCountMap.get(String(category._id)) || 0; });
 
         const totalCategories = await Category.countDocuments(query);
         const allCategories = await Category.countDocuments();

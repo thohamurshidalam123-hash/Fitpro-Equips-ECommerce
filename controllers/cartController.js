@@ -10,13 +10,19 @@ const loadCartPage = async (req, res) => {
         // For fetching cart from db
         const cart = await Cart.findOne({ userId }).populate({
             path: 'items.productId',
-            populate: { path: 'categoryId', select: 'name' }
+            populate: [
+                { path: 'categoryId', select: 'name' },
+                { path: 'brandId', select: 'name' }
+            ]
         }).lean();
 
         // Setting up variables for math calculations and checkout validation
         let subtotal = 0;
         let canCheckout = true;
         const cartItems = cart ? cart.items : [];
+        const itemsPerPage = 12;
+        const totalPages = Math.max(Math.ceil(cartItems.length / itemsPerPage), 1);
+        const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), totalPages);
 
         // For validating stock and status for every item in the cart
         cartItems.forEach((item) => {
@@ -30,14 +36,20 @@ const loadCartPage = async (req, res) => {
                 return;
             }
 
-            // Checking the product is still active
-            item.isAvailable = product.availableStock >= item.quantity;
+            const variant = item.variantId ? product.variants.find(productVariant => String(productVariant._id) === String(item.variantId)) : null;
+            item.variant = variant;
+            const availableStock = item.variantId && !variant ? 0 : (variant ? variant.stock : product.availableStock);
+            item.price = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+            item.totalPrice = item.quantity * item.price;
+
+            // Checking the product and selected variant are still available
+            item.isAvailable = product.status === 'Active' && (!variant || variant.status !== 'Out of Stock') && availableStock >= item.quantity;
 
             // Checking the requested cart quantity is available in stock
-            item.hasStock = product.availableStock >= item.quantity;
+            item.hasStock = availableStock >= item.quantity;
 
             // For identifying if the product is completely out of stock
-            item.outOfStock = product.availableStock === 0;
+            item.outOfStock = availableStock === 0;
 
             // For blocking checkout while the item is unavailable or not having enough stock
             if (!item.isAvailable || !item.hasStock) {
@@ -50,16 +62,20 @@ const loadCartPage = async (req, res) => {
         const tax = Math.round(subtotal * 0.18);
         const shipping = subtotal > 0 && subtotal < 1500 ? 500 : 0;
         const total = subtotal + tax + shipping;
+        const cartPageItems = cartItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
         // For rendering cart
         return res.render('user/cart', {
             cartItems,
+            cartPageItems,
             subtotal,
             tax,
             shipping,
             total,
             canCheckout,
             itemCount: cartItems.length,
+            page,
+            totalPages,
             currentPage: 'cart'
         });
     } catch (error) {
@@ -75,7 +91,7 @@ const addToCart = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Please login to add items to cart' });
         }
 
-        const { productId, quantity } = req.body;
+        const { productId, variantId, quantity } = req.body;
         const requestQuantity = Number(quantity) || 1;
         const MAX_LIMIT_PER_USER = 5;
 
@@ -86,8 +102,17 @@ const addToCart = async (req, res) => {
             return res.status(400).json({ success: false, message: 'This product is currently unavailable.' });
         }
 
+        const variant = variantId ? product.variants.id(variantId) : null;
+        if (product.variants.length && !variant) {
+            return res.status(400).json({ success: false, message: 'Please select a valid product variant.' });
+        }
+        if (variant && (variant.status === 'Out of Stock' || variant.stock <= 0)) {
+            return res.status(400).json({ success: false, message: 'This product variant is out of stock.' });
+        }
+
         // For determaining which price to be used
-        const activePrice = product.salePrice > 0 ? product.salePrice : product.regularPrice;
+        const activePrice = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+        const availableStock = variant ? variant.stock : product.availableStock;
 
         // For getting or creating user cart
         let cart = await Cart.findOne({ userId });
@@ -97,7 +122,7 @@ const addToCart = async (req, res) => {
         }
 
         //For checking if product is already in the cart
-        const existingItemIndex = cart.items.findIndex(item => item.productId.toString() === productId);
+        const existingItemIndex = cart.items.findIndex(item => item.productId.toString() === productId && String(item.variantId || '') === String(variantId || ''));
 
         if (existingItemIndex > -1) {
             // If product is already exists then increasing the quantity
@@ -109,8 +134,8 @@ const addToCart = async (req, res) => {
             }
 
             // Validating against total stock of product
-            if (newQuantity > product.availableStock) {
-                return res.status(400).json({ success: false, message: `Only ${product.availableStock} units left in stock` });
+            if (newQuantity > availableStock) {
+                return res.status(400).json({ success: false, message: `Only ${availableStock} units left in stock` });
             }
 
             // For updating existing item's quantity and total price
@@ -121,13 +146,14 @@ const addToCart = async (req, res) => {
             if (requestQuantity > MAX_LIMIT_PER_USER) {
                 return res.status(400).json({ success: false, message: `You can only add a maximum of ${MAX_LIMIT_PER_USER} units of this item.` });
             }
-            if (requestQuantity > product.availableStock) {
-                return res.status(400).json({ success: false, message: `Only ${product.availableStock} units of product is available` });
+            if (requestQuantity > availableStock) {
+                return res.status(400).json({ success: false, message: `Only ${availableStock} units of product is available` });
             }
 
             // For pushing new item into items array(cart)
             cart.items.push({
                 productId,
+                variantId: variant ? variant._id : undefined,
                 quantity: requestQuantity,
                 price: activePrice,
                 totalPrice: requestQuantity * activePrice
@@ -174,6 +200,11 @@ const updateQuantity = async (req, res) => {
 
         // For getting the latest product details from DB to check stock
         const product = await Product.findById(item.productId);
+        if (!product || product.status !== 'Active') {
+            return res.status(400).json({ success: false, message: 'This product is currently unavailable.' });
+        }
+        const variant = item.variantId ? product.variants.find(productVariant => String(productVariant._id) === String(item.variantId)) : null;
+        const availableStock = variant ? variant.stock : product.availableStock;
 
         // For increasing quantity
         if (action === 'increase') {
@@ -183,8 +214,8 @@ const updateQuantity = async (req, res) => {
             }
 
             // Validating stock of product
-            if (item.quantity >= product.availableStock) {
-                return res.status(400).json({ success: false, message: `Only ${product.availableStock} units left in stock.` });
+            if (item.quantity >= availableStock) {
+                return res.status(400).json({ success: false, message: `Only ${availableStock} units left in stock.` });
             }
 
             item.quantity += 1;

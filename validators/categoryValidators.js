@@ -20,8 +20,8 @@ const validateCategory = (data, { requireImage = false } = {}) => {
 
 const validateCategoryImage = (file) => {
     if (!file) return null;
-    if (!['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'].includes(file.mimetype)) {
-        return 'Image must be a PNG, JPG, GIF, or SVG file';
+    if (!['image/png', 'image/jpeg'].includes(file.mimetype)) {
+        return 'File not supported';
     }
     if (file.size > 5 * 1024 * 1024) return 'Image cannot exceed 5 MB';
     return null;

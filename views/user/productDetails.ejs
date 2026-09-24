@@ -56,6 +56,7 @@
 
                         <!-- Dynamic Title -->
                         <h1 id="productTitle"><%= product.productName %></h1>
+                        <p class="product-brand">Brand: <strong><%= product.brandId ? product.brandId.name : 'Fitpro Equipment' %></strong></p>
 
                         <!-- Dynamic Price & Discounts -->
                         <div class="product-price-row">
@@ -80,10 +81,10 @@
 
                         <% if (product.variants && product.variants.length > 0) { %>
                             <fieldset class="weight-options">
-                                <legend>Weight Capacity</legend>
+                                <legend>Choose a variant</legend>
                                 <div>
                                     <% product.variants.forEach((variant, index) => { %>
-                                        <button class="weight-option <%= index === 0 ? 'selected' : '' %>" type="button"><%= variant.name %></button>
+                                        <button class="weight-option <%= index === 0 ? 'selected' : '' %>" type="button" data-variant-id="<%= variant._id %>" <%= variant.stock < 1 ? 'disabled' : '' %>><%= variant.name || `${variant.weight} ${variant.weightUnit || 'kg'}` %><small><%= variant.color || '' %></small></button>
                                     <% }) %>
                                 </div>
                             </fieldset>
@@ -97,7 +98,7 @@
                                     <output id="quantity">1</output>
                                     <button type="button" data-quantity-increase aria-label="Increase quantity">＋</button>
                                 </div>
-                                <button class="add-to-cart" type="button" onclick="addToCart('<%= product._id %>')">▣ &nbsp; Add to Cart</button>
+                                <button class="add-to-cart" type="button" data-product-id="<%= product._id %>" onclick="addToCart('<%= product._id %>')">▣ &nbsp; Add to Cart</button>
                             <% } else { %>
                                 <button class="add-to-cart" type="button" disabled style="background-color: #ccc; cursor: not-allowed; width: 100%;">▣ &nbsp; Out of Stock</button>
                             <% } %>
@@ -130,12 +131,12 @@
                                     <button class="related-wishlist" type="button" aria-label="Add <%= rel.productName %> to wishlist">♡</button>
                                     <a class="related-product-link" href="/products/<%= rel._id %>">
                                         <div class="related-product-image"><% if (rel.images && rel.images[0]) { %><img src="<%= rel.images[0] %>" alt="<%= rel.productName %>"><% } else { %><span>FITPRO</span><% } %></div>
-                                        <small><%= rel.categoryId && rel.categoryId.name ? rel.categoryId.name : product.categoryId.name %></small>
+                                        <small><%= rel.brandId && rel.brandId.name ? rel.brandId.name : (rel.categoryId && rel.categoryId.name ? rel.categoryId.name : 'Equipment') %></small>
                                         <h3><%= rel.productName %></h3>
                                     </a>
                                     <strong class="related-product-price">₹<%= Number(rel.salePrice > 0 ? rel.salePrice : rel.regularPrice).toFixed(2) %></strong>
                                     <span class="related-stock-pill"><%= rel.availableStock %> in stock</span>
-                                    <button class="related-cart-button" type="button">▣ Add to Cart</button>
+                                    <button class="related-cart-button" type="button" data-product-id="<%= rel._id %>" <%= rel.availableStock < 1 ? 'disabled' : '' %>>▣ Add to Cart</button>
                                 </article>
                             <% }) %>
                         </div>
@@ -249,40 +250,117 @@
             });
         });
 
-        // Toggle variant selection visually
+        const variants = <%- JSON.stringify(product.variants || []).replace(/</g, '\\u003c') %>;
+        let selectedVariant = variants.find(variant => Number(variant.stock) > 0) || variants[0] || null;
+        const priceRow = document.querySelector('.product-price-row strong');
+        const stockLabel = document.querySelector('.stock-label');
+        const variantImages = document.getElementById('product-gallery');
+        const productImages = <%- JSON.stringify(product.images || []).replace(/</g, '\\u003c') %>;
+
+        const renderGallery = (images) => {
+            const galleryImages = images.length ? images : productImages;
+            productImage.src = galleryImages[0] || '';
+            variantImages.innerHTML = galleryImages.map((image, index) => `<button type="button" class="thumbnail ${index === 0 ? 'active' : ''}" data-image="${image}" aria-label="View image ${index + 1}"><img src="${image}" alt=""></button>`).join('');
+            variantImages.querySelectorAll('.thumbnail').forEach(thumbnail => thumbnail.addEventListener('click', () => {
+                productImage.src = thumbnail.dataset.image;
+                imageZoom = 1;
+                imageOffsetX = 0;
+                imageOffsetY = 0;
+                updateImageZoom();
+                variantImages.querySelectorAll('.thumbnail').forEach(item => item.classList.remove('active'));
+                thumbnail.classList.add('active');
+            }));
+        };
+
+        const updateSelectedVariant = (variant) => {
+            selectedVariant = variant;
+            if (!variant) return;
+            priceRow.textContent = `₹${Number(variant.price || 0).toFixed(2)}`;
+            const inStock = Number(variant.stock) > 0;
+            stockLabel.innerHTML = `<i></i> ${inStock ? `In Stock (${variant.stock} available)` : 'Out of Stock'}`;
+            stockLabel.style.color = inStock ? '#28a745' : '#dc3545';
+            document.querySelector('.add-to-cart')?.toggleAttribute('disabled', !inStock);
+            const maxVariantQuantity = Math.min(Number(variant.stock) || 0, maxLimitPerUser);
+            quantity.textContent = String(Math.max(1, Math.min(Number(quantity.textContent) || 1, maxVariantQuantity || 1)));
+            renderGallery(variant.images || []);
+        };
+
         document.querySelectorAll('.weight-option').forEach((option) => {
             option.addEventListener('click', () => {
-                document.querySelectorAll('.weight-option').forEach((item) => item.classList.remove('selected'));
+                const variant = variants.find(item => String(item._id) === option.dataset.variantId);
+                document.querySelectorAll('.weight-option').forEach(item => item.classList.remove('selected'));
                 option.classList.add('selected');
+                updateSelectedVariant(variant);
             });
         });
 
         // TASK D.v & D.vi: Increment/Decrement Quantity with Strict Stock & Max Limit Validations
         const quantity = document.getElementById('quantity');
-        const availableStock = <%= product.availableStock %>;
+        const availableStock = Number('<%= product.availableStock %>');
         const maxLimitPerUser = 5; // Strict business rule limit
 
         // Calculate the maximum allowed quantity based on stock and arbitrary limit
         const maxAllowed = Math.min(availableStock, maxLimitPerUser);
 
         document.querySelector('[data-quantity-decrease]')?.addEventListener('click', () => {
-            quantity.value = Math.max(Number(quantity.value) - 1, 1);
+            quantity.textContent = String(Math.max(Number(quantity.textContent) - 1, 1));
         });
 
         document.querySelector('[data-quantity-increase]')?.addEventListener('click', () => {
-            if (Number(quantity.value) < maxAllowed) {
-                quantity.value = Number(quantity.value) + 1;
-            } else {
-                alert(`You can only add a maximum of ${maxAllowed} units for this item.`);
+            const currentStock = selectedVariant ? Number(selectedVariant.stock) : availableStock;
+            const currentMax = Math.min(currentStock, maxLimitPerUser);
+            if (Number(quantity.textContent) < currentMax) {
+                quantity.textContent = String(Number(quantity.textContent) + 1);
+            } else if (typeof window.showAppModal === 'function') {
+                window.showAppModal(`You can only add a maximum of ${currentMax} units for this item.`, 'error');
             }
         });
 
-        // Cart Submission Placeholder
-        function addToCart(productId) {
-            const selectedQuantity = Number(quantity.value);
-            console.log(`Adding ${selectedQuantity} of product ${productId} to cart.`);
+        async function addToCart(productId, variantId = (selectedVariant ? selectedVariant._id : undefined)) {
+            const selectedQuantity = Number(quantity.textContent) || 1;
+            const button = document.querySelector(`.add-to-cart[data-product-id="${productId}"]`);
+            if (button) button.disabled = true;
 
+            try {
+                const response = await fetch('/cart/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ productId, variantId, quantity: selectedQuantity })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    if (window.showAppModal) {
+                        window.showAppModal(result.message || 'Unable to add product to cart.', 'error');
+                    }
+                    return;
+                }
+
+                if (window.showAppModal) {
+                    window.showAppModal(result.message || 'Product added to cart successfully!', 'success');
+                }
+            } catch (error) {
+                if (window.showAppModal) {
+                    window.showAppModal('Unable to add product to cart right now.', 'error');
+                }
+            } finally {
+                if (button) button.disabled = false;
+            }
         }
+
+        if (selectedVariant) {
+            document.querySelectorAll('.weight-option').forEach(option => option.classList.toggle('selected', option.dataset.variantId === String(selectedVariant._id)));
+            updateSelectedVariant(selectedVariant);
+        }
+
+        document.querySelectorAll('.related-cart-button').forEach((button) => {
+            button.addEventListener('click', async () => {
+                const productId = button.dataset.productId;
+                if (!productId || button.disabled) return;
+                await addToCart(productId, null);
+            });
+        });
     </script>
 </body>
 </html>

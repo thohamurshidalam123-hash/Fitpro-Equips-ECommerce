@@ -6,6 +6,7 @@ const router = express.Router();
 const adminController = require('../controllers/adminController');
 const categoryController = require('../controllers/categoryControllers')
 const productController = require('../controllers/productController');
+const brandController = require('../controllers/brandController');
 
 const productUploadDir = path.join(__dirname, '..', 'uploads', 'products');
 fs.mkdirSync(productUploadDir, { recursive: true });
@@ -14,7 +15,14 @@ const productUpload = multer({
 	storage: multer.diskStorage({
 		destination: productUploadDir,
 		filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`)
-	})
+	}),
+	fileFilter: (req, file, cb) => cb(['image/png', 'image/jpeg'].includes(file.mimetype) ? null : new Error('UNSUPPORTED_FILE_TYPE'), true)
+});
+const parseProductUpload = (req, res, next) => productUpload.array('images', 8)(req, res, error => {
+	if (error) {
+		return res.status(400).json({ success: false, message: 'Please correct the errors below', errors: { images: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : 'File not supported' } });
+	}
+	next();
 });
 
 const categoryUploadDir = path.join(__dirname, '..', 'uploads', 'categories');
@@ -25,15 +33,29 @@ const categoryUpload = multer({
 		destination: (req, file, cb) => cb(null, categoryUploadDir),
 		filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(file.originalname)}`)
 	}),
-	fileFilter: (req, file, cb) => cb(null, true)
+	fileFilter: (req, file, cb) => cb(['image/png', 'image/jpeg'].includes(file.mimetype) ? null : new Error('UNSUPPORTED_FILE_TYPE'), true)
 });
 const parseCategoryUpload = (req, res, next) => categoryUpload.single('image')(req, res, error => {
 	if (error) {
 		return res.status(400).json({
 			success: false,
 			message: 'Please correct the errors below',
-			errors: { image: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : 'Unable to process the category image' }
+			errors: { image: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : 'File not supported' }
 		});
+	}
+	next();
+});
+
+const brandUploadDir = path.join(__dirname, '..', 'uploads', 'brands');
+fs.mkdirSync(brandUploadDir, { recursive: true });
+const parseBrandUpload = (req, res, next) => multer({ dest: brandUploadDir, limits: { fileSize: 5 * 1024 * 1024 } }).single('logo')(req, res, error => {
+	if (error) return res.status(400).json({ success: false, errors: { logo: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : 'File not supported' } });
+	if (req.file) {
+		const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${req.file.mimetype === 'image/png' ? '.png' : '.jpg'}`;
+		const target = path.join(brandUploadDir, filename);
+		fs.renameSync(req.file.path, target);
+		req.file.filename = filename;
+		req.file.path = target;
 	}
 	next();
 });
@@ -59,10 +81,20 @@ router.post('/category/add', parseCategoryUpload, categoryController.addCategory
 router.post('/category/edit', parseCategoryUpload, categoryController.editCategory);
 router.patch('/category/status/:id',categoryController.toggleCategoryStatus);
 
+// Brand management routes
+router.get('/brands/:id', brandController.loadBrandDetails);
+router.get('/brands', brandController.loadBrands);
+router.post('/brands/add', parseBrandUpload, brandController.addBrand);
+router.post('/brands/edit', parseBrandUpload, brandController.editBrand);
+router.patch('/brands/status/:id', brandController.toggleBrandStatus);
+
 // Product management routes
 router.get('/products', productController.loadProducts);
-router.post('/products/add',productUpload.array('images', 8), productController.addProduct);
-router.post('/products/edit/:id',productController.editProduct);
-
+router.post('/products/add', parseProductUpload, productController.addProduct);
+router.post('/products/edit/:id', parseProductUpload, productController.editProduct);
+router.get('/products/:id', productController.loadProductDetails);
+router.post('/products/:productId/variants/add', parseProductUpload, productController.addVariant);
+router.put('/products/:productId/variants/edit/:variantId', parseProductUpload, productController.editVariant);
+router.delete('/products/:productId/variants/delete/:variantId',productController.deleteVariant);
 
 module.exports = router;

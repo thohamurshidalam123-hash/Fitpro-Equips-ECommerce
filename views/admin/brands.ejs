@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brands | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/brands.css">
+	<link rel="stylesheet" href="/css/admin-scale.css">
+</head>
+<body>
+    <div class="admin-dashboard brands-page">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'brands' }) %>
+        <main class="main-content brand-content">
+            <section class="brand-heading">
+                <div><h1>Brand Management</h1><p>Manage fitness equipment brands, logos, and ecosystem visibility</p></div>
+                <button type="button" class="brand-primary-button" id="openAddBrand">＋&nbsp; Add Brand</button>
+            </section>
+            <section class="brand-stats" aria-label="Brand summary">
+                <div class="brand-stat"><span class="brand-stat-icon blue">▣</span><small>Total Brands</small><strong><%= totalBrands || 0 %></strong></div>
+                <div class="brand-stat"><span class="brand-stat-icon green">✓</span><small>Active</small><strong><%= activeBrands || 0 %></strong></div>
+                <div class="brand-stat"><span class="brand-stat-icon red">⊗</span><small>Inactive</small><strong><%= inactiveBrands || 0 %></strong></div>
+                <div class="brand-stat"><span class="brand-stat-icon orange">☆</span><small>Low Stock</small><strong><%= lowStockBrands || 0 %></strong></div>
+            </section>
+            <section class="brand-directory">
+                <div class="brand-filter-bar">
+                    <form class="brand-search" method="GET" action="/admin/brands">
+                        <span aria-hidden="true">⌕</span><input type="search" name="search" value="<%= searchQuery || '' %>" placeholder="Search brand name..." aria-label="Search brand name"><button type="submit" class="brand-search-button">Search</button><% if (searchQuery) { %><a class="brand-clear-button" href="/admin/brands?status=<%= encodeURIComponent(statusFilter || '') %>&category=<%= encodeURIComponent(categoryFilter || '') %>">Clear</a><% } %>
+                        <input type="hidden" name="status" value="<%= statusFilter || '' %>"><input type="hidden" name="category" value="<%= categoryFilter || '' %>">
+                    </form>
+                    <select id="brandStatusSelect" class="brand-filter-select" aria-label="Filter by status"><option value="">Status: All</option><option value="Active" <%= statusFilter === 'Active' ? 'selected' : '' %>>Status: Active</option><option value="Disabled" <%= statusFilter === 'Disabled' ? 'selected' : '' %>>Status: Inactive</option></select>
+                    <select id="brandCategorySelect" class="brand-filter-select" aria-label="Filter by category"><option value="">Category: Any</option><% categories.forEach(category => { %><option value="<%= category._id %>" <%= categoryFilter === String(category._id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select>
+                    <form id="brandFilters" method="GET" action="/admin/brands"><input type="hidden" name="search" value="<%= searchQuery || '' %>"><input id="brandStatusFilter" type="hidden" name="status" value="<%= statusFilter || '' %>"><input id="brandCategoryFilter" type="hidden" name="category" value="<%= categoryFilter || '' %>"></form>
+                </div>
+                <div class="brand-directory-header"><h2>Brand Directory</h2><div><button type="button" title="Refresh" onclick="window.location.reload()">⟳</button><button type="button" title="More actions">⋮</button></div></div>
+                <div class="brand-table-wrap"><table class="brand-table"><thead><tr><th>BRAND NAME</th><th>CATEGORY</th><th>PRODUCTS</th><th>FEATURED</th><th>STATUS</th><th>OFFERS</th><th>REVENUE</th><th>ACTIONS</th></tr></thead><tbody>
+                    <% if (brands.length) { brands.forEach(brand => { %>
+                    <tr><td class="brand-name-cell"><% if (brand.logo) { %><img src="<%= brand.logo %>" alt="<%= brand.name %> logo"><% } else { %><span class="brand-logo-placeholder"><%= brand.name.charAt(0).toUpperCase() %></span><% } %><span><strong><%= brand.name %></strong></span></td><td><%= brand.categoryId && brand.categoryId.name || 'Uncategorized' %></td><td><%= brand.productCount %></td><td><span class="brand-pill <%= brand.featured ? 'featured' : 'muted' %>"><%= brand.featured ? '★ YES' : 'NO' %></span></td><td><span class="brand-status <%= brand.status === 'Active' ? 'active' : 'inactive' %>"><%= brand.status %></span></td><td><span class="brand-pill muted">No Offer</span></td><td class="brand-revenue">₹<%= Number(brand.revenue || 0).toLocaleString('en-IN') %></td><td class="brand-actions"><a class="brand-view" href="/admin/brands/<%= brand._id %>" title="View brand" aria-label="View <%= brand.name %>">&#128065;</a><button type="button" class="brand-edit" title="Edit brand" data-id="<%= brand._id %>" data-name="<%= brand.name %>" data-description="<%= brand.description || '' %>" data-category="<%= brand.categoryId && brand.categoryId._id || '' %>" data-featured="<%= brand.featured %>">✎</button><button type="button" class="brand-toggle" title="Toggle status" data-id="<%= brand._id %>">◉</button></td></tr>
+                    <% }) } else { %><tr><td colspan="8" class="brand-empty">No brands found.</td></tr><% } %>
+                </tbody></table></div>
+                <footer class="brand-table-footer"><span>Showing <%= brands.length ? ((page - 1) * limit) + 1 : 0 %> to <%= Math.min(page * limit, totalBrands) %> of <%= totalBrands %> brands</span><nav><% if (page > 1) { %><a href="/admin/brands?page=<%= page - 1 %>&search=<%= encodeURIComponent(searchQuery || '') %>&status=<%= statusFilter %>&category=<%= categoryFilter %>">‹</a><% } %><b><%= page %></b><% if (page < totalPages) { %><a href="/admin/brands?page=<%= page + 1 %>&search=<%= encodeURIComponent(searchQuery || '') %>&status=<%= statusFilter %>&category=<%= categoryFilter %>">›</a><% } %></nav></footer>
+            </section>
+        </main>
+    </div>
+    <div class="brand-modal hidden" id="brandModal" role="dialog" aria-modal="true" aria-labelledby="brandModalTitle"><div class="brand-modal-panel"><button type="button" class="brand-modal-close" id="closeBrandModal" aria-label="Close">×</button><h2 id="brandModalTitle">Add New Brand</h2><form id="brandForm" method="POST" action="/admin/brands/add" enctype="multipart/form-data" novalidate><input type="hidden" id="brandId" name="id"><label for="brandName">Brand Name</label><input id="brandName" name="name" maxlength="80" placeholder="e.g. Bowflex"><p class="brand-field-error" data-error-for="name"></p><label for="brandDescription">Description</label><textarea id="brandDescription" name="description" rows="3" maxlength="250" placeholder="Describe this brand..."></textarea><p class="brand-field-error" data-error-for="description"></p><label for="brandCategory">Category</label><select id="brandCategory" name="categoryId"><option value="">Select category</option><% categories.forEach(category => { %><option value="<%= category._id %>"><%= category.name %></option><% }) %></select><p class="brand-field-error" data-error-for="categoryId"></p><label class="brand-featured"><span><strong>Featured Brand</strong><small>Highlight this brand in the store</small></span><input type="checkbox" id="brandFeatured" name="featured"><span class="brand-toggle-track"></span></label><label for="brandLogo">Brand Image</label><input id="brandLogo" name="logo" type="file" accept="image/jpeg,image/png" data-image-editor data-image-editor-manual="true" data-aspect-ratio="1" data-max-width="800"><small class="brand-file-note">Select one JPEG or PNG image, maximum 5 MB.</small><p class="brand-field-error" data-error-for="logo"></p><p class="brand-form-error" id="brandFormError"></p><div class="brand-modal-actions"><button type="button" class="brand-secondary-button" id="cancelBrand">Cancel</button><button type="submit" class="brand-primary-button">Save Brand</button></div></form></div></div>
+    <%- include('../partials/admin-footer.ejs') %>
+    <script src="/js/image-editor.js?v=4"></script>
+    <script src="/js/brands.js?v=13"></script>
+</body>
+</html>

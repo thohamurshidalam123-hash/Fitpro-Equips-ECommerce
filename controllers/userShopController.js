@@ -1,5 +1,6 @@
 const Product = require ('../models/productModel');
 const Category = require ('../models/categoryModel');
+const Brand = require ('../models/brandModel');
 
 const loadLandingPage = async (req, res) => {
     try {
@@ -30,6 +31,9 @@ const loadShopPage = async (req, res) => {
         let categoryFilter = req.query.category || [];
         categoryFilter = Array.isArray(categoryFilter) ? categoryFilter : [categoryFilter];
         categoryFilter = categoryFilter.filter(Boolean);
+        let brandFilter = req.query.brand || [];
+        brandFilter = Array.isArray(brandFilter) ? brandFilter : [brandFilter];
+        brandFilter = brandFilter.filter(Boolean);
         let minPrice = req.query.minPrice || '';
         let maxPrice = req.query.maxPrice || '';
         let sortOption = req.query.sort || 'newest';
@@ -37,12 +41,13 @@ const loadShopPage = async (req, res) => {
         // For fecthing only active categories
         const activeCategories = await Category.find({ status:'Active' }).lean();
         const activeCategoryId = activeCategories.map( cat => cat._id.toString());
+        const activeBrands = await Brand.find({ status: 'Active' }).sort({ name: 1 }).lean();
+        const activeBrandId = activeBrands.map(brand => brand._id.toString());
 
         // For build dynamic query object
         // For starting by strictly enforcing that the product is Active AND its category is Active
         let query ={
             status: 'Active',
-            availableStock: { $gt: 0 },
             categoryId: { $in: activeCategoryId}
         };
 
@@ -58,6 +63,11 @@ const loadShopPage = async (req, res) => {
             if(validCategories.length > 0){
                 query.categoryId = { $in: validCategories };
             }
+        }
+
+        if (brandFilter.length) {
+            const validBrands = brandFilter.filter(id => activeBrandId.includes(id));
+            if (validBrands.length > 0) query.brandId = { $in: validBrands };
         }
 
         //For applying price range filter
@@ -83,12 +93,13 @@ const loadShopPage = async (req, res) => {
                 sortQuery = { productName: -1 };
                 break;
             default:
-                sortQuery = { createdAt: -1 };
+                sortQuery = { createdAt : -1 };
         }
 
         // For executin query with pagination
         const products = await Product.find(query)
         .populate('categoryId', 'name')
+        .populate('brandId', 'name')
         .sort(sortQuery)
         .skip((page-1)*limit)
         .limit(limit)
@@ -102,6 +113,7 @@ const loadShopPage = async (req, res) => {
         res.render('user/shop',{
             products,
             categories: activeCategories,
+            brands: activeBrands,
             message,
             messageType,
             currentPage: 'shop',
@@ -112,6 +124,7 @@ const loadShopPage = async (req, res) => {
             activeFilters :{
                 search,
                 category: categoryFilter,
+                brand: brandFilter,
                 minPrice,
                 maxPrice,
                 sort: sortOption
@@ -129,6 +142,7 @@ const productDetailsPage = async (req,res) => {
 
         const product = await Product.findById(productId)
         .populate('categoryId', 'name status')
+        .populate('brandId', 'name status')
         .lean();
 
         if(!product || product.status !== 'Active' || product.availableStock <= 0 || !product.categoryId || product.categoryId.status !== 'Active'){
@@ -144,6 +158,7 @@ const productDetailsPage = async (req,res) => {
             status: 'Active',
             availableStock: { $gt: 0 }
         })
+        .populate('brandId', 'name')
         .limit(4)
         .lean();
 

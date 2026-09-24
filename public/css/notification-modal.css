@@ -1,7 +1,7 @@
 .app-notification-overlay {
     position: fixed;
     inset: 0;
-    z-index: 2000;
+    z-index: 3000;
     display: grid;
     place-items: center;
     padding: 20px;
@@ -33,6 +33,13 @@
     transform: translateY(0) scale(1);
 }
 
+.app-notification-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .app-notification-icon {
     display: grid;
     place-items: center;
@@ -57,6 +64,10 @@
     line-height: 1.25;
 }
 
+.app-notification-modal.is-error .app-notification-title {
+    display: none;
+}
+
 .app-notification-message {
     margin: 0 0 22px;
     color: #5b6472;
@@ -64,20 +75,34 @@
     line-height: 1.55;
 }
 
-.app-notification-close {
+.app-notification-close,
+.app-notification-cancel {
     min-width: 92px;
     padding: 10px 20px;
     border: 0;
     border-radius: 7px;
-    background: #1f5edb;
-    color: #ffffff;
     cursor: pointer;
     font: inherit;
     font-weight: 600;
 }
 
+.app-notification-close {
+    background: #1f5edb;
+    color: #ffffff;
+}
+
 .app-notification-close:hover {
     background: #174aa9;
+}
+
+.app-notification-cancel {
+    display: none;
+    background: #e5e7eb;
+    color: #1f2937;
+}
+
+.app-notification-cancel:hover {
+    background: #d1d5db;
 }
 
 body.app-modal-open {

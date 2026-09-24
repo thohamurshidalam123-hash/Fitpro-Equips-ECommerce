@@ -203,7 +203,7 @@
 
                         <!-- Error/Success Messages -->
                         <% if (typeof message !== 'undefined' && message) { %>
-                            <div class="error-message"><%= message %></div>
+                            <div id="sessionMessage" data-message="<%= message %>" data-type="<%= typeof messageType !== 'undefined' ? messageType : 'error' %>"></div>
                         <% } %>
 
                         <!-- Login Form -->
@@ -365,6 +365,13 @@
     <!-- ================================================================ -->
 
     <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sessionMessage = document.getElementById('sessionMessage');
+            if (sessionMessage) {
+                showNotification(sessionMessage.dataset.message, sessionMessage.dataset.type || 'error');
+            }
+        });
+
         // Global variables for OTP resend timer
         let otpResendTimer = 0;
         let otpResendInterval = null;

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title><%= product.productName %> | Fitpro Equips</title>
+	<link rel="stylesheet" href="/css/admin-dashboard.css">
+	<link rel="stylesheet" href="/css/product.css">
+	<link rel="stylesheet" href="/css/admin-scale.css">
+	<link rel="stylesheet" href="/css/admin-product-details.css">
+</head>
+<body>
+	<div class="admin-dashboard product-page product-details-page">
+		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'products' }) %>
+		<main class="main-content">
+			<p class="breadcrumb"><a href="/admin/products">Products</a> <span>›</span> Product Details</p>
+			<section class="details-heading">
+				<div class="details-product-summary">
+					<div class="details-product-thumb"><% if (product.images && product.images[0]) { %><img src="<%= product.images[0] %>" alt="<%= product.productName %>"><% } else { %><span>▦</span><% } %></div>
+					<div><h1><%= product.productName %> <span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Low Stock' ? 'low' : 'out' %>"><%= (product.status || 'Active').toUpperCase() %></span></h1><p><strong>Brand:</strong> <%= product.brandId && product.brandId.name || 'Unassigned' %> <i>•</i> <strong>Category:</strong> <%= product.categoryId && product.categoryId.name || 'Uncategorized' %></p></div>
+				</div>
+				<button class="add-product" id="openEditProduct" type="button">✎ Edit Product</button>
+				<button class="edit-product details-edit-source" type="button" aria-hidden="true" tabindex="-1"
+					data-id="<%= product._id %>" data-name="<%= product.productName %>"
+					data-category="<%= product.categoryId && product.categoryId._id || '' %>"
+					data-brand="<%= product.brandId && product.brandId._id || '' %>"
+					data-price="<%= product.regularPrice || 0 %>" data-stock="<%= product.availableStock || 0 %>"
+					data-description="<%= product.description || '' %>" data-status="<%= product.status || 'Active' %>"
+					data-highlight-title1="<%= product.highlights && product.highlights[0] ? product.highlights[0].title : '' %>"
+					data-highlight-title2="<%= product.highlights && product.highlights[1] ? product.highlights[1].title : '' %>"
+					data-highlight-title3="<%= product.highlights && product.highlights[2] ? product.highlights[2].title : '' %>"
+					data-highlight-title4="<%= product.highlights && product.highlights[3] ? product.highlights[3].title : '' %>"></button>
+			</section>
+
+			<section class="details-grid">
+				<article class="details-panel information-panel"><h2>Product Information</h2><div class="details-panel-content"><h3>Description</h3><p><%= product.description %></p></div></article>
+				<article class="details-panel gallery-panel"><h2>Product Gallery</h2><div class="gallery-content"><% (product.images || []).slice(0, 3).forEach((image, index) => { %><img class="gallery-image <%= index === 0 ? 'gallery-featured' : '' %>" src="<%= image %>" alt="<%= product.productName %> image <%= index + 1 %>"><% }) %><div class="gallery-add" aria-hidden="true">▧</div></div></article>
+			</section>
+
+			<section class="variants-panel"><div class="variants-heading"><h2>Variants &amp; Pricing</h2><button id="openAddVariant" class="add-variant-button" type="button">+ Add Variant</button></div><table><thead><tr><th>VARIANT</th><th>PRICE</th><th>STOCK</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody><% if (product.variants && product.variants.length) { product.variants.forEach(variant => { %><tr><td><%= variant.name || 'Standard' %></td><td>₹<%= Number(variant.price || 0).toLocaleString('en-IN') %></td><td><%= variant.stock || 0 %></td><td><span class="variant-status"><%= variant.status || product.status || 'Active' %></span></td><td><button class="edit-variant-button" type="button" aria-label="Edit <%= variant.name || 'variant' %>" data-variant-id="<%= variant._id %>" data-variant-name="<%= variant.name || '' %>" data-variant-color="<%= variant.color || '' %>" data-variant-weight="<%= variant.weight || '' %>" data-variant-unit="<%= variant.weightUnit || 'kg' %>" data-variant-price="<%= variant.price || 0 %>" data-variant-stock="<%= variant.stock || 0 %>" data-variant-status="<%= variant.status || 'Active' %>" data-variant-images="<%- (variant.images || []).join('|') %>">✎</button></td></tr><% }) } else { %><tr><td>Standard</td><td>₹<%= Number(product.salePrice || product.regularPrice || 0).toLocaleString('en-IN') %></td><td>0</td><td><span class="variant-status"><%= product.status || 'Active' %></span></td><td>✎</td></tr><% } %></tbody></table></section>
+		</main>
+	</div>
+
+	<%- include('../partials/admin-product-edit-modal.ejs', { categories, brands }) %>
+	<div class="variant-modal hidden" id="addVariantModal" role="dialog" aria-modal="true" aria-labelledby="addVariantTitle">
+		<div class="variant-modal-panel">
+			<button class="variant-modal-close" type="button" data-close-variant-modal aria-label="Close">×</button>
+			<h2 id="addVariantTitle">Add Product Variant</h2>
+			<form id="addVariantForm" novalidate>
+				<div class="variant-form-grid">
+					<div>
+						<label for="addVariantColor">Color</label>
+						<select id="addVariantColor" name="variantColor" required><option value="">Select a color</option><option>Midnight Black</option><option>Steel Gray</option><option>Chrome</option><option>Matte Black</option></select>
+						<p class="variant-field-error" data-variant-field-error="variantColor"></p>
+					</div>
+					<div>
+						<label for="addVariantWeight">Weight</label>
+						<div class="variant-input-unit"><input id="addVariantWeight" name="variantWeight" type="number" min="0.01" step="0.01" placeholder="0.00" required><span>kg</span></div>
+						<p class="variant-field-error" data-variant-field-error="variantWeight"></p>
+					</div>
+					<div>
+						<label for="addVariantPrice">Price</label>
+						<input id="addVariantPrice" name="variantPrice" type="number" min="0.01" step="0.01" placeholder="$ 0.00" required>
+						<p class="variant-field-error" data-variant-field-error="variantPrice"></p>
+					</div>
+					<div>
+						<label for="addVariantStock">Initial Stock</label>
+						<input id="addVariantStock" name="variantStock" type="number" min="0" step="1" placeholder="0" required>
+						<p class="variant-field-error" data-variant-field-error="variantStock"></p>
+					</div>
+				</div>
+				<label>Variant Images <small>Max 5MB per image</small></label>
+				<label class="variant-upload-zone" for="addVariantImages"><span class="variant-upload-icon">☁</span><strong>Click to upload or drag and drop</strong><span>SVG, PNG, JPG or GIF</span><input id="addVariantImages" name="images" type="file" accept="image/png,image/jpeg" multiple required data-image-editor data-image-editor-manual="true" data-aspect-ratio="2" data-max-width="800"></label>
+				<div class="variant-image-previews" data-previews-for="addVariantImages"></div>
+				<p class="variant-field-error" data-variant-field-error="images"></p>
+				<p class="variant-form-error" data-variant-error="images"></p>
+				<p class="variant-form-error" data-variant-form-error></p>
+				<div class="variant-modal-actions"><button type="button" class="variant-cancel" data-close-variant-modal>Cancel</button><button class="variant-submit" type="submit">Add Variant</button></div>
+			</form>
+		</div>
+	</div>
+	<div class="variant-modal hidden" id="editVariantModal" role="dialog" aria-modal="true" aria-labelledby="editVariantTitle">
+		<div class="variant-modal-panel">
+			<button class="variant-modal-close" type="button" data-close-variant-modal aria-label="Close">×</button>
+			<h2 id="editVariantTitle">Edit Product Variant</h2>
+			<form id="editVariantForm" novalidate><input type="hidden" name="variantId" id="editVariantId"><div class="variant-form-grid"><div><label for="editVariantColor">Color</label><select id="editVariantColor" name="variantColor" required><option value="">Select a color</option><option>Midnight Black</option><option>Steel Gray</option><option>Chrome</option><option>Matte Black</option></select><p class="variant-field-error" data-variant-field-error="variantColor"></p></div><div><label for="editVariantWeight">Weight</label><div class="variant-input-unit"><input id="editVariantWeight" name="variantWeight" type="number" min="0.01" step="0.01" required><span>kg</span></div><p class="variant-field-error" data-variant-field-error="variantWeight"></p></div><div><label for="editVariantPrice">Price</label><input id="editVariantPrice" name="variantPrice" type="number" min="0.01" step="0.01" required><p class="variant-field-error" data-variant-field-error="variantPrice"></p></div><div><label for="editVariantStock">Stock Quantity</label><input id="editVariantStock" name="variantStock" type="number" min="0" step="1" required><p class="variant-field-error" data-variant-field-error="variantStock"></p></div></div><label>Current Images</label><div class="variant-image-previews current-variant-images" data-previews-for="editVariantImages"></div><label class="variant-upload-zone compact" for="editVariantImages"><span class="variant-upload-icon">☁</span><strong>Click to upload or drag and drop</strong><span>SVG, PNG, JPG or GIF (max. 800×400px)</span><input id="editVariantImages" name="images" type="file" accept="image/png,image/jpeg" multiple data-image-editor data-image-editor-manual="true" data-aspect-ratio="2" data-max-width="800"></label><p class="variant-field-error" data-variant-field-error="images"></p><p class="variant-form-error" data-variant-error="images"></p><p class="variant-form-error" data-variant-form-error></p><div class="variant-modal-actions"><button type="button" class="variant-cancel" data-close-variant-modal>Cancel</button><button class="variant-submit" type="submit">Save Changes</button></div></form>
+		</div>
+	</div>
+	<%- include('../partials/admin-footer.ejs') %>
+	<script src="/js/image-editor.js?v=20260923-8"></script>
+	<script src="/js/product.js?v=20260923-10"></script>
+</body>
+</html>

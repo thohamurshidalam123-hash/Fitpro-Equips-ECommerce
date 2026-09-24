@@ -38,8 +38,6 @@ const upload = multer({
 
 const requireUserSession = async (req, res, next) => {
     if (!req.session || !req.session.userId) {
-        req.session.message = 'Your session has expired. Please log in again.';
-        req.session.messageType = 'error';
         return res.redirect('/login');
     }
 
@@ -50,7 +48,7 @@ const requireUserSession = async (req, res, next) => {
             delete req.session.userId;
             req.session.message = user ? 'Your account has been blocked.' : 'Your session has expired. Please log in again.';
             req.session.messageType = 'error';
-            return res.redirect('/login');
+            return res.redirect('/login?authMessage=1');
         }
 
         req.user = user;
@@ -59,7 +57,7 @@ const requireUserSession = async (req, res, next) => {
         console.error('User session validation error:', error.message);
         req.session.message = 'Session validation failed. Please log in again.';
         req.session.messageType = 'error';
-        return res.redirect('/login');
+        return res.redirect('/login?authMessage=1');
     }
 };
 

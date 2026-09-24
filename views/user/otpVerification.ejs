@@ -40,7 +40,7 @@
 						<h2>Email Verification</h2>
 						<p class="intro">Enter the 6-digit verification code sent to your email.</p>
 						<span class="email-chip"><span aria-hidden="true">&#9993;</span> j•••@example.com</span>
-						<% if (typeof message !== 'undefined' && message) { %><p class="error-message"><%= message %></p><% } %>
+						<% if (typeof message !== 'undefined' && message) { %><div data-session-message="<%= message %>" data-type="<%= typeof messageType !== 'undefined' ? messageType : 'error' %>"></div><% } %>
 						<div class="otp-inputs" role="group" aria-label="Six digit verification code">
 							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1" required>
 							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" required>
@@ -86,9 +86,14 @@
 							window.setTimeout(function () {
 								window.location.href = result.redirectUrl || '/userProfile';
 							}, 900);
-						} else if (errorMessage) {
-							errorMessage.textContent = result.message || 'Invalid OTP. Please try again.';
-							errorMessage.style.display = 'block';
+						} else {
+							var invalidOtpMessage = result.message || 'Invalid OTP. Please try again.';
+							if (typeof window.showAppModal === 'function') {
+								window.showAppModal(invalidOtpMessage, 'error');
+							} else if (errorMessage) {
+								errorMessage.textContent = invalidOtpMessage;
+								errorMessage.style.display = 'block';
+							}
 						}
 					})
 					.catch(function () {

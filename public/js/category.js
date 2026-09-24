@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const errors = {};
 		const name = nameInput.value.trim();
 		const description = descriptionInput.value.trim();
-		const image = imageInput.files[0];
+		const image = imageInput.processedFiles?.[0] || imageInput.files[0];
 		if (!name) errors.name = 'Category name is required';
 		else if (name.length < 2) errors.name = 'Category name must be at least 2 characters long';
 		else if (name.length > 80) errors.name = 'Category name cannot exceed 80 characters';
@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		else if (description.length < 2) errors.description = 'Description must be at least 2 characters long';
 		else if (description.length > 250) errors.description = 'Description cannot exceed 250 characters';
 		if (!idInput.value && !image) errors.image = 'Category image is required';
-		if (image && !['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'].includes(image.type)) errors.image = 'Image must be a PNG, JPG, GIF, or SVG file';
+		if (imageInput.dataset.invalidFile === 'true' || (image && !['image/png', 'image/jpeg'].includes(image.type))) errors.image = 'File not supported';
 		else if (image && image.size > 5 * 1024 * 1024) errors.image = 'Image cannot exceed 5 MB';
 		return errors;
 	};
@@ -51,6 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		descriptionInput.value = category?.description || '';
 		featuredInput.checked = category?.featured === 'true';
 		imageInput.value = '';
+		delete imageInput.dataset.invalidFile;
 		selectedImage.textContent = category?.image ? 'Current image will be kept unless a new image is selected.' : '';
 		clearErrors();
 		modal.classList.remove('hidden');
@@ -67,10 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
 	}));
 	form.addEventListener('submit', async event => {
 		event.preventDefault();
+		if (imageInput.imageProcessingPromise) await imageInput.imageProcessingPromise;
 		const validationErrors = validateForm();
-		if (Object.keys(validationErrors).length) { showErrors(validationErrors); return; }
+		if (Object.keys(validationErrors).length) {
+			showErrors(validationErrors);
+			return;
+		}
 		const id = idInput.value;
 		const formData = new FormData(form);
+		const processedImage = imageInput.processedFiles?.length ? imageInput.processedFiles[0] : imageInput.files[0];
+		if (processedImage) {
+			formData.delete('image');
+			formData.append('image', processedImage, processedImage.name);
+		}
 		formData.set('id', id);
 		formData.set('featured', String(featuredInput.checked));
 		submitButton.disabled = true;
@@ -84,9 +94,6 @@ document.addEventListener('DOMContentLoaded', () => {
 				if (typeof window.showAppModal === 'function') {
 					window.showAppModal(result.message, 'success');
 					setTimeout(() => window.location.reload(), 1500);
-				} else {
-					window.alert(result.message);
-					window.location.reload();
 				}
 			}
 		} catch (requestError) {

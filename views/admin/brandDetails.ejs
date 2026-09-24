@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= brand.name %> | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/brands.css">
+    <link rel="stylesheet" href="/css/brand-details.css">
+	<link rel="stylesheet" href="/css/admin-scale.css">
+</head>
+<body>
+    <div class="admin-dashboard brands-page">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'brands' }) %>
+        <main class="main-content brand-detail-content">
+            <div class="brand-detail-breadcrumb"><a href="/admin/brands">Brands</a><span>›</span><strong><%= brand.name %></strong></div>
+            <section class="brand-detail-heading">
+                <div class="brand-detail-title"><h1><%= brand.name %></h1><span class="brand-status <%= brand.status === 'Active' ? 'active' : 'inactive' %>"><%= brand.status %></span></div>
+                <button type="button" class="brand-primary-button" id="openEditBrand">✎&nbsp; Edit Brand</button>
+            </section>
+            <section class="brand-detail-summary">
+                <div class="detail-logo-panel"><% if (brand.logo) { %><img src="<%= brand.logo %>" alt="<%= brand.name %> logo"><% } else { %><span class="detail-logo-empty">No logo</span><% } %></div>
+                <div class="detail-metric"><small>▣ &nbsp;TOTAL<br>PRODUCTS</small><strong><%= totalProducts %></strong></div>
+                <div class="detail-metric"><small>▣ &nbsp;TOTAL REVENUE</small><strong>₹<%= (Number(revenue || 0) / 100000).toFixed(2) %> L</strong></div>
+                <div class="detail-metric"><small>✓ &nbsp;ACTIVE PRODUCTS</small><strong><%= activeProducts %></strong></div>
+                <div class="detail-metric"><small>⊘ &nbsp;OUT OF STOCK</small><strong><%= outOfStockProducts %></strong></div>
+                <div class="detail-metric"><small>◌ &nbsp;LOW STOCK</small><strong><%= lowStockProducts %></strong></div>
+            </section>
+            <section class="brand-overview"><h2>Brand Description</h2><p><%= brand.description %></p></section>
+            <section class="brand-products-panel">
+                <div class="brand-products-heading"><h2>Brand Products</h2><span><%= totalProducts %> products</span></div>
+                <div class="brand-table-wrap"><table class="brand-products-table"><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>PRICE</th><th>STOCK</th><th>OFFERS</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>
+                    <% if (products.length) { products.forEach(product => { %>
+                    <tr><td class="detail-product-name"><% if (product.images && product.images[0]) { %><img src="<%= product.images[0] %>" alt="<%= product.productName %>"><% } else { %><span>▦</span><% } %><strong><%= product.productName %></strong></td><td><%= product.categoryId && product.categoryId.name || 'Uncategorized' %></td><td class="detail-price">₹<%= Number(product.salePrice || product.regularPrice || 0).toLocaleString('en-IN') %></td><td><span class="detail-stock <%= product.availableStock < 20 ? 'low' : product.availableStock < 50 ? 'medium' : '' %>"><%= product.availableStock %></span></td><td><span class="brand-pill muted"><%= product.offerPercentage ? `${product.offerPercentage}% OFF` : 'No Offer' %></span></td><td><span class="brand-status <%= product.status === 'Active' ? 'active' : 'inactive' %>"><%= product.status %></span></td><td>⋮</td></tr>
+                    <% }) } else { %><tr><td colspan="7" class="brand-empty">No products assigned to this brand.</td></tr><% } %>
+                </tbody></table></div>
+                <footer class="brand-table-footer"><span>Showing <%= products.length ? ((page - 1) * limit) + 1 : 0 %> to <%= Math.min(page * limit, totalProducts) %> of <%= totalProducts %> products</span><nav><% if (page > 1) { %><a href="/admin/brands/<%= brand._id %>?page=<%= page - 1 %>">‹</a><% } %><b><%= page %></b><% if (page < totalPages) { %><a href="/admin/brands/<%= brand._id %>?page=<%= page + 1 %>">›</a><% } %></nav></footer>
+            </section>
+        </main>
+    </div>
+    <div class="brand-modal hidden" id="brandModal" role="dialog" aria-modal="true" aria-labelledby="brandModalTitle"><div class="brand-modal-panel"><button type="button" class="brand-modal-close" id="closeBrandModal" aria-label="Close">×</button><h2 id="brandModalTitle">Edit Brand</h2><form id="brandForm" enctype="multipart/form-data" novalidate><input type="hidden" id="brandId" name="id" value="<%= brand._id %>"><label for="brandName">Brand Name</label><input id="brandName" name="name" maxlength="80" value="<%= brand.name %>"><p class="brand-field-error" data-error-for="name"></p><label for="brandDescription">Description</label><textarea id="brandDescription" name="description" rows="3" maxlength="250"><%= brand.description %></textarea><p class="brand-field-error" data-error-for="description"></p><label for="brandCategory">Category</label><select id="brandCategory" name="categoryId"><option value="">Select category</option><% categories.forEach(category => { %><option value="<%= category._id %>" <%= brand.categoryId && String(brand.categoryId._id) === String(category._id) ? 'selected' : '' %>><%= category.name %></option><% }) %></select><p class="brand-field-error" data-error-for="categoryId"></p><label class="brand-featured"><span><strong>Featured Brand</strong><small>Highlight this brand in the store</small></span><input type="checkbox" id="brandFeatured" name="featured" <%= brand.featured ? 'checked' : '' %>><span class="brand-toggle-track"></span></label><label for="brandLogo">Brand Logo</label><input id="brandLogo" name="logo" type="file" accept="image/png,image/jpeg"><small class="brand-file-note">JPEG or PNG, maximum 5 MB.</small><p class="brand-field-error" data-error-for="logo"></p><p class="brand-form-error" id="brandFormError"></p><div class="brand-modal-actions"><button type="button" class="brand-secondary-button" id="cancelBrand">Cancel</button><button type="submit" class="brand-primary-button">Save Brand</button></div></form></div></div>
+    <%- include('../partials/admin-footer.ejs') %>
+    <script>document.getElementById('brandLogo').dataset.imageEditor = ''; document.getElementById('brandLogo').dataset.imageEditorManual = 'true'; document.getElementById('brandLogo').dataset.aspectRatio = '1'; document.getElementById('brandLogo').dataset.maxWidth = '800';</script>
+    <script src="/js/image-editor.js?v=3"></script>
+    <script src="/js/brand-details.js?v=4"></script>
+</body>
+</html>

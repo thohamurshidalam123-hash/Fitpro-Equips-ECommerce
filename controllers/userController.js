@@ -15,8 +15,11 @@ const loadLogin = async (req, res) => {
             return res.redirect('/userProfile');
         }
 
-        const message = req.session.message || null;
-        const messageType = req.session.messageType || 'error';
+        const shouldShowAuthMessage = req.query.authMessage === '1';
+        const message = req.session.message && (shouldShowAuthMessage || req.session.messageType === 'success')
+            ? req.session.message
+            : null;
+        const messageType = message ? (req.session.messageType || 'error') : null;
         delete req.session.message;
         delete req.session.messageType;
         return res.render('user/login', { currentPage: 'login', message, messageType });
@@ -247,8 +250,8 @@ const verifyOtp = async (req, res) => {
             // Show confirmation before opening the user's profile
             return res.render('user/otpVerification', { registrationSuccess: true, currentPage: 'otp' });
         } else {
-            if (wantsJson) return res.json({ success: false, message: 'Invalid OTP. Please try again.' });
-            return res.render('user/otpVerification', { message: 'Invalid OTP. Please try again.', currentPage: 'otp' });
+            if (wantsJson) return res.json({ success: false, message: 'Wrong OTP. Please try again.' });
+            return res.render('user/otpVerification', { message: 'Wrong OTP. Please try again.', currentPage: 'otp' });
         }
 
     } catch (error) {
@@ -325,7 +328,7 @@ const loginUser = async (req, res) => {
     }
 };
 
-const logout=async (req, res) => {
+const logout = async (req, res) => {
     req.session.destroy((err) => {
         if (err) console.log('Error destroying session:', err);
         res.redirect('/login');

@@ -452,6 +452,40 @@
         margin-top: 2px;
     }
 
+    .cart-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        margin-top: 18px;
+    }
+
+    .cart-pagination a,
+    .cart-pagination span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+        height: 30px;
+        padding: 0 9px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        color: #52647d;
+        background: #fff;
+        font-size: 12px;
+    }
+
+    .cart-pagination a.current {
+        color: #fff;
+        border-color: var(--blue);
+        background: var(--blue);
+    }
+
+    .cart-pagination span.disabled {
+        color: #adb8c8;
+        background: #f5f7fb;
+    }
+
     @media (max-width: 980px) {
         .cart-content { grid-template-columns: 1fr; }
         .summary-box { order: -1; }
@@ -491,22 +525,21 @@
                     <div class="cart-items">
                         <!-- DYNAMIC CART LOOP -->
                         <% if (typeof cartItems !== 'undefined' && cartItems.length > 0) { %>
-                            <% cartItems.forEach(item => { %>
+                            <% cartPageItems.forEach(item => { %>
                                 <!-- Task D.vii: Add class if item is disabled or out of stock -->
                                 <article class="cart-item <%= (!item.isAvailable || item.outOfStock) ? 'disabled-item' : '' %>">
                                     <div class="product-thumb">
-                                        <a href="/product/<%= item.productId._id %>">
-                                            <img src="<%= item.productId.images[0] %>" alt="<%= item.productId.productName %>">
+                                        <a href="/products/<%= item.productId._id %>">
+                                            <img src="<%= item.variant && item.variant.images && item.variant.images[0] ? item.variant.images[0] : item.productId.images[0] %>" alt="<%= item.productId.productName %>">
                                         </a>
                                     </div>
                                     <div class="product-info">
-                                        <span class="product-tag"><%= item.productId.categoryId ? item.productId.categoryId.name : 'Equipment' %></span>
-                                        <a href="/product/<%= item.productId._id %>">
+                                        <span class="product-tag"><%= item.productId.brandId ? item.productId.brandId.name : (item.productId.categoryId ? item.productId.categoryId.name : 'Equipment') %></span>
+                                        <a href="/products/<%= item.productId._id %>">
                                             <h2 class="product-name"><%= item.productId.productName %></h2>
                                         </a>
                                         
-                                        <!-- Notice: SKU was removed from schema as requested in earlier steps -->
-                                        <p class="product-meta">Included: 1 Unit</p>
+                                        <p class="product-meta"><strong>Brand:</strong> <%= item.productId.brandId ? item.productId.brandId.name : 'Fitpro Equipment' %><% if (item.variant) { %> <span>·</span> <strong>Variant:</strong> <%= item.variant.name || `${item.variant.weight} ${item.variant.weightUnit || 'kg'}` %><% if (item.variant.color) { %> (<%= item.variant.color %>)<% } %><% } %></p>
 
                                         <!-- Task D.vii: Error Warnings for blocked/OOS items -->
                                         <% if (!item.isAvailable) { %>
@@ -514,7 +547,7 @@
                                         <% } else if (item.outOfStock) { %>
                                             <span class="error-msg">🚫 Out of Stock</span>
                                         <% } else if (!item.hasStock) { %>
-                                            <span class="error-msg">⚠️ Only <%= item.productId.availableStock %> units left. Reduce quantity.</span>
+                                            <span class="error-msg">⚠️ Only <%= item.variant ? item.variant.stock : item.productId.availableStock %> units left. Reduce quantity.</span>
                                         <% } %>
 
                                         <div class="product-controls">
@@ -539,6 +572,13 @@
                                 <p style="color: var(--muted); margin-bottom: 20px;">Looks like you haven't added any fitness gear yet.</p>
                                 <a href="/shop" class="checkout-btn" style="display: inline-flex; width: auto; padding: 0 30px;">Continue Shopping</a>
                             </div>
+                        <% } %>
+                        <% if (totalPages > 1) { %>
+                            <nav class="cart-pagination" aria-label="Cart pages">
+                                <% if (page > 1) { %><a href="/cart?page=<%= page - 1 %>">Previous</a><% } else { %><span class="disabled" aria-disabled="true">Previous</span><% } %>
+                                <% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a href="/cart?page=<%= pageNumber %>" class="<%= pageNumber === page ? 'current' : '' %>"><%= pageNumber %></a><% } %>
+                                <% if (page < totalPages) { %><a href="/cart?page=<%= page + 1 %>">Next</a><% } else { %><span class="disabled" aria-disabled="true">Next</span><% } %>
+                            </nav>
                         <% } %>
                     </div>
 
@@ -612,16 +652,29 @@
                 // Reloads the page to cleanly recalculate the backend totals and tax
                 window.location.reload(); 
             } else {
-                alert(data.message); // Displays stock or limit warnings
+                if (typeof window.showAppModal === 'function') {
+                    window.showAppModal(data.message || 'Cart update failed.', 'error');
+                }
             }
         } catch (error) {
             console.error('Error:', error);
+            if (typeof window.showAppModal === 'function') {
+                window.showAppModal('Something went wrong while updating the cart.', 'error');
+            }
         }
     }
 
     // Task D.i: Remove Item
     async function removeItem(itemId) {
-        if (!confirm('Are you sure you want to remove this item?')) return;
+        if (typeof window.showConfirmationModal === 'function') {
+            window.showConfirmationModal('Are you sure you want to remove this item?', () => removeItemRequest(itemId));
+            return;
+        }
+
+        removeItemRequest(itemId);
+    }
+
+    async function removeItemRequest(itemId) {
         try {
             const response = await fetch('/cart/remove', {
                 method: 'POST',
@@ -631,24 +684,38 @@
             if ((await response.json()).success) window.location.reload();
         } catch (error) {
             console.error('Error:', error);
+            if (typeof window.showAppModal === 'function') {
+                window.showAppModal('Something went wrong while removing the item.', 'error');
+            }
         }
     }
 
     // Task D.iv: Move to Wishlist
     async function moveToWishlist(itemId, productId) {
         try {
-            const response = await fetch('/cart/move-to-wishlist', {
+            const response = await fetch('/cart/moveToWishlist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ itemId, productId })
             });
             const data = await response.json();
             if (data.success) {
-                alert(data.message);
-                window.location.reload(); // Reload to remove it from cart view
+                if (typeof window.showAppModal === 'function') {
+                    window.showAppModal(data.message || 'Item moved to wishlist.', 'success', {
+                        showCancel: true,
+                        onClose: () => window.location.reload()
+                    });
+                } else {
+                    window.location.reload();
+                }
+            } else if (typeof window.showAppModal === 'function') {
+                window.showAppModal(data.message || 'Unable to move item to wishlist.', 'error');
             }
         } catch (error) {
             console.error('Error:', error);
+            if (typeof window.showAppModal === 'function') {
+                window.showAppModal('Something went wrong while moving the item.', 'error');
+            }
         }
     }
 </script>

@@ -21,6 +21,26 @@
 		canvas.toBlob(blob => resolve(new File([blob], `${sourceFile.name.replace(/\.[^.]+$/, '')}.jpg`, { type: 'image/jpeg', lastModified: Date.now() })), 'image/jpeg', .9);
 	}, 'image/jpeg');
 
+	const resizeImage = (file, options) => new Promise((resolve, reject) => {
+		const image = new Image();
+		const objectUrl = URL.createObjectURL(file);
+		image.onload = async () => {
+			const width = options.maxWidth;
+			const height = Math.round(width / options.aspectRatio);
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const scale = Math.max(width / image.width, height / image.height);
+			const drawWidth = image.width * scale;
+			const drawHeight = image.height * scale;
+			canvas.getContext('2d').drawImage(image, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight);
+			URL.revokeObjectURL(objectUrl);
+			resolve(await createFile(canvas, file, width, height));
+		};
+		image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error('Invalid image')); };
+		image.src = objectUrl;
+	});
+
 	const editImage = (file, options) => new Promise(resolve => {
 		const image = new Image();
 		const backdrop = document.createElement('div');
@@ -91,28 +111,45 @@
 	});
 
 	const processInput = async input => {
+		input.dataset.processing = 'true';
+		input.selectedFiles = [...input.files];
+		input.processedFiles = [];
 		const options = {
 			aspectRatio: Number(input.dataset.aspectRatio || 1),
 			maxWidth: Number(input.dataset.maxWidth || 800)
 		};
 		const files = [...input.files];
-		if (!files.length) return;
+		if (!files.length) { delete input.dataset.processing; return null; }
+		const unsupportedFile = files.find(file => !['image/png', 'image/jpeg'].includes(file.type));
+		if (unsupportedFile) {
+			input.value = '';
+			input.dataset.invalidFile = 'true';
+			delete input.dataset.processing;
+			const error = input.closest('form')?.querySelector(`[data-field-error="${input.name}"], [data-error-for="${input.name}"]`);
+			if (error) error.textContent = 'File not supported';
+			input.classList.add('has-error');
+			input.processedFiles = [];
+			return null;
+		}
+		delete input.dataset.invalidFile;
 		const processed = [];
 		for (const file of files) {
-			if (file.type === 'image/svg+xml') processed.push(file);
-			else if (file.type.startsWith('image/')) {
-				const result = await editImage(file, options);
-				if (!result) { input.value = ''; return; }
-				processed.push(result);
-			}
+			const result = input.dataset.autoResize === 'true' ? await resizeImage(file, options) : await editImage(file, options);
+			if (!result) { input.value = ''; input.processedFiles = []; delete input.dataset.processing; return null; }
+			processed.push(result);
 		}
-		const transfer = new DataTransfer();
-		processed.forEach(file => transfer.items.add(file));
-		input.files = transfer.files;
+		input.processedFiles = processed;
+		delete input.dataset.processing;
 		input.dispatchEvent(new Event('imageprocessed', { bubbles: true }));
+		return processed[0] || null;
 	};
 
-	document.addEventListener('DOMContentLoaded', () => {
-		document.querySelectorAll('input[data-image-editor]').forEach(input => input.addEventListener('change', () => processInput(input)));
-	});
+	const initializeEditors = () => {
+		document.querySelectorAll('input[data-image-editor]').forEach(input => {
+			if (input.dataset.imageEditorManual !== 'true') input.addEventListener('change', () => { input.imageProcessingPromise = processInput(input); });
+		});
+	};
+	window.processImageInput = processInput;
+	if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializeEditors, { once: true });
+	else initializeEditors();
 })();

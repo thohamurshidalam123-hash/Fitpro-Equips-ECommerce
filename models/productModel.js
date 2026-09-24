@@ -17,8 +17,13 @@ const productSchema = new mongoose.Schema({
 
     variants : [{
         name: { type: String},
+        color: { type: String },
+        weight: { type: Number },
+        weightUnit: { type: String, default: 'kg' },
         price: { type: Number},
-        status : { type: String, Enum: ['In Stock','Low Stock','Out of Stock']},
+        stock: { type: Number, default: 0, min: 0 },
+        images: { type: [String], default: [] },
+        status : { type: String, enum: ['In Stock','Low Stock','Out of Stock','Active']},
     }],
 
     highlights: [{

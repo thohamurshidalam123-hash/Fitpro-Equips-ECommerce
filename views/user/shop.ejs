@@ -18,7 +18,7 @@
 			</section>
 
 			<form class="shop-toolbar" method="get" action="/shop">
-				<div class="shop-search-box"><label class="shop-search"><span aria-hidden="true">⌕</span><input type="search" name="search" value="<%= activeFilters.search %>" placeholder="Search equipment, brands, or gear..." aria-label="Search equipment"></label><div class="search-actions"><button class="search-button" type="submit">Search</button><a class="clear-search" href="/shop?sort=<%= encodeURIComponent(activeFilters.sort) %>&amp;minPrice=<%= encodeURIComponent(activeFilters.minPrice) %>&amp;maxPrice=<%= encodeURIComponent(activeFilters.maxPrice) %><%= activeFilters.category.map(category => '&amp;category=' + encodeURIComponent(category)).join('') %>">Clear</a></div></div>
+				<div class="shop-search-box"><label class="shop-search"><span aria-hidden="true">⌕</span><input type="search" name="search" value="<%= activeFilters.search %>" placeholder="Search equipment, brands, or gear..." aria-label="Search equipment"></label><div class="search-actions"><button class="search-button" type="submit">Search</button><a class="clear-search" href="/shop?sort=<%= encodeURIComponent(activeFilters.sort) %>&amp;minPrice=<%= encodeURIComponent(activeFilters.minPrice) %>&amp;maxPrice=<%= encodeURIComponent(activeFilters.maxPrice) %><%= (activeFilters.category || []).map(category => '&amp;category=' + encodeURIComponent(category)).join('') %><%= (activeFilters.brand || []).map(brand => '&amp;brand=' + encodeURIComponent(brand)).join('') %>">Clear</a></div></div>
 				<div class="view-controls"><label for="sort">Sort by</label><select id="sort" name="sort" class="sort-button" onchange="this.form.submit()"><option value="newest" <%= activeFilters.sort === 'newest' ? 'selected' : '' %>>Newest</option><option value="price_asc" <%= activeFilters.sort === 'price_asc' ? 'selected' : '' %>>Price: low to high</option><option value="price_desc" <%= activeFilters.sort === 'price_desc' ? 'selected' : '' %>>Price: high to low</option><option value="a_z" <%= activeFilters.sort === 'a_z' ? 'selected' : '' %>>Name: A-Z</option><option value="z_a" <%= activeFilters.sort === 'z_a' ? 'selected' : '' %>>Name: Z-A</option></select></div>
 			</form>
 
@@ -27,23 +27,37 @@
 					<div class="filter-heading"><strong>Filters</strong><small>Refine your search</small></div>
 					<input type="hidden" name="search" value="<%= activeFilters.search %>"><input type="hidden" name="sort" value="<%= activeFilters.sort %>">
 					<fieldset><legend>Category</legend><select class="category-select" name="category" multiple size="4" aria-label="Select categories"><% categories.forEach(category => { %><option value="<%= category._id %>" <%= activeFilters.category.includes(category._id.toString()) ? 'selected' : '' %>><%= category.name %></option><% }) %></select><small class="filter-hint">Select one or more</small></fieldset>
+					<fieldset><legend>Brand</legend><select class="category-select" name="brand" multiple size="4" aria-label="Select brands"><% brands.forEach(brand => { %><option value="<%= brand._id %>" <%= activeFilters.brand.includes(brand._id.toString()) ? 'selected' : '' %>><%= brand.name %></option><% }) %></select><small class="filter-hint">Select one or more</small></fieldset>
 					<fieldset><legend>Price Range</legend><div class="price-inputs"><input name="minPrice" type="number" min="0" value="<%= activeFilters.minPrice %>" placeholder="Min"><input name="maxPrice" type="number" min="0" value="<%= activeFilters.maxPrice %>" placeholder="Max"></div></fieldset>
 					<button class="clear-filters" type="submit">Apply Filters</button> <a class="clear-filters" href="/shop">Clear All Filters</a>
 				</form>
 
 				<section class="shop-results" aria-label="Products">
 					<% if (!products.length) { %><p>No available products match your filters.</p><% } %>
-					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; %>
-						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
+					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const serializedVariants = encodeURIComponent(JSON.stringify(product.variants || [])); %>
+						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.brandId ? product.brandId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2><span class="product-card-category"><%= product.categoryId ? product.categoryId.name : 'Equipment' %></span></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
 								<button type="button" data-quantity-action="decrease" aria-label="Decrease quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>−</button>
 								<span class="product-qty-value">1</span>
 								<button type="button" data-quantity-action="increase" data-max-quantity="<%= product.availableStock %>" aria-label="Increase quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>＋</button>
-							</div><span class="stock-pill"><%= product.availableStock %> in stock</span><button class="cart-button" type="button">▣ Add to Cart</button></article>
+								</div><span class="stock-pill"><%= product.availableStock %> in stock</span><button class="cart-button" type="button" data-product-id="<%= product._id %>" data-variants="<%= serializedVariants %>" <%= product.availableStock < 1 ? 'disabled' : '' %>>▣ Add to Cart</button></article>
 					<% }) %></div>
-					<% if (totalPages > 1) { %><nav class="pagination" aria-label="Shop pages"><% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a href="/shop?page=<%= pageNumber %>&search=<%= encodeURIComponent(activeFilters.search) %>&sort=<%= activeFilters.sort %>&minPrice=<%= activeFilters.minPrice %>&maxPrice=<%= activeFilters.maxPrice %><%= activeFilters.category.map(category => '&category=' + encodeURIComponent(category)).join('') %>" class="<%= pageNumber === page ? 'current' : '' %>"><%= pageNumber %></a><% } %></nav><% } %>
+					<% if (totalPages > 1) { %><nav class="pagination" aria-label="Shop pages">
+						<% const paginationQuery = '&search=' + encodeURIComponent(activeFilters.search) + '&sort=' + encodeURIComponent(activeFilters.sort) + '&minPrice=' + encodeURIComponent(activeFilters.minPrice) + '&maxPrice=' + encodeURIComponent(activeFilters.maxPrice) + (activeFilters.category || []).map(category => '&category=' + encodeURIComponent(category)).join('') + (activeFilters.brand || []).map(brand => '&brand=' + encodeURIComponent(brand)).join(''); %>
+						<% if (page > 1) { %><a class="pagination-control" href="/shop?page=<%= page - 1 %><%= paginationQuery %>">Previous</a><% } else { %><span class="pagination-control disabled" aria-disabled="true">Previous</span><% } %>
+						<% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a href="/shop?page=<%= pageNumber %><%= paginationQuery %>" class="<%= pageNumber === page ? 'current' : '' %>"><%= pageNumber %></a><% } %>
+						<% if (page < totalPages) { %><a class="pagination-control" href="/shop?page=<%= page + 1 %><%= paginationQuery %>">Next</a><% } else { %><span class="pagination-control disabled" aria-disabled="true">Next</span><% } %>
+					</nav><% } %>
 				</section>
 			</div>
 		</main>
+		<div class="variant-picker-backdrop" id="shopVariantPicker" hidden>
+			<section class="variant-picker" role="dialog" aria-modal="true" aria-labelledby="shopVariantTitle">
+				<button class="variant-picker-close" type="button" aria-label="Close variant selection">×</button>
+				<h2 id="shopVariantTitle">Choose a variant</h2>
+				<div id="shopVariantOptions"></div>
+				<button class="variant-picker-add" type="button" id="shopVariantAdd">Add to Cart</button>
+			</section>
+		</div>
 		<%- include('../partials/user-footer') %>
 	</div>
 	<script>
@@ -60,6 +74,78 @@
 			const nextQuantity = Math.min(maximumQuantity, Math.max(1, currentQuantity + change));
 
 			valueElement.textContent = nextQuantity;
+		});
+
+		document.addEventListener('click', async (event) => {
+			const button = event.target.closest('.cart-button');
+			if (!button) return;
+			if (button.disabled) return;
+
+			const productId = button.dataset.productId;
+			if (!productId) return;
+			const variants = JSON.parse(decodeURIComponent(button.dataset.variants || '%5B%5D'));
+			if (variants.length) {
+				openShopVariantPicker(button, variants);
+				return;
+			}
+
+			const productCard = button.closest('.shop-product-card');
+			const quantityElement = productCard ? productCard.querySelector('.product-qty-value') : null;
+			const quantity = Number(quantityElement ? quantityElement.textContent : 1) || 1;
+			button.disabled = true;
+
+			try {
+				const response = await fetch('/cart/add', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ productId, quantity })
+				});
+				const result = await response.json();
+
+				if (!response.ok || !result.success) {
+					if (window.showAppModal) {
+						window.showAppModal(result.message || 'Unable to add product to cart.', 'error');
+					}
+					return;
+				}
+
+				if (window.showAppModal) {
+					window.showAppModal(result.message || 'Product added to cart successfully!', 'success');
+				}
+			} catch (error) {
+				if (window.showAppModal) {
+					window.showAppModal('Unable to add product to cart right now.', 'error');
+				}
+			} finally {
+				button.disabled = false;
+			}
+		});
+
+		const variantPicker = document.getElementById('shopVariantPicker');
+		const variantOptions = document.getElementById('shopVariantOptions');
+		const variantAdd = document.getElementById('shopVariantAdd');
+		let pickerProductId = '';
+		let pickerQuantity = 1;
+		function openShopVariantPicker(button, variants) {
+			pickerProductId = button.dataset.productId;
+			pickerQuantity = Number(button.closest('.shop-product-card').querySelector('.product-qty-value')?.textContent) || 1;
+			const firstAvailableVariant = variants.find(variant => Number(variant.stock) > 0);
+			variantOptions.innerHTML = variants.map(variant => `<button type="button" class="shop-variant-option ${firstAvailableVariant && String(firstAvailableVariant._id) === String(variant._id) ? 'selected' : ''}" data-variant-id="${variant._id}" ${variant.stock < 1 ? 'disabled' : ''}><strong>${variant.name || `${variant.weight} ${variant.weightUnit || 'kg'}`}</strong><span>${variant.color || ''} · ₹${Number(variant.price || 0).toFixed(2)} · ${variant.stock} left</span></button>`).join('');
+			variantPicker.hidden = false;
+		}
+		variantOptions.addEventListener('click', event => { const option = event.target.closest('.shop-variant-option'); if (!option || option.disabled) return; variantOptions.querySelectorAll('.shop-variant-option').forEach(item => item.classList.remove('selected')); option.classList.add('selected'); });
+		document.querySelector('.variant-picker-close').addEventListener('click', () => { variantPicker.hidden = true; });
+		variantPicker.addEventListener('click', event => { if (event.target === variantPicker) variantPicker.hidden = true; });
+		variantAdd.addEventListener('click', async () => {
+			const selected = variantOptions.querySelector('.shop-variant-option.selected');
+			if (!selected) return;
+			variantAdd.disabled = true;
+			try {
+				const response = await fetch('/cart/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: pickerProductId, variantId: selected.dataset.variantId, quantity: pickerQuantity }) });
+				const result = await response.json();
+				if (window.showAppModal) window.showAppModal(result.message || 'Unable to add product to cart.', result.success ? 'success' : 'error');
+				if (result.success) variantPicker.hidden = true;
+			} finally { variantAdd.disabled = false; }
 		});
 	</script>
 	<% if (typeof message !== 'undefined' && message) { %>
