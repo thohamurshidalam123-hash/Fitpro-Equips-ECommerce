@@ -9,6 +9,8 @@ const addressController = require('../controllers/addressController');
 const passport = require('passport');
 const userShopController = require('../controllers/userShopController');
 const cartController = require ('../controllers/cartController')
+const wishlistController = require ('../controllers/wishlistController');
+const checkoutController = require('../controllers/checkoutController');
 require('../configuration/passport');
 
 
@@ -117,5 +119,14 @@ router.post('/cart/add',cartController.addToCart);
 router.post('/cart/update',cartController.updateQuantity);
 router.post('/cart/remove',cartController.removeFromCart);
 router.post('/cart/moveToWishlist',cartController.moveToWishlist);
+
+//Wishlist routes
+router.get('/wishlist', requireUserSession, wishlistController.loadWishlist);
+router.post('/wishlist/toggle', requireUserSession, wishlistController.toggleWishlist);
+router.post('/wishlist/remove', requireUserSession, wishlistController.removeWishlistItem);
+router.post('/wishlist/clear', requireUserSession, wishlistController.clearWishlist);
+
+// Checkout routes
+router.get('/checkout',requireUserSession,checkoutController.loadCheckout);
 
 module.exports = router;

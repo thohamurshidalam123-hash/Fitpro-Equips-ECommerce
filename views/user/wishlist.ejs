@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Fitpro Equips | Wishlist</title>
+	<link rel="stylesheet" href="/css/landing.css">
+	<link rel="stylesheet" href="/css/wishlist.css">
+</head>
+<body>
+	<div class="page-shell wishlist-shell">
+		<%- include('../partials/user-header', { currentPage: 'wishlist' }) %>
+
+		<main class="wishlist-main">
+			<div class="wishlist-breadcrumb"><a href="/">Home</a><span aria-hidden="true">›</span><strong>Wishlist</strong></div>
+
+			<section class="wishlist-heading" aria-labelledby="wishlist-title">
+				<div>
+					<h1 id="wishlist-title">My Wishlist</h1>
+					<p>Save your favorite fitness equipment and purchase them anytime.</p>
+				</div>
+				<div class="wishlist-summary"><span>Saved Products</span><strong data-wishlist-count><%= itemCount %> Item<%= itemCount === 1 ? '' : 's' %></strong></div>
+			</section>
+
+			<div class="wishlist-actions">
+				<button class="wishlist-button wishlist-button-primary" type="button" data-add-all>🛒&nbsp; Add All to Cart</button>
+				<a class="wishlist-button wishlist-button-secondary" href="/shop">◎&nbsp; Continue Shopping</a>
+				<button class="clear-wishlist" type="button" data-clear-wishlist>♧&nbsp; Clear Wishlist</button>
+			</div>
+
+			<section class="wishlist-grid" aria-label="Saved products">
+				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const oldPrice = product.salePrice > 0 ? product.regularPrice : null; const variant = (product.variants || []).find(item => Number(item.stock) > 0 && item.status !== 'Out of Stock'); %>
+					<article class="wishlist-card" data-wishlist-card data-product-id="<%= product._id %>">
+						<div class="wishlist-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>>
+							<button class="remove-wishlist" type="button" aria-label="Remove <%= product.productName %> from wishlist" data-remove-wishlist>×</button>
+						</div>
+						<div class="wishlist-card-content"><small><%= product.brandId ? product.brandId.name : (product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT') %></small><h2><%= product.productName %></h2><div class="wishlist-price">₹<%= Number(price).toLocaleString('en-IN') %><% if (oldPrice) { %> <del>₹<%= Number(oldPrice).toLocaleString('en-IN') %></del><% } %></div><button class="card-cart-button" type="button" data-add-cart data-product-id="<%= product._id %>"<% if (!variant && product.variants && product.variants.length || product.status !== 'Active' || product.availableStock < 1) { %> disabled<% } %><% if (variant) { %> data-variant-id="<%= variant._id %>"<% } %>>Add to Cart</button></div>
+					</article>
+				<% }) %>
+			</section>
+			<p class="wishlist-empty" hidden>Your wishlist is empty. <a href="/shop">Continue shopping</a></p>
+		</main>
+
+		<%- include('../partials/user-footer') %>
+	</div>
+	<script src="/js/wishlist.js"></script>
+</body>
+</html>

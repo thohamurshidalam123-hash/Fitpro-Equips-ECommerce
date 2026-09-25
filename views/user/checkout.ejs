@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <link rel="stylesheet" href="/css/checkout.css">
+</head>
+<body>
+    <div class="checkout-page-shell">
+
+        <%- include('../partials/user-header', { currentPage: 'shop' }) %>
+
+        <main class="checkout-main-content">
+            <h1 class="checkout-page-title">Checkout</h1>
+
+            <div class="checkout-grid">
+
+                <!-- ================= LEFT COLUMN ================= -->
+                <div class="checkout-left-col">
+
+                    <!-- 1. Delivery Address Card -->
+                    <section class="checkout-card" aria-labelledby="delivery-heading">
+
+                        <div class="checkout-card-header">
+                            <div class="card-header-left">
+
+                                <span class="card-header-icon" aria-hidden="true">
+                                    <svg width="18" height="18" viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+
+                                        <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+                                        <circle cx="12" cy="10" r="3"/>
+
+                                    </svg>
+                                </span>
+
+                                <h2 class="checkout-card-title" id="delivery-heading">
+                                    Delivery Address
+                                </h2>
+                            </div>
+
+                            <% if (activeAddress) { %>
+                                <span class="address-type-pill">
+                                    <%= activeAddress.addressType || 'Home' %>
+                                </span>
+                            <% } %>
+                        </div>
+
+
+                        <% if (activeAddress) { %>
+
+                            <div
+                                class="address-details"
+                                data-active-address-id="<%= activeAddress._id %>"
+                            >
+
+                                <h3 class="address-recipient-name">
+                                    <%= activeAddress.name %>
+                                </h3>
+
+                                <p class="address-recipient-phone">
+                                    <%= activeAddress.phone %>
+                                </p>
+
+                                <p class="address-line address-line-1">
+                                    <%= activeAddress.street %>,
+                                    <%= activeAddress.landmark ? activeAddress.landmark + ',' : '' %>
+                                </p>
+
+                                <p class="address-line address-line-last">
+                                    <%= activeAddress.city %>,
+                                    <%= activeAddress.state %> -
+                                    <%= activeAddress.pincode %>
+                                </p>
+
+
+                                <div class="address-actions-row">
+
+                                    <button
+                                        type="button"
+                                        class="address-action-btn"
+                                        id="btnChangeAddress"
+                                    >
+
+                                        <svg width="14" height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round">
+
+                                            <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                                            <path d="m15 5 4 4"/>
+
+                                        </svg>
+
+                                        Change Address
+
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="address-action-btn"
+                                        id="btnAddNewAddress"
+                                    >
+
+                                        <svg width="14" height="14"
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round">
+
+                                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                                            <line x1="5" y1="12" x2="19" y2="12"></line>
+
+                                        </svg>
+
+                                        Add New Address
+
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        <% } else { %>
+
+                            <div
+                                class="address-details"
+                                data-active-address-id=""
+                            >
+
+                                <p style="color: #d52d39; margin-bottom: 15px;">
+                                    No addresses found. Please add a delivery address.
+                                </p>
+
+                                <button
+                                    type="button"
+                                    class="address-action-btn"
+                                    id="btnAddNewAddress"
+                                >
+
+                                    <svg width="14" height="14"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+
+                                    </svg>
+
+                                    Add New Address
+
+                                </button>
+
+                            </div>
+
+                        <% } %>
+
+                    </section>
+
+
+                    <!-- 2. Payment Method Card -->
+                    <section
+                        class="checkout-card"
+                        aria-labelledby="payment-heading"
+                    >
+
+                        <div class="checkout-card-header">
+
+                            <div class="card-header-left">
+
+                                <span class="card-header-icon" aria-hidden="true">
+
+                                    <svg width="18" height="18"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+
+                                        <rect width="20" height="14" x="2" y="5" rx="2"/>
+                                        <line x1="2" x2="22" y1="10" x2="10"/>
+
+                                    </svg>
+
+                                </span>
+
+                                <h2
+                                    class="checkout-card-title"
+                                    id="payment-heading"
+                                >
+                                    Payment Method
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="payment-methods-grid">
+
+                            <!-- Option 1: Razorpay -->
+                            <div
+                                class="payment-method-item active"
+                                data-payment-method="razorpay"
+                                tabindex="0"
+                                role="button"
+                                aria-pressed="true"
+                            >
+
+                                <div class="payment-method-icon">
+
+                                    <svg width="22" height="22"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.9"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+
+                                        <path d="M19 7V4a1 1 0 0 0-1-1H5a2 2 0 0 0 0 4h15a1 1 0 0 1 1 1v4h-3a2 2 0 0 0 0 4h3a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1"/>
+                                        <path d="M3 5v14a2 2 0 0 0 2 2h15a1 1 0 0 0 1-1v-4"/>
+
+                                    </svg>
+
+                                </div>
+
+                                <div class="payment-method-info">
+
+                                    <h3 class="payment-method-name">
+                                        Razor pay
+                                    </h3>
+
+                                    <p class="payment-method-sub">
+                                        Google Pay, PhonePe, BHIM
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Option 2: Wallet -->
+                            <div
+                                class="payment-method-item"
+                                data-payment-method="wallet"
+                                tabindex="0"
+                                role="button"
+                                aria-pressed="false"
+                            >
+
+                                <div class="payment-method-icon wallet-icon">
+
+                                    <svg width="22" height="22"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.9"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+
+                                        <rect width="20" height="14" x="2" y="5" rx="2"/>
+                                        <line x1="2" x2="22" y1="10" x2="10"/>
+
+                                    </svg>
+
+                                </div>
+
+                                <div class="payment-method-info">
+
+                                    <h3 class="payment-method-name">
+                                        Wallet
+                                    </h3>
+
+                                    <p class="payment-method-sub">
+                                        Pay using wallet balance
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- Option 3: Cash On Delivery -->
+                            <div
+                                class="payment-method-item"
+                                data-payment-method="cod"
+                                tabindex="0"
+                                role="button"
+                                aria-pressed="false"
+                            >
+
+                                <div class="payment-method-icon">
+
+                                    <svg width="22" height="22"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.9"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round">
+
+                                        <rect
+                                            width="20"
+                                            height="13"
+                                            x="2"
+                                            y="5.5"
+                                            rx="2"
+                                        />
+
+                                        <circle cx="12" cy="12" r="2.5"/>
+
+                                        <path d="M6 12h.01M18 12h.01"/>
+
+                                    </svg>
+
+                                </div>
+
+                                <div class="payment-method-info">
+
+                                    <h3 class="payment-method-name">
+                                        Cash On Delivery
+                                    </h3>
+
+                                    <p class="payment-method-sub">
+                                        Pay on delivery
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </section>
+
+
+                    <!-- 3. Security & Guarantee Banner -->
+                    <div class="checkout-trust-banner">
+
+                        <div class="trust-item left">
+
+                            <div class="trust-icon" aria-hidden="true">
+
+                                <svg width="26" height="26"
+                                    viewBox="0 0 24 24"
+                                    fill="#16a34a">
+
+                                    <path d="M12 2L3 6v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V6l-9-4zm-2 15l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+
+                                </svg>
+
+                            </div>
+
+                            <div class="trust-info">
+
+                                <h4>256-bit SSL Secure</h4>
+
+                                <p>
+                                    Your data is fully encrypted
+                                </p>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="trust-item right">
+
+                            <div class="trust-icon" aria-hidden="true">
+
+                                <svg width="26" height="26"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="#059669"
+                                    stroke-width="2.2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round">
+
+                                    <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                    <path d="M3 3v5h5"/>
+                                    <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+                                    <path d="M16 21h5v-5"/>
+
+                                </svg>
+
+                            </div>
+
+                            <div class="trust-info">
+
+                                <h4>Money Back Guarantee</h4>
+
+                                <p>
+                                    No questions asked returns
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ================= RIGHT COLUMN ================= -->
+                <div class="checkout-right-col">
+
+                    <div class="order-summary-card">
+
+                        <h2 class="order-summary-title">
+                            Order Summary
+                        </h2>
+
+
+                        <!-- Product List -->
+                        <div class="summary-items-list">
+
+                            <% cartItems.forEach(item => { %>
+
+                                <div class="summary-item-row">
+
+                                    <img
+                                        class="summary-item-image"
+                                        src="<%= item.image %>"
+                                        alt="<%= item.name %>"
+                                    >
+
+                                    <div class="summary-item-info">
+
+                                        <h3 class="summary-item-name">
+                                            <%= item.name %>
+                                        </h3>
+
+                                        <p class="summary-item-qty">
+                                            Qty: <%= item.quantity %>
+                                        </p>
+
+                                    </div>
+
+                                    <div
+                                        class="summary-item-price"
+                                        style="font-weight: 600; font-size: 14px; color: #1e293b;"
+                                    >
+                                        ₹<%= item.itemTotal.toLocaleString('en-IN') %>
+                                    </div>
+
+                                </div>
+
+                            <% }); %>
+
+                        </div>
+
+
+                        <hr class="summary-dotted-line">
+
+
+                        <!-- Pricing Breakdown -->
+                        <div class="summary-breakdown">
+
+                            <div class="breakdown-row">
+
+                                <span class="breakdown-label">
+                                    Subtotal
+                                </span>
+
+                                <span class="breakdown-value">
+                                    ₹<%= totals.subtotal.toLocaleString('en-IN') %>
+                                </span>
+
+                            </div>
+
+
+                            <div class="breakdown-row shipping">
+
+                                <span class="breakdown-label">
+                                    Shipping
+                                </span>
+
+                                <span class="breakdown-value">
+                                    <%= totals.shipping === 0
+                                        ? 'FREE'
+                                        : '₹' + totals.shipping.toLocaleString('en-IN')
+                                    %>
+                                </span>
+
+                            </div>
+
+
+                            <% if (totals.discount > 0) { %>
+
+                                <div class="breakdown-row discount">
+
+                                    <span class="breakdown-label">
+                                        Discount
+                                    </span>
+
+                                    <span class="breakdown-value">
+                                        -₹<%= totals.discount.toLocaleString('en-IN') %>
+                                    </span>
+
+                                </div>
+
+                            <% } %>
+
+
+                            <div class="breakdown-row">
+
+                                <span class="breakdown-label">
+                                    Tax (GST 18%)
+                                </span>
+
+                                <span class="breakdown-value">
+                                    ₹<%= totals.tax.toLocaleString('en-IN') %>
+                                </span>
+
+                            </div>
+
+                        </div>
+
+
+                        <!-- Grand Total -->
+                        <div class="grand-total-row">
+
+                            <span class="grand-total-label">
+                                Grand Total
+                            </span>
+
+                            <span class="grand-total-value">
+                                ₹<%= totals.grandTotal.toLocaleString('en-IN') %>
+                            </span>
+
+                        </div>
+
+
+                        <!-- Primary Place Order Button -->
+                        <button
+                            type="button"
+                            class="btn-place-order"
+                        >
+                            Place Order & Pay
+                        </button>
+
+
+                        <!-- Powered by Razorpay notice -->
+                        <div class="secure-payment-badge">
+
+                            <svg width="14" height="14"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="#64748b"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round">
+
+                                <rect
+                                    width="18"
+                                    height="11"
+                                    x="3"
+                                    y="11"
+                                    rx="2"
+                                    ry="2"
+                                />
+
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+
+                            </svg>
+
+                            <span>
+                                Secure Payment Powered by
+                                <strong>Razorpay</strong>
+                            </span>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </main>
+
+
+        <!-- ================= MODALS ================= -->
+
+        <!-- 1. Change Address Modal -->
+        <div
+            class="checkout-modal-backdrop"
+            id="changeAddressModal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalChangeAddressTitle"
+        >
+
+            <div class="checkout-modal-window">
+
+                <div class="checkout-modal-header">
+
+                    <h3
+                        class="checkout-modal-title"
+                        id="modalChangeAddressTitle"
+                    >
+                        Select Delivery Address
+                    </h3>
+
+                    <button
+                        type="button"
+                        class="checkout-modal-close"
+                        data-close-modal
+                        aria-label="Close modal"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <div class="saved-addresses-list">
+
+                    <% if (addresses && addresses.length > 0) { %>
+
+                        <% addresses.forEach(addr => { %>
+
+                            <div
+                                class="saved-address-option <%= (activeAddress && addr._id.toString() === activeAddress._id.toString()) ? 'selected' : '' %>"
+                                data-id="<%= addr._id %>"
+                            >
+
+                                <input
+                                    type="radio"
+                                    name="addressSelection"
+                                    class="saved-address-radio"
+                                    value="<%= addr._id %>"
+                                    <%= (activeAddress && addr._id.toString() === activeAddress._id.toString()) ? 'checked' : '' %>
+                                >
+
+                                <div class="saved-address-body">
+
+                                    <div class="saved-address-header">
+
+                                        <span class="saved-address-name">
+                                            <%= addr.name %>
+                                        </span>
+
+                                        <span class="saved-address-badge">
+                                            <%= addr.addressType || 'Home' %>
+                                        </span>
+
+                                    </div>
+
+                                    <p class="saved-address-text">
+                                        <%= addr.phone %>
+                                    </p>
+
+                                    <p class="saved-address-text">
+                                        <%= addr.street %>,
+                                        <%= addr.city %>,
+                                        <%= addr.state %> -
+                                        <%= addr.pincode %>
+                                    </p>
+
+                                </div>
+
+                            </div>
+
+                        <% }); %>
+
+                    <% } else { %>
+
+                        <p
+                            style="padding: 20px; text-align: center; color: #64748b;"
+                        >
+                            No saved addresses available.
+                        </p>
+
+                    <% } %>
+
+                </div>
+
+
+                <div class="modal-actions">
+
+                    <button
+                        type="button"
+                        class="btn-secondary"
+                        data-close-modal
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="button"
+                        class="btn-primary"
+                        id="btnApplySelectedAddress"
+                    >
+                        Deliver to this address
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- 2. Add New Address Modal -->
+        <div
+            class="checkout-modal-backdrop"
+            id="addAddressModal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modalAddAddressTitle"
+        >
+
+            <div class="checkout-modal-window">
+
+                <div class="checkout-modal-header">
+
+                    <h3
+                        class="checkout-modal-title"
+                        id="modalAddAddressTitle"
+                    >
+                        Add New Delivery Address
+                    </h3>
+
+                    <button
+                        type="button"
+                        class="checkout-modal-close"
+                        data-close-modal
+                        aria-label="Close modal"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+
+                <form id="addAddressForm">
+
+                    <div class="modal-form-grid">
+
+                        <div class="modal-form-group">
+
+                            <label
+                                class="modal-form-label"
+                                for="newFullName"
+                            >
+                                Full Name *
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newFullName"
+                                type="text"
+                                placeholder="e.g. Jane Doe"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group">
+
+                            <label
+                                class="modal-form-label"
+                                for="newPhone"
+                            >
+                                Phone Number *
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newPhone"
+                                type="tel"
+                                placeholder="e.g. +91 98765 43210"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group full-width">
+
+                            <label
+                                class="modal-form-label"
+                                for="newStreet"
+                            >
+                                Street / Flat / House No. *
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newStreet"
+                                type="text"
+                                placeholder="e.g. 4522 Premium Plaza, Suite 100"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group full-width">
+
+                            <label
+                                class="modal-form-label"
+                                for="newLandmark"
+                            >
+                                Landmark / Area
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newLandmark"
+                                type="text"
+                                placeholder="e.g. Near Silicon Valley Park"
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group">
+
+                            <label
+                                class="modal-form-label"
+                                for="newCity"
+                            >
+                                City *
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newCity"
+                                type="text"
+                                placeholder="e.g. Silicon Valley"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group">
+
+                            <label
+                                class="modal-form-label"
+                                for="newState"
+                            >
+                                State *
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newState"
+                                type="text"
+                                placeholder="e.g. CA"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group">
+
+                            <label
+                                class="modal-form-label"
+                                for="newPincode"
+                            >
+                                Pincode / ZIP *
+                            </label>
+
+                            <input
+                                class="modal-form-input"
+                                id="newPincode"
+                                type="text"
+                                placeholder="e.g. 94043"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-form-group">
+
+                            <label
+                                class="modal-form-label"
+                                for="newAddressType"
+                            >
+                                Address Type
+                            </label>
+
+                            <select
+                                class="modal-form-select"
+                                id="newAddressType"
+                            >
+
+                                <option
+                                    value="Home"
+                                    selected
+                                >
+                                    Home
+                                </option>
+
+                                <option value="Work">
+                                    Work
+                                </option>
+
+                                <option value="Other">
+                                    Other
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="modal-actions">
+
+                        <button
+                            type="button"
+                            class="btn-secondary"
+                            data-close-modal
+                        >
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="btn-primary"
+                        >
+                            Save & Use Address
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+
+        </div>
+
+
+        <%- include('../partials/user-footer') %>
+
+    </div>
+
+
+    <!-- Interactive script -->
+    <script src="/js/checkout.js"></script>
+
+    <script>
+
+        document
+            .getElementById('btnApplySelectedAddress')
+            ?.addEventListener('click', function () {
+
+                const selectedRadio =
+                    document.querySelector(
+                        'input[name="addressSelection"]:checked'
+                    );
+
+                if (selectedRadio) {
+
+                    document
+                        .querySelector('.address-details')
+                        .dataset.activeAddressId = selectedRadio.value;
+
+                    document
+                        .getElementById('changeAddressModal')
+                        .style.display = 'none';
+
+                    alert(
+                        'Address selection updated for this order. Click "Place Order" to confirm.'
+                    );
+                }
+
+            });
+
+    </script>
+
+</body>
+</html>

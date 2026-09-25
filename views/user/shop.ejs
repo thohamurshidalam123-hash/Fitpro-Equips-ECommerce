@@ -35,7 +35,7 @@
 				<section class="shop-results" aria-label="Products">
 					<% if (!products.length) { %><p>No available products match your filters.</p><% } %>
 					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const serializedVariants = encodeURIComponent(JSON.stringify(product.variants || [])); %>
-						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.brandId ? product.brandId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2><span class="product-card-category"><%= product.categoryId ? product.categoryId.name : 'Equipment' %></span></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
+						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" data-wishlist-toggle data-product-id="<%= product._id %>" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.brandId ? product.brandId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2><span class="product-card-category"><%= product.categoryId ? product.categoryId.name : 'Equipment' %></span></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
 								<button type="button" data-quantity-action="decrease" aria-label="Decrease quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>−</button>
 								<span class="product-qty-value">1</span>
 								<button type="button" data-quantity-action="increase" data-max-quantity="<%= product.availableStock %>" aria-label="Increase quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>＋</button>
@@ -55,6 +55,15 @@
 				<button class="variant-picker-close" type="button" aria-label="Close variant selection">×</button>
 				<h2 id="shopVariantTitle">Choose a variant</h2>
 				<div id="shopVariantOptions"></div>
+				<div class="variant-picker-quantity" aria-label="Variant quantity selector">
+					<span>Quantity</span>
+					<div class="variant-quantity-control">
+						<button type="button" id="shopVariantDecrease" aria-label="Decrease quantity">−</button>
+						<strong id="shopVariantQuantity">1</strong>
+						<button type="button" id="shopVariantIncrease" aria-label="Increase quantity">+</button>
+					</div>
+				</div>
+				<p class="variant-picker-total">Total quantity selected: <strong id="shopVariantTotal">1</strong></p>
 				<button class="variant-picker-add" type="button" id="shopVariantAdd">Add to Cart</button>
 			</section>
 		</div>
@@ -124,16 +133,39 @@
 		const variantPicker = document.getElementById('shopVariantPicker');
 		const variantOptions = document.getElementById('shopVariantOptions');
 		const variantAdd = document.getElementById('shopVariantAdd');
+		const variantQuantity = document.getElementById('shopVariantQuantity');
+		const variantTotal = document.getElementById('shopVariantTotal');
+		const variantDecrease = document.getElementById('shopVariantDecrease');
+		const variantIncrease = document.getElementById('shopVariantIncrease');
 		let pickerProductId = '';
 		let pickerQuantity = 1;
+		let pickerMaxQuantity = 1;
+		const updatePickerQuantity = (quantity) => {
+			pickerQuantity = Math.min(pickerMaxQuantity, Math.max(1, quantity));
+			variantQuantity.textContent = pickerQuantity;
+			variantTotal.textContent = pickerQuantity;
+			variantDecrease.disabled = pickerQuantity <= 1;
+			variantIncrease.disabled = pickerQuantity >= pickerMaxQuantity;
+		};
 		function openShopVariantPicker(button, variants) {
 			pickerProductId = button.dataset.productId;
 			pickerQuantity = Number(button.closest('.shop-product-card').querySelector('.product-qty-value')?.textContent) || 1;
 			const firstAvailableVariant = variants.find(variant => Number(variant.stock) > 0);
-			variantOptions.innerHTML = variants.map(variant => `<button type="button" class="shop-variant-option ${firstAvailableVariant && String(firstAvailableVariant._id) === String(variant._id) ? 'selected' : ''}" data-variant-id="${variant._id}" ${variant.stock < 1 ? 'disabled' : ''}><strong>${variant.name || `${variant.weight} ${variant.weightUnit || 'kg'}`}</strong><span>${variant.color || ''} · ₹${Number(variant.price || 0).toFixed(2)} · ${variant.stock} left</span></button>`).join('');
+			variantOptions.innerHTML = variants.map(variant => `<button type="button" class="shop-variant-option ${firstAvailableVariant && String(firstAvailableVariant._id) === String(variant._id) ? 'selected' : ''}" data-variant-id="${variant._id}" data-stock="${variant.stock}" ${variant.stock < 1 ? 'disabled' : ''}><strong>${variant.name || `${variant.weight} ${variant.weightUnit || 'kg'}`}</strong><span>${variant.color || ''} · ₹${Number(variant.price || 0).toFixed(2)} · ${variant.stock} left</span></button>`).join('');
+			pickerMaxQuantity = Math.min(5, Number(firstAvailableVariant?.stock) || 1);
+			updatePickerQuantity(Math.min(pickerQuantity, pickerMaxQuantity));
 			variantPicker.hidden = false;
 		}
-		variantOptions.addEventListener('click', event => { const option = event.target.closest('.shop-variant-option'); if (!option || option.disabled) return; variantOptions.querySelectorAll('.shop-variant-option').forEach(item => item.classList.remove('selected')); option.classList.add('selected'); });
+		variantOptions.addEventListener('click', event => {
+			const option = event.target.closest('.shop-variant-option');
+			if (!option || option.disabled) return;
+			variantOptions.querySelectorAll('.shop-variant-option').forEach(item => item.classList.remove('selected'));
+			option.classList.add('selected');
+			pickerMaxQuantity = Math.min(5, Number(option.dataset.stock) || 1);
+			updatePickerQuantity(pickerQuantity);
+		});
+		variantDecrease.addEventListener('click', () => updatePickerQuantity(pickerQuantity - 1));
+		variantIncrease.addEventListener('click', () => updatePickerQuantity(pickerQuantity + 1));
 		document.querySelector('.variant-picker-close').addEventListener('click', () => { variantPicker.hidden = true; });
 		variantPicker.addEventListener('click', event => { if (event.target === variantPicker) variantPicker.hidden = true; });
 		variantAdd.addEventListener('click', async () => {
@@ -148,6 +180,7 @@
 			} finally { variantAdd.disabled = false; }
 		});
 	</script>
+	<script src="/js/wishlist-actions.js"></script>
 	<% if (typeof message !== 'undefined' && message) { %>
 		<div id="shopNotification" data-message="<%= message %>" data-type="<%= messageType || 'error' %>"></div>
 		<script>

@@ -103,7 +103,7 @@
                                 <button class="add-to-cart" type="button" disabled style="background-color: #ccc; cursor: not-allowed; width: 100%;">▣ &nbsp; Out of Stock</button>
                             <% } %>
                         </div>
-                        <button class="wishlist-button" type="button">♡ &nbsp; Add to Wishlist</button>
+                        <button class="wishlist-button" data-wishlist-toggle data-product-id="<%= product._id %>" type="button">♡ &nbsp; Add to Wishlist</button>
                     </div>
                 </section>
 
@@ -148,6 +148,7 @@
         <%- include('../partials/user-footer') %>
     </div>
 
+    <script src="/js/wishlist-actions.js"></script>
     <script>
         const productImage = document.getElementById('productImage');
         const galleryFrame = document.querySelector('.product-gallery-main');
