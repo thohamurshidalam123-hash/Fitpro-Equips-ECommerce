@@ -12,6 +12,7 @@ const cartController = require ('../controllers/cartController')
 const wishlistController = require ('../controllers/wishlistController');
 const checkoutController = require('../controllers/checkoutController');
 const orderController = require('../controllers/orderController');
+const invoiceController = require('../controllers/invoiceController');
 require('../configuration/passport');
 
 
@@ -138,5 +139,6 @@ router.get('/orders',requireUserSession,orderController.loadOrderHistory);
 router.get('/account/orders/:id',requireUserSession,orderController.loadOrderDetails);
 router.post('/account/orders/:id/cancel',requireUserSession,orderController.cancelOrder);
 router.post('/account/orders/:id/return',requireUserSession,orderController.returnOrder);
+router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
 
 module.exports = router;

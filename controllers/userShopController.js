@@ -105,6 +105,12 @@ const loadShopPage = async (req, res) => {
         .limit(limit)
         .lean();
 
+        products.forEach(product => {
+            if (product.variants && product.variants.length > 0) {
+                product.availableStock = product.variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
+            }
+        });
+
         // For getting the total count of pagination
         const totalProducts = await Product.countDocuments(query);
         const totalPages = Math.ceil(totalProducts/limit);

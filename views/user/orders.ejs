@@ -68,7 +68,7 @@
         .order-product-image img { width: 100%; height: 100%; object-fit: contain; }
         .order-product-name { margin: 0 0 2px; color: #27364c; font-size: 9px; font-weight: 650; }
         .order-product-variant { margin: 0; color: var(--orders-muted); font-size: 8px; }
-        .download-button { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid #e3e9f2; border-radius: 5px; color: #61718a; background: #fff; cursor: pointer; }
+        .download-button { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid #e3e9f2; border-radius: 5px; color: #61718a; background: #fff; cursor: pointer; text-decoration: none; }
         .download-button svg { width: 12px; height: 12px; }
 
         .tracking { display: grid; grid-template-columns: repeat(5, 1fr); position: relative; margin: 0 12px 10px; padding: 3px 0 0; list-style: none; }
@@ -221,7 +221,7 @@
                                         <p class="order-product-variant">Qty: <%= item.quantity %> | ₹<%= item.price.toLocaleString('en-IN') %></p>
                                     </div>
                                     <% if (order.orderStatus === 'Delivered') { %>
-                                        <button class="download-button" type="button" aria-label="Download invoice for order <%= order.orderId %>" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></button>
+                                        <a class="download-button" href="/account/orders/<%= order._id %>/invoice" aria-label="Download invoice for order <%= order.orderId %>" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></a>
                                     <% } %>
                                 </div>
                             <% }); %>

@@ -1,6 +1,36 @@
 const Order =require('../models/orderModel');
 const Product = require('../models/productModel');
 
+const adjustOrderItemStock = async (item, quantityChange) => {
+    const product = await Product.findById(item.productId);
+    if (!product) return;
+
+    let variant = item.variantId ? product.variants.id(item.variantId) : null;
+    if (!variant && !item.variantId && product.variants.length > 0) {
+        let matchingVariants = item.image
+            ? product.variants.filter(productVariant => productVariant.images.includes(item.image))
+            : [];
+        if (matchingVariants.length !== 1) {
+            matchingVariants = product.variants.filter(productVariant => Number(productVariant.price) === Number(item.price));
+        }
+        if (matchingVariants.length === 1) variant = matchingVariants[0];
+    }
+
+    if (variant) {
+        variant.stock = Math.max(0, (Number(variant.stock) || 0) + quantityChange);
+        if (variant.stock > 0 && variant.status === 'Out of Stock') variant.status = 'Active';
+        product.availableStock = product.variants.reduce(
+            (total, productVariant) => total + (Number(productVariant.stock) || 0),
+            0
+        );
+    } else if (product.variants.length === 0) {
+        product.availableStock = Math.max(0, (Number(product.availableStock) || 0) + quantityChange);
+    }
+
+    if (product.availableStock > 0 && product.status === 'Out of Stock') product.status = 'Active';
+    await product.save();
+};
+
 const loadOrderHistory = async (req, res) => {
     try{
         const userId = req.session.userId;
@@ -107,9 +137,7 @@ const cancelOrder = async (req, res) => {
 
         // For incrementing stock for all items
         for (let item of order.items){
-            await Product.findByIdAndUpdate(item.productId, {
-                $inc: { availableStock: item.quantity}
-            });
+            await adjustOrderItemStock(item, item.quantity);
 
         }
 
@@ -146,9 +174,7 @@ const returnOrder = async (req, res) => {
 
         // For incrementing stock of returned item
         for (let item of order.items) {
-            await Product.findByIdAndUpdate(item.productId, {
-                $inc: { availableStock: item.quantity }
-            });
+            await adjustOrderItemStock(item, item.quantity);
         }
 
         res.json({ success: true, message: 'Order return initiates successfully'});

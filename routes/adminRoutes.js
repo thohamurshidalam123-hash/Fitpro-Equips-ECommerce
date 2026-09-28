@@ -7,6 +7,8 @@ const adminController = require('../controllers/adminController');
 const categoryController = require('../controllers/categoryControllers')
 const productController = require('../controllers/productController');
 const brandController = require('../controllers/brandController');
+const adminOrderController = require('../controllers/adminOrderController')
+const invoiceController = require('../controllers/invoiceController');
 
 const productUploadDir = path.join(__dirname, '..', 'uploads', 'products');
 fs.mkdirSync(productUploadDir, { recursive: true });
@@ -96,5 +98,12 @@ router.get('/products/:id', productController.loadProductDetails);
 router.post('/products/:productId/variants/add', parseProductUpload, productController.addVariant);
 router.put('/products/:productId/variants/edit/:variantId', parseProductUpload, productController.editVariant);
 router.delete('/products/:productId/variants/delete/:variantId',productController.deleteVariant);
+
+// Order management routes
+router.get('/orders',adminOrderController.loadAdminOrders);
+router.get('/orders/:id/invoice', invoiceController.downloadAdminInvoice);
+router.get('/orders/:id',adminOrderController.loadAdminOrderDetails);
+router.post('/orders/:id/status',adminOrderController.updateOrderStatus)
+
 
 module.exports = router;

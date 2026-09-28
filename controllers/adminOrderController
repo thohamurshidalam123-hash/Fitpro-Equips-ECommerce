@@ -1,0 +1,111 @@
+const Order = require('../models/orderModel');
+
+// For listing orders with search, filter, sort (descending) and pagination
+const loadAdminOrders = async (req, res) => {
+    try{
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const search = req.query.search ? req.query.search.trim() : '';
+        const validStatuses = ['Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned'];
+        const status = validStatuses.includes(req.query.status) ? req.query.status : 'all';
+        const validPaymentStatuses = ['Paid', 'Pending'];
+        const payment = validPaymentStatuses.includes(req.query.payment) ? req.query.payment : 'all';
+
+        let query = {};
+
+        if (status !== 'all') query.orderStatus = status;
+        if (payment !== 'all') query.paymentStatus = payment;
+
+        // For search filter (by Order ID or Customer Name/Email via populated user)
+        if (search) {
+            query.$or = [
+                { orderId: { $regex: search, $options:'i'}},
+                { 'shippingAddress.name': { $regex: search, $options: 'i' }}
+            ];
+        }
+
+        // For fetching counts for summary card showing
+        const totalOrders = await Order.countDocuments({});
+        const processingOrders = await Order.countDocuments({ orderStatus: 'Processing' });
+        const shippedOrders = await Order.countDocuments({ orderStatus: 'Shipped' });
+        const deliveredOrders = await Order.countDocuments({ orderStatus: 'Delivered' });
+
+        // For fetching paginated orders in descending order by date
+        const count = await Order.countDocuments(query)
+        const orders = await Order.find(query)
+            .populate('userId', 'name email')
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean();
+
+        res.render('admin/adminOrder', {
+            currentPage: 'orders',
+            orders,
+            stats: {
+                total: totalOrders,
+                processing: processingOrders,
+                shipped: shippedOrders,
+                delivered: deliveredOrders,
+            },
+            pagination: {
+                page,
+                totalPages: Math.ceil(count / limit),
+                totalEntries: count
+            },
+            filters: { search, status, payment }
+        });
+    }catch(error) {
+        console.error('Error in load admin order page:',error);
+        res.status(500).json({ success: false, message: 'Server Error'});
+    }
+};
+
+// For loading order details page
+const loadAdminOrderDetails = async (req, res) => {
+    try{
+        const orderId = req.params.id;
+        const order = await Order.findById(orderId).populate('userId').lean();
+        
+        if(!order) return res.redirect('/admin/orders');
+
+        res.render('admin/adminOrderDetails', {
+            currentPage: 'orders',
+            order
+        });
+    }catch(error) {
+        console.error('Error in load admin order details page:',error);
+        res.status(500).json({ success: false, message: 'Server Errror'});
+    }
+};
+
+// Updating order status
+const updateOrderStatus = async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { status } = req.body;
+
+        const validStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ success: false, message: 'Invalid status value' });
+        }
+
+        const order = await Order.findById(orderId);
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+
+        order.orderStatus = status;
+        await order.save();
+
+        res.json({ success: true, message: 'Order status updated successfully' });
+    } catch (error) {
+        console.error('Update Status Error:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+
+module.exports = {
+    loadAdminOrders,
+    loadAdminOrderDetails,
+    updateOrderStatus
+}

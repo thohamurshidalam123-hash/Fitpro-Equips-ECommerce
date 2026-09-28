@@ -211,6 +211,7 @@ const placeOrder = async (req, res) => {
             subtotal += itemTotal;
             orderItems.push({
                 productId: product._id,
+                variantId: item.variantId,
                 name: product.productName,
                 image: (variant && variant.images[0]) || product.images[0] || '',
                 price: price,
@@ -260,6 +261,14 @@ const placeOrder = async (req, res) => {
                     { _id: item.productId._id, 'variants._id': item.variantId },
                     { $inc: { 'variants.$.stock': -item.quantity } }
                 );
+                const updatedProduct = await Product.findById(item.productId._id);
+                if (updatedProduct) {
+                    updatedProduct.availableStock = updatedProduct.variants.reduce(
+                        (total, productVariant) => total + (Number(productVariant.stock) || 0),
+                        0
+                    );
+                    await updatedProduct.save();
+                }
             } else {
                 await Product.findByIdAndUpdate(item.productId._id, {
                     $inc: { availableStock: -item.quantity }

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Management | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-scale.css">
+    <style>
+        :root {
+            --order-blue: #0965e8;
+            --order-ink: #1c2738;
+            --order-muted: #758198;
+            --order-line: #dfe5ef;
+            --order-page: #f6f8ff;
+        }
+
+        body:has(.order-management-page) { background: var(--order-page); color: var(--order-ink); }
+        .order-management-page { grid-template-columns: clamp(164px, 16.3vw, 198px) 1fr; min-height: 100vh; }
+        .order-management-page > .sidebar { width: clamp(164px, 16.3vw, 198px); }
+        .order-management-page > .main-content { min-width: 0; padding: 0 28px 32px; }
+
+        .orders-topbar {
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            margin: 0 -28px 26px;
+            padding: 0 18px;
+            border-bottom: 1px solid #e1e6ef;
+            background: rgba(255,255,255,.72);
+        }
+
+        .orders-global-search { position: relative; width: min(100%, 262px); }
+        .orders-global-search svg { position: absolute; top: 50%; left: 9px; width: 13px; height: 13px; color: #7c889b; transform: translateY(-50%); pointer-events: none; }
+        .orders-global-search input { width: 100%; height: 29px; padding: 0 10px 0 29px; border: 1px solid #d9e2f1; border-radius: 6px; outline: none; color: #334158; background: #f1f5ff; font: inherit; font-size: 10px; }
+        .orders-global-search input:focus { border-color: #8eb6f7; box-shadow: 0 0 0 2px rgba(9,101,232,.1); }
+        .orders-top-actions { display: flex; align-items: center; gap: 20px; }
+        .orders-notification { position: relative; display: grid; width: 22px; height: 24px; place-items: center; border: 0; color: #53627a; background: transparent; }
+        .orders-notification svg { width: 15px; height: 15px; }
+        .orders-notification::after { position: absolute; top: 4px; right: 2px; width: 5px; height: 5px; border-radius: 50%; background: #e4474d; content: ""; }
+        .orders-support { color: #075bd6; font-size: 10px; font-weight: 600; text-decoration: none; }
+
+        .orders-heading { margin: 0 0 17px; }
+        .orders-breadcrumb { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; color: #8490a2; font-size: 9px; }
+        .orders-breadcrumb span:last-child { color: var(--order-blue); }
+        .orders-title { margin: 0; color: var(--order-ink); font-size: 21px; font-weight: 650; line-height: 1.2; }
+
+        .orders-stat-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; margin-bottom: 14px; }
+        .orders-stat { min-height: 65px; padding: 13px 12px 10px; border: 1px solid var(--order-line); border-radius: 7px; background: #fff; }
+        .orders-stat-label { display: block; margin-bottom: 8px; color: #788499; font-size: 9px; }
+        .orders-stat-value { display: block; color: #233044; font-size: 14px; font-weight: 700; }
+        .orders-stat.processing .orders-stat-value { color: #e27416; }
+        .orders-stat.shipped .orders-stat-value { color: #0899df; }
+        .orders-stat.delivered .orders-stat-value { color: #0c9c66; }
+
+        .orders-filterbar { display: grid; grid-template-columns: minmax(175px, 1fr) repeat(2, minmax(82px, auto)) auto; gap: 8px; align-items: center; margin-bottom: 12px; padding: 9px; border: 1px solid #dce3ee; border-radius: 7px; background: #fff; }
+        .orders-query { position: relative; min-width: 0; }
+        .orders-query > svg { position: absolute; top: 50%; left: 9px; width: 13px; height: 13px; color: #6f7e95; transform: translateY(-50%); pointer-events: none; }
+        .orders-query input { width: 100%; height: 29px; padding: 0 30px 0 28px; border: 0; border-radius: 5px; outline: none; color: #34435a; background: #f0f4ff; font: inherit; font-size: 9px; }
+        .orders-clear-search { position: absolute; top: 50%; right: 5px; display: grid; width: 22px; height: 22px; place-items: center; padding: 0; border: 0; border-radius: 4px; color: #6f7e95; background: transparent; transform: translateY(-50%); cursor: pointer; }
+        .orders-clear-search:hover { color: #26364d; background: #e2eafa; }
+        .orders-clear-search svg { width: 12px; height: 12px; }
+        .orders-search-button { display: inline-flex; height: 29px; align-items: center; justify-content: center; gap: 5px; padding: 0 10px; border: 0; border-radius: 5px; color: #fff; background: var(--order-blue); font: inherit; font-size: 9px; cursor: pointer; }
+        .orders-search-button:hover { background: #0755c3; }
+        .orders-search-button svg { width: 12px; height: 12px; }
+        .orders-filter-select { height: 29px; min-width: 0; padding: 0 9px; border: 1px solid transparent; border-radius: 5px; color: #3d4a5e; background: #f5f7fb; font: inherit; font-size: 9px; cursor: pointer; }
+        .orders-filter-select:focus { border-color: #97b9eb; outline: none; }
+        
+        .orders-table-card { overflow: visible; border: 1px solid #dce3ee; border-radius: 7px; background: #fff; }
+        .orders-table-wrap { overflow-x: auto; }
+        .orders-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+        .orders-table thead { background: #f8f9fc; }
+        .orders-table th { height: 33px; padding: 0 12px; border-bottom: 1px solid #dce3ee; color: #79859a; font-size: 8px; font-weight: 650; letter-spacing: .03em; }
+        .orders-table td { height: 40px; padding: 5px 12px; border-bottom: 1px solid #edf0f5; color: #303d51; font-size: 9px; }
+        .orders-table tbody tr:last-child td { border-bottom: 0; }
+        .orders-table tbody tr:hover { background: #fbfcff; }
+        .order-id-link { color: #075bd6; font-weight: 650; text-decoration: none; }
+        .order-id-link:hover { text-decoration: underline; }
+        .orders-customer { display: flex; align-items: center; gap: 7px; }
+        .customer-avatar { display: grid; width: 20px; height: 20px; flex: 0 0 20px; place-items: center; border-radius: 50%; color: #2863ad; background: #e7efff; font-size: 7px; font-weight: 700; }
+        .customer-name { display: block; color: #28364a; font-size: 9px; }
+        .customer-email { display: block; margin-top: 2px; color: #8c97a7; font-size: 7px; }
+        .product-count { display: inline-grid; min-width: 15px; height: 15px; place-items: center; border: 1px solid #dae3f0; border-radius: 3px; color: #44546d; background: #f3f6fb; font-size: 7px; }
+        .payment-badge { display: inline-flex; align-items: center; min-height: 13px; padding: 0 6px; border-radius: 8px; color: #087b4e; background: #d9f7eb; font-size: 6px; font-weight: 700; text-transform: uppercase; }
+        
+        .status-badge { display: inline-flex; align-items: center; gap: 4px; min-height: 17px; padding: 0 7px; border-radius: 9px; font-size: 7px; font-weight: 650; }
+        .status-badge::before { width: 4px; height: 4px; border-radius: 50%; background: currentColor; content: ""; }
+        .status-badge.processing { color: #bd6711; background: #fff0d8; }
+        .status-badge.shipped { color: #1266be; background: #dcefff; }
+        .status-badge.delivered { color: #087b4e; background: #d9f7eb; }
+        .status-badge.cancelled { color: #bd3940; background: #fde7e8; }
+        
+        .order-amount { color: #263348; font-weight: 650; }
+        .order-action-menu { position: relative; width: 24px; }
+        .order-action-menu summary { display: grid; width: 22px; height: 24px; place-items: center; border-radius: 4px; color: #77849a; cursor: pointer; list-style: none; }
+        .order-action-menu summary::-webkit-details-marker { display: none; }
+        .order-action-menu summary:hover { color: var(--order-blue); background: #f1f5ff; }
+        .order-action-menu svg { width: 13px; height: 13px; }
+        .order-action-popover { position: absolute; top: 23px; right: 0; z-index: 5; display: grid; min-width: 106px; padding: 4px; border: 1px solid var(--order-line); border-radius: 5px; background: #fff; box-shadow: 0 5px 16px rgba(25,45,75,.12); }
+        .order-action-popover a { padding: 6px 8px; border-radius: 3px; color: #42516a; background: #fff; font-size: 8px; text-decoration: none; display: block; }
+        .order-action-popover a:hover { color: var(--order-blue); background: #f2f6ff; }
+
+        .orders-table-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 36px; padding: 5px 12px; border-top: 1px solid #e3e8f0; color: #78859a; font-size: 8px; }
+        .orders-pagination { display: flex; align-items: center; gap: 4px; }
+        .page-button { display: grid; width: 19px; height: 19px; place-items: center; border: 1px solid #d7dfec; border-radius: 4px; color: #6d7c93; background: #fff; font: inherit; font-size: 7px; cursor: pointer; text-decoration: none; }
+        .page-button.active { border-color: #075bd6; color: #fff; background: #075bd6; }
+        .page-button svg { width: 10px; height: 10px; }
+
+        .delivery-pulse { min-height: 150px; margin-top: 13px; padding: 16px 14px; border: 1px solid #dce3ee; border-radius: 7px; background: #fff; }
+        .delivery-pulse h2 { margin: 0 0 13px; color: #28354a; font-size: 10px; font-weight: 650; }
+        .pulse-row { margin-bottom: 8px; }
+        .pulse-label-line { display: flex; justify-content: space-between; margin-bottom: 3px; color: #7c889b; font-size: 7px; }
+        .pulse-label-line strong { color: #28364a; font-size: 7px; }
+        .pulse-track { height: 4px; overflow: hidden; border-radius: 4px; background: #e9eff8; }
+        .pulse-bar { height: 100%; border-radius: inherit; }
+        .pulse-bar.delivered { width: 82%; background: #0eae78; }
+        .pulse-bar.shipped { width: 15%; background: #11a5e8; }
+        .pulse-bar.processing { width: 3%; min-width: 14px; background: #f1a000; }
+    </style>
+</head>
+<body>
+    <div class="admin-dashboard order-management-page">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'orders' }) %>
+
+        <main class="main-content">
+            <header class="orders-topbar">
+                <label class="orders-global-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+                    <input type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search admin">
+                </label>
+                <div class="orders-top-actions">
+                    <button class="orders-notification" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button>
+                    <a class="orders-support" href="#support">Support</a>
+                </div>
+            </header>
+
+            <div class="orders-heading">
+                <nav class="orders-breadcrumb" aria-label="Breadcrumb"><span>Dashboard</span><span aria-hidden="true">›</span><span>Orders</span></nav>
+                <h1 class="orders-title">Order Management</h1>
+            </div>
+
+            <section class="orders-stat-grid" aria-label="Order overview">
+                <article class="orders-stat"><span class="orders-stat-label">Total Orders</span><strong class="orders-stat-value"><%= stats.total.toLocaleString('en-IN') %></strong></article>
+                <article class="orders-stat processing"><span class="orders-stat-label">Processing</span><strong class="orders-stat-value"><%= stats.processing %></strong></article>
+                <article class="orders-stat shipped"><span class="orders-stat-label">Shipped</span><strong class="orders-stat-value"><%= stats.shipped %></strong></article>
+                <article class="orders-stat delivered"><span class="orders-stat-label">Delivered</span><strong class="orders-stat-value"><%= stats.delivered %></strong></article>
+            </section>
+
+            <!-- Server-Side Search & Filter Form -->
+            <form action="/admin/orders" method="GET" class="orders-filterbar" id="filterForm">
+                <label class="orders-query">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+                    <input name="search" type="search" placeholder="Search by Order ID, Customer Name..." aria-label="Search orders" value="<%= filters.search %>">
+                    <button class="orders-clear-search" id="clearSearch" type="button" aria-label="Clear search" title="Clear search">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"></path></svg>
+                    </button>
+                </label>
+                
+                <select name="status" class="orders-filter-select" onchange="this.form.submit()" aria-label="Filter by status">
+                    <option value="all" <%= filters.status === 'all' ? 'selected' : '' %>>All Status</option>
+                    <option value="Processing" <%= filters.status === 'Processing' ? 'selected' : '' %>>Processing</option>
+                    <option value="Packed" <%= filters.status === 'Packed' ? 'selected' : '' %>>Packed</option>
+                    <option value="Shipped" <%= filters.status === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                    <option value="Delivered" <%= filters.status === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                    <option value="Cancelled" <%= filters.status === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                    <option value="Returned" <%= filters.status === 'Returned' ? 'selected' : '' %>>Returned</option>
+                </select>
+
+                <select name="payment" class="orders-filter-select" onchange="this.form.submit()" aria-label="Filter by payment">
+                    <option value="all" <%= filters.payment === 'all' ? 'selected' : '' %>>Payment</option>
+                    <option value="Paid" <%= filters.payment === 'Paid' ? 'selected' : '' %>>Paid</option>
+                    <option value="Pending" <%= filters.payment === 'Pending' ? 'selected' : '' %>>Pending</option>
+                </select>
+                <button class="orders-search-button" type="submit">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+                    Search
+                </button>
+            </form>
+
+            <section class="orders-table-card" aria-label="Orders">
+                <div class="orders-table-wrap">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>ORDER ID</th>
+                                <th>CUSTOMER</th>
+                                <th>PRODUCTS</th>
+                                <th>DATE</th>
+                                <th>PAYMENT</th>
+                                <th>STATUS</th>
+                                <th>AMOUNT</th>
+                                <th>ACTIONS</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersBody">
+                            <% if (orders.length === 0) { %>
+                                <tr><td colspan="8" style="text-align: center; padding: 20px;">No orders found.</td></tr>
+                            <% } else { %>
+                                <% orders.forEach(order => { 
+                                    const dateFormatted = new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                                    const customerName = order.userId ? order.userId.name : (order.shippingAddress ? order.shippingAddress.name : 'Guest');
+                                    const customerEmail = order.userId ? order.userId.email : 'N/A';
+                                    const initials = customerName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+                                    const totalQty = order.items.reduce((sum, i) => sum + i.quantity, 0);
+                                    const statusClass = order.orderStatus.toLowerCase().replace(/\s+/g, '');
+                                %>
+                                <tr class="order-row">
+                                    <td> <a href="/admin/orders/<%= order._id %>" class="order-id-link"><%= order.orderId %></a> </td>
+                                    <td>
+                                        <div class="orders-customer">
+                                            <span class="customer-avatar"><%= initials %></span>
+                                            <span>
+                                                <span class="customer-name"><%= customerName %></span>
+                                                <span class="customer-email"><%= customerEmail %></span>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td><span class="product-count"><%= totalQty %></span></td>
+                                    <td><%= dateFormatted %></td>
+                                    <td><span class="payment-badge"><%= order.paymentStatus || 'Paid' %></span></td>
+                                    <td><span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span></td>
+                                    <td class="order-amount">₹<%= order.grandTotal.toLocaleString('en-IN') %></td>
+                                    <td>
+                                        <details class="order-action-menu">
+                                            <summary aria-label="Actions">
+                                                <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.7"></circle><circle cx="12" cy="12" r="1.7"></circle><circle cx="12" cy="19" r="1.7"></circle></svg>
+                                            </summary>
+                                            <div class="order-action-popover">
+                                                <a href="/admin/orders/<%= order._id %>">View details</a>
+                                            </div>
+                                        </details>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <footer class="orders-table-footer">
+                    <span>Showing page <%= pagination.page %> of <%= pagination.totalPages %> (<%= pagination.totalEntries %> total entries)</span>
+                    <nav class="orders-pagination" aria-label="Orders pages">
+                        <% if (pagination.page > 1) { %>
+                            <a href="/admin/orders?page=<%= pagination.page - 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&payment=<%= filters.payment %>" class="page-button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"></path></svg>
+                            </a>
+                        <% } %>
+
+                        <% for(let i = 1; i <= pagination.totalPages; i++) { %>
+                            <a href="/admin/orders?page=<%= i %>&search=<%= filters.search %>&status=<%= filters.status %>&payment=<%= filters.payment %>" class="page-button <%= pagination.page === i ? 'active' : '' %>"><%= i %></a>
+                        <% } %>
+
+                        <% if (pagination.page < pagination.totalPages) { %>
+                            <a href="/admin/orders?page=<%= pagination.page + 1 %>&search=<%= filters.search %>&status=<%= filters.status %>&payment=<%= filters.payment %>" class="page-button">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"></path></svg>
+                            </a>
+                        <% } %>
+                    </nav>
+                </footer>
+            </section>
+
+            <section class="delivery-pulse" aria-labelledby="deliveryPulseTitle">
+                <h2 id="deliveryPulseTitle">Delivery Pulse</h2>
+                <div class="pulse-row"><div class="pulse-label-line"><span>Delivered</span><strong><%= stats.delivered %></strong></div><div class="pulse-track"><div class="pulse-bar delivered"></div></div></div>
+                <div class="pulse-row"><div class="pulse-label-line"><span>Shipping</span><strong><%= stats.shipped %></strong></div><div class="pulse-track"><div class="pulse-bar shipped"></div></div></div>
+                <div class="pulse-row"><div class="pulse-label-line"><span>Processing</span><strong><%= stats.processing %></strong></div><div class="pulse-track"><div class="pulse-bar processing"></div></div></div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const filterForm = document.getElementById('filterForm');
+        const searchInput = filterForm.querySelector('input[name="search"]');
+        document.getElementById('clearSearch').addEventListener('click', () => {
+            searchInput.value = '';
+            filterForm.requestSubmit();
+        });
+    </script>
+</body>
+</html>

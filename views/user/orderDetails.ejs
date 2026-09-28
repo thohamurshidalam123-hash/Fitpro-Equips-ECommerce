@@ -38,7 +38,7 @@
         .cancel-order-button,
         .return-order-button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 5px; font: inherit; font-size: 9px; cursor: pointer; transition: background 0.15s ease; }
         
-        .invoice-button { border: 1px solid #d6e4fa; color: #35445c; background: #edf4ff; }
+        .invoice-button { border: 1px solid #d6e4fa; color: #35445c; background: #edf4ff; text-decoration: none; }
         .invoice-button:hover { background: #e2edff; }
         
         .cancel-order-button { border: 1px solid #f0c6ca; color: #c53540; background: #fff; }
@@ -183,10 +183,10 @@
                 </div>
                 
                 <div class="overview-actions">
-                    <button class="invoice-button" type="button">
+                    <a class="invoice-button" href="/account/orders/<%= order._id %>/invoice">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg>
                         Download Invoice
-                    </button>
+                    </a>
 
                     <!-- Show Cancel if active -->
                     <% if (order.orderStatus !== 'Delivered' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned') { %>
@@ -233,8 +233,13 @@
             </section>
             <% } else { %>
                 <section class="tracking-panel">
-                    <h2 class="section-title">Order Status: <span style="color: #dc2626;"><%= order.orderStatus %></span></h2>
-                    <p style="font-size: 13px; color: #475569;">This order has been <%= order.orderStatus.toLowerCase() %>.</p>
+                    <% if (order.orderStatus === 'Returned') { %>
+                        <h2 class="section-title">Order Status: <span style="color: #dc2626;">Return in process</span></h2>
+                        <p style="font-size: 13px; color: #475569;">Order return process initiated</p>
+                    <% } else { %>
+                        <h2 class="section-title">Order Status: <span style="color: #dc2626;"><%= order.orderStatus %></span></h2>
+                        <p style="font-size: 13px; color: #475569;">This order has been <%= order.orderStatus.toLowerCase() %>.</p>
+                    <% } %>
                     <% if (order.cancellationReason || order.returnReason) { %>
                         <p style="font-size: 12px; color: #64748b; font-style: italic;">Reason: "<%= order.cancellationReason || order.returnReason %>"</p>
                     <% } %>
