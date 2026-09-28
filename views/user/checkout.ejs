@@ -61,7 +61,7 @@
                             >
 
                                 <h3 class="address-recipient-name">
-                                    <%= activeAddress.name %>
+                                    <%= activeAddress.fullName %>
                                 </h3>
 
                                 <p class="address-recipient-phone">
@@ -69,12 +69,12 @@
                                 </p>
 
                                 <p class="address-line address-line-1">
-                                    <%= activeAddress.street %>,
-                                    <%= activeAddress.landmark ? activeAddress.landmark + ',' : '' %>
+                                    <%= [activeAddress.houseName, activeAddress.street, activeAddress.landmark].filter(Boolean).join(', ') %>
                                 </p>
 
                                 <p class="address-line address-line-last">
                                     <%= activeAddress.city %>,
+                                    <%= activeAddress.district %>,
                                     <%= activeAddress.state %> -
                                     <%= activeAddress.pincode %>
                                 </p>
@@ -523,11 +523,11 @@
                             <div class="breakdown-row">
 
                                 <span class="breakdown-label">
-                                    Tax (GST 18%)
+                                    Tax (GST 0.18%)
                                 </span>
 
                                 <span class="breakdown-value">
-                                    ₹<%= totals.tax.toLocaleString('en-IN') %>
+                                    ₹<%= totals.tax.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %>
                                 </span>
 
                             </div>
@@ -554,7 +554,7 @@
                             type="button"
                             class="btn-place-order"
                         >
-                            Place Order & Pay
+                            Place Order
                         </button>
 
 
@@ -641,6 +641,11 @@
                             <div
                                 class="saved-address-option <%= (activeAddress && addr._id.toString() === activeAddress._id.toString()) ? 'selected' : '' %>"
                                 data-id="<%= addr._id %>"
+                                data-name="<%= addr.fullName %>"
+                                data-phone="<%= addr.phone %>"
+                                data-line1="<%= [addr.houseName, addr.street, addr.landmark].filter(Boolean).join(', ') %>"
+                                data-line2="<%= [addr.city, addr.district, addr.state].filter(Boolean).join(', ') %> - <%= addr.pincode %>"
+                                data-type="<%= addr.addressType || 'Home' %>"
                             >
 
                                 <input
@@ -656,7 +661,7 @@
                                     <div class="saved-address-header">
 
                                         <span class="saved-address-name">
-                                            <%= addr.name %>
+                                            <%= addr.fullName %>
                                         </span>
 
                                         <span class="saved-address-badge">
@@ -670,10 +675,10 @@
                                     </p>
 
                                     <p class="saved-address-text">
-                                        <%= addr.street %>,
-                                        <%= addr.city %>,
-                                        <%= addr.state %> -
-                                        <%= addr.pincode %>
+                                        <%= [addr.houseName, addr.street, addr.landmark].filter(Boolean).join(', ') %>
+                                    </p>
+                                    <p class="saved-address-text">
+                                        <%= [addr.city, addr.district, addr.state].filter(Boolean).join(', ') %> - <%= addr.pincode %>
                                     </p>
 
                                 </div>
@@ -752,7 +757,7 @@
                 </div>
 
 
-                <form id="addAddressForm">
+                <form id="addAddressForm" novalidate>
 
                     <div class="modal-form-grid">
 
@@ -770,8 +775,10 @@
                                 id="newFullName"
                                 type="text"
                                 placeholder="e.g. Jane Doe"
+                                aria-describedby="errorFullName"
                                 required
                             >
+                            <span class="field-error" id="errorFullName" data-field-error="fullName" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -790,8 +797,10 @@
                                 id="newPhone"
                                 type="tel"
                                 placeholder="e.g. +91 98765 43210"
+                                aria-describedby="errorPhone"
                                 required
                             >
+                            <span class="field-error" id="errorPhone" data-field-error="phone" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -800,18 +809,28 @@
 
                             <label
                                 class="modal-form-label"
-                                for="newStreet"
+                                for="newHouseName"
                             >
                                 Street / Flat / House No. *
                             </label>
 
                             <input
                                 class="modal-form-input"
-                                id="newStreet"
+                                id="newHouseName"
                                 type="text"
-                                placeholder="e.g. 4522 Premium Plaza, Suite 100"
+                                placeholder="e.g. Flat 12B"
+                                aria-describedby="errorHouseName"
                                 required
                             >
+                            <span class="field-error" id="errorHouseName" data-field-error="houseName" aria-live="polite" hidden></span>
+
+                        </div>
+
+                        <div class="modal-form-group full-width">
+
+                            <label class="modal-form-label" for="newStreet">Street / Area *</label>
+                            <input class="modal-form-input" id="newStreet" type="text" placeholder="e.g. MG Road" aria-describedby="errorStreet" required>
+                            <span class="field-error" id="errorStreet" data-field-error="street" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -830,7 +849,9 @@
                                 id="newLandmark"
                                 type="text"
                                 placeholder="e.g. Near Silicon Valley Park"
+                                aria-describedby="errorLandmark"
                             >
+                            <span class="field-error" id="errorLandmark" data-field-error="landmark" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -849,8 +870,18 @@
                                 id="newCity"
                                 type="text"
                                 placeholder="e.g. Silicon Valley"
+                                aria-describedby="errorCity"
                                 required
                             >
+                            <span class="field-error" id="errorCity" data-field-error="city" aria-live="polite" hidden></span>
+
+                        </div>
+
+                        <div class="modal-form-group">
+
+                            <label class="modal-form-label" for="newDistrict">District *</label>
+                            <input class="modal-form-input" id="newDistrict" type="text" placeholder="e.g. Ernakulam" aria-describedby="errorDistrict" required>
+                            <span class="field-error" id="errorDistrict" data-field-error="district" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -869,8 +900,10 @@
                                 id="newState"
                                 type="text"
                                 placeholder="e.g. CA"
+                                aria-describedby="errorState"
                                 required
                             >
+                            <span class="field-error" id="errorState" data-field-error="state" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -889,8 +922,10 @@
                                 id="newPincode"
                                 type="text"
                                 placeholder="e.g. 94043"
+                                aria-describedby="errorPincode"
                                 required
                             >
+                            <span class="field-error" id="errorPincode" data-field-error="pincode" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -907,6 +942,7 @@
                             <select
                                 class="modal-form-select"
                                 id="newAddressType"
+                                aria-describedby="errorAddressType"
                             >
 
                                 <option
@@ -925,6 +961,7 @@
                                 </option>
 
                             </select>
+                            <span class="field-error" id="errorAddressType" data-field-error="addressType" aria-live="polite" hidden></span>
 
                         </div>
 
@@ -964,36 +1001,6 @@
 
     <!-- Interactive script -->
     <script src="/js/checkout.js"></script>
-
-    <script>
-
-        document
-            .getElementById('btnApplySelectedAddress')
-            ?.addEventListener('click', function () {
-
-                const selectedRadio =
-                    document.querySelector(
-                        'input[name="addressSelection"]:checked'
-                    );
-
-                if (selectedRadio) {
-
-                    document
-                        .querySelector('.address-details')
-                        .dataset.activeAddressId = selectedRadio.value;
-
-                    document
-                        .getElementById('changeAddressModal')
-                        .style.display = 'none';
-
-                    alert(
-                        'Address selection updated for this order. Click "Place Order" to confirm.'
-                    );
-                }
-
-            });
-
-    </script>
 
 </body>
 </html>

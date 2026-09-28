@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <style>
+        .order-detail-page {
+            min-height: 100vh;
+            color: #17243a;
+            background: #f5f7fc;
+            --detail-blue: #0968ec;
+            --detail-muted: #738097;
+            --detail-line: #e4eaf4;
+        }
+
+        .order-detail-main { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 24px 0 68px; }
+        .detail-breadcrumb { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 14px; color: #79869a; font-size: 10px; }
+        .detail-breadcrumb a:hover { color: var(--detail-blue); }
+
+        .order-overview,
+        .tracking-panel,
+        .items-panel,
+        .address-panel,
+        .summary-panel { border: 1px solid #e4eaf4; border-radius: 7px; background: #fff; box-shadow: 0 4px 14px rgba(34, 66, 117, .045); }
+
+        .order-overview { display: flex; align-items: center; justify-content: space-between; gap: 22px; padding: 17px 20px; }
+        .order-overview h1 { margin: 0 0 6px; font-size: 19px; line-height: 1.2; }
+        .overview-meta { display: flex; flex-wrap: wrap; gap: 8px 12px; color: #61718a; font-size: 9px; }
+        .overview-meta span { display: inline-flex; align-items: center; gap: 4px; }
+        .overview-meta svg { width: 11px; height: 11px; color: #77869b; }
+        .overview-meta .status-shipped { color: #167a4a; }
+        .overview-meta .status-paid { color: #15814b; }
+        .overview-actions { display: flex; flex: 0 0 128px; flex-direction: column; gap: 7px; }
+        
+        .invoice-button,
+        .cancel-order-button,
+        .return-order-button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 5px; font: inherit; font-size: 9px; cursor: pointer; transition: background 0.15s ease; }
+        
+        .invoice-button { border: 1px solid #d6e4fa; color: #35445c; background: #edf4ff; }
+        .invoice-button:hover { background: #e2edff; }
+        
+        .cancel-order-button { border: 1px solid #f0c6ca; color: #c53540; background: #fff; }
+        .cancel-order-button:hover { border-color: #dd8f96; background: #fff5f5; }
+        
+        .return-order-button { border: 1px solid #fed7aa; color: #c2410c; background: #fff; }
+        .return-order-button:hover { border-color: #fdba74; background: #fff7ed; }
+        .return-order-button:disabled { border-color: #e3e8ef; color: #8994a5; background: #f5f7fa; cursor: not-allowed; }
+
+        .invoice-button svg, .cancel-order-button svg, .return-order-button svg { width: 12px; height: 12px; }
+
+        .tracking-panel { margin-top: 17px; padding: 16px 18px 13px; }
+        .section-title { margin: 0 0 17px; font-size: 13px; font-weight: 650; }
+        .tracking-timeline { display: grid; grid-template-columns: repeat(5, 1fr); position: relative; margin: 0; padding: 0 3px; list-style: none; }
+        .tracking-timeline::before,
+        .tracking-timeline::after { position: absolute; top: 7px; left: 10%; height: 2px; content: ""; }
+        .tracking-timeline::before { right: 10%; background: #dfe6f0; }
+        
+        /* Dynamic Tracking Line */
+        .tracking-timeline[data-progress="processing"]::after { width: 20%; background: #51b98a; }
+        .tracking-timeline[data-progress="packed"]::after { width: 40%; background: #51b98a; }
+        .tracking-timeline[data-progress="shipped"]::after { width: 60%; background: #51b98a; }
+        .tracking-timeline[data-progress="delivered"]::after { width: 80%; background: #51b98a; }
+        
+        .tracking-stage { position: relative; z-index: 1; display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 5px; color: #a0aaba; text-align: center; }
+        .stage-dot { display: grid; width: 14px; height: 14px; place-items: center; border: 1px solid #dce4ee; border-radius: 50%; color: #8795a9; background: #f0f3f8; }
+        .stage-dot svg { width: 8px; height: 8px; }
+        .tracking-stage.complete { color: #32415a; }
+        .tracking-stage.complete .stage-dot { border-color: #168653; color: #fff; background: #168653; }
+        .tracking-stage.current { color: var(--detail-blue); }
+        .tracking-stage.current .stage-dot { border-color: var(--detail-blue); color: #fff; background: var(--detail-blue); box-shadow: 0 0 0 3px #e5efff; }
+        .stage-name { font-size: 8px; font-weight: 650; white-space: nowrap; }
+        .stage-date { color: #8b97a9; font-size: 7px; white-space: nowrap; }
+
+        .order-detail-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(235px, .9fr); align-items: start; gap: 18px; margin-top: 17px; }
+        .items-panel { padding: 15px 16px; }
+        .items-panel .section-title { margin-bottom: 12px; }
+        .detail-item { display: grid; grid-template-columns: 58px minmax(0, 1fr) auto; align-items: center; gap: 10px; margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid #f1f5f9; }
+        .detail-item:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+        .detail-item-image { display: grid; width: 58px; height: 58px; place-items: center; overflow: hidden; border-radius: 5px; background: #eef2f7; }
+        .detail-item-image img { width: 100%; height: 100%; object-fit: contain; }
+        .detail-item-name { margin: 0 0 4px; font-size: 10px; font-weight: 650; }
+        .detail-item-meta { margin: 0 0 3px; color: #758198; font-size: 8px; line-height: 1.4; }
+        .detail-item-quantity { margin: 0 0 6px; color: #4f5f77; font-size: 8px; }
+        .detail-item-price { display: block; color: var(--detail-blue); font-size: 12px; font-weight: 700; }
+        .item-actions { display: flex; gap: 5px; margin-top: 5px; }
+        .item-action { min-height: 17px; padding: 1px 7px; border: 1px solid #c8dafa; border-radius: 3px; color: var(--detail-blue); background: #fff; font-size: 7px; text-decoration: none; }
+        .item-action.primary { border-color: #148348; color: #fff; background: #16884d; }
+        .item-action:hover { filter: brightness(.96); }
+
+        .detail-aside { display: grid; gap: 14px; }
+        .address-panel { padding: 14px 15px; }
+        .aside-title { display: flex; align-items: center; gap: 6px; margin: 0 0 12px; color: #35445c; font-size: 10px; font-weight: 650; }
+        .aside-title svg { width: 12px; height: 12px; color: var(--detail-blue); }
+        .address-name { margin: 0 0 3px; font-size: 9px; font-weight: 650; }
+        .address-copy { margin: 0; color: #65738a; font-size: 8px; line-height: 1.55; }
+
+        .summary-panel { padding: 15px 16px 12px; }
+        .summary-panel .aside-title { margin-bottom: 12px; }
+        .summary-row { display: flex; justify-content: space-between; gap: 12px; margin: 0 0 8px; color: #68768d; font-size: 8px; }
+        .summary-row strong { color: #33425a; font-weight: 600; white-space: nowrap; }
+        .summary-row .discount { color: #15814b; }
+        .summary-total { display: flex; justify-content: space-between; gap: 10px; margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--detail-line); font-size: 9px; font-weight: 650; }
+        .summary-total strong { color: var(--detail-blue); font-size: 13px; }
+
+        .help-panel { padding: 15px; border-radius: 6px; color: #fff; background: #075bd6; box-shadow: 0 5px 14px rgba(7, 91, 214, .16); }
+        .help-title { margin: 0 0 4px; font-size: 10px; }
+        .help-copy { margin: 0 0 10px; color: #d8e7ff; font-size: 8px; line-height: 1.5; }
+        .support-link { display: flex; min-height: 23px; align-items: center; justify-content: center; gap: 5px; border: 1px solid rgba(255,255,255,.26); border-radius: 4px; color: #fff; background: rgba(255,255,255,.12); font-size: 8px; text-decoration: none; }
+        .support-link:hover { background: rgba(255,255,255,.2); }
+        .support-link svg { width: 10px; height: 10px; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(3px); display: none; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.2s ease; }
+        .modal-overlay.active { display: flex; opacity: 1; }
+        .modal-box { background: #fff; border-radius: 12px; width: min(90%, 420px); padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); transform: translateY(10px); transition: transform 0.2s ease; }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .modal-header h3 { margin: 0; font-size: 16px; color: #0f172a; }
+        .close-modal { background: none; border: none; font-size: 20px; color: #64748b; cursor: pointer; }
+        .modal-body p { font-size: 13px; color: #475569; margin-top: 0; margin-bottom: 16px; line-height: 1.5; }
+        .modal-textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 13px; font-family: inherit; resize: vertical; min-height: 80px; margin-bottom: 16px; }
+        .modal-textarea:focus { outline: none; border-color: var(--detail-blue); box-shadow: 0 0 0 3px rgba(9, 104, 236, 0.1); }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn { padding: 9px 16px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; border: none; }
+        .btn-cancel { background: #f1f5f9; color: #475569; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-warning { background: #ea580c; color: #fff; }
+
+        @media (max-width: 680px) {
+            .order-detail-main { width: calc(100% - 32px); padding-top: 19px; }
+            .order-detail-grid { grid-template-columns: minmax(0, 1.3fr) minmax(190px, 1fr); gap: 12px; }
+            .order-overview { padding: 15px; }
+            .overview-meta { gap: 7px; }
+        }
+
+        @media (max-width: 500px) {
+            .order-detail-main { width: calc(100% - 26px); padding-bottom: 38px; }
+            .order-overview { align-items: flex-start; flex-direction: column; gap: 13px; }
+            .overview-actions { width: 100%; flex-basis: auto; flex-direction: row; }
+            .invoice-button, .cancel-order-button, .return-order-button { flex: 1; }
+            .order-detail-grid { grid-template-columns: 1fr; }
+            .detail-aside { grid-template-columns: 1fr 1fr; align-items: start; }
+            .help-panel { grid-column: 1 / -1; }
+            .tracking-panel { padding: 14px 10px 12px; }
+            .tracking-timeline { padding: 0; }
+            .stage-name { font-size: 7px; }
+            .stage-date { font-size: 6px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="order-detail-page">
+        <%- include('../partials/user-header', { currentPage: 'shop' }) %>
+
+        <main class="order-detail-main">
+            <nav class="detail-breadcrumb" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">›</span>
+                <a href="/account">My Account</a><span aria-hidden="true">›</span>
+                <a href="/account/orders">Order History</a><span aria-hidden="true">›</span>
+                <span aria-current="page">Order Details</span>
+            </nav>
+
+            <section class="order-overview" aria-labelledby="order-title">
+                <div>
+                    <h1 id="order-title">Order #<%= order.orderId %></h1>
+                    <div class="overview-meta">
+                        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>Placed <%= new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) %></span>
+                        
+                        <span class="status-shipped"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg>Status: <%= order.orderStatus %></span>
+                        
+                        <span class="status-paid"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18M7 15h3"></path></svg>Payment: <%= order.paymentMethod %></span>
+                        
+                        <% if (order.orderStatus !== 'Delivered' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned') { %>
+                            <span class="status-shipped"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h11v11H3zM14 11h4l3 3v4h-7z"></path><circle cx="7" cy="19" r="1"></circle><circle cx="18" cy="19" r="1"></circle></svg>Est. Delivery: <%= estimatedDelivery %></span>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <div class="overview-actions">
+                    <button class="invoice-button" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg>
+                        Download Invoice
+                    </button>
+
+                    <!-- Show Cancel if active -->
+                    <% if (order.orderStatus !== 'Delivered' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned') { %>
+                        <button class="cancel-order-button" id="btnOpenCancel" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m9 9 6 6m0-6-6 6"></path></svg>
+                            Cancel Order
+                        </button>
+                    <% } %>
+                    
+                    <!-- Return actions are only available for delivered orders. -->
+                    <% if (order.orderStatus === 'Delivered') { %>
+                        <button class="return-order-button" id="btnOpenReturn" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Return Order
+                        </button>
+                    <% } else { %>
+                        <button class="return-order-button" type="button" disabled title="Returns are available after delivery">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Return Order
+                        </button>
+                    <% } %>
+                </div>
+            </section>
+            <% 
+                let progressClass = 'pending';
+                let s1 = 'complete', s2 = '', s3 = '', s4 = '', s5 = '';
+
+                if (order.orderStatus === 'Processing') { s2 = 'complete'; progressClass = 'processing'; }
+                if (order.orderStatus === 'Packed') { s2 = 'complete'; s3 = 'complete'; progressClass = 'packed'; }
+                if (order.orderStatus === 'Shipped') { s2 = 'complete'; s3 = 'complete'; s4 = 'complete'; progressClass = 'shipped'; }
+                if (order.orderStatus === 'Delivered') { s2 = 'complete'; s3 = 'complete'; s4 = 'complete'; s5 = 'complete'; progressClass = 'delivered'; }
+            %>
+
+            <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned') { %>
+            <section class="tracking-panel" aria-labelledby="tracking-title">
+                <h2 class="section-title" id="tracking-title">Tracking Timeline</h2>
+                <ol class="tracking-timeline" data-progress="<%= progressClass %>" aria-label="Order tracking progress">
+                    <li class="tracking-stage <%= s1 %>"><span class="stage-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg></span><span class="stage-name">Confirmed</span></li>
+                    <li class="tracking-stage <%= s2 %>"><span class="stage-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg></span><span class="stage-name">Processing</span></li>
+                    <li class="tracking-stage <%= s3 %>"><span class="stage-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg></span><span class="stage-name">Packed</span></li>
+                    <li class="tracking-stage <%= s4 %>"><span class="stage-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span><span class="stage-name">Shipped</span></li>
+                    <li class="tracking-stage <%= s5 %>"><span class="stage-dot"></span><span class="stage-name">Delivered</span></li>
+                </ol>
+            </section>
+            <% } else { %>
+                <section class="tracking-panel">
+                    <h2 class="section-title">Order Status: <span style="color: #dc2626;"><%= order.orderStatus %></span></h2>
+                    <p style="font-size: 13px; color: #475569;">This order has been <%= order.orderStatus.toLowerCase() %>.</p>
+                    <% if (order.cancellationReason || order.returnReason) { %>
+                        <p style="font-size: 12px; color: #64748b; font-style: italic;">Reason: "<%= order.cancellationReason || order.returnReason %>"</p>
+                    <% } %>
+                </section>
+            <% } %>
+
+            <div class="order-detail-grid">
+                <section class="items-panel" aria-labelledby="items-title">
+                    <h2 class="section-title" id="items-title">Items in This Order</h2>
+                    
+                    <% order.items.forEach(item => { %>
+                    <article class="detail-item">
+                        <div class="detail-item-image"><img src="<%= item.image %>" alt="<%= item.name %>"></div>
+                        <div>
+                            <h3 class="detail-item-name"><%= item.name %></h3>
+                            <p class="detail-item-meta">Product ID: <%= item.productId %></p>
+                            <p class="detail-item-quantity">Qty: <%= item.quantity %></p>
+                            <div class="item-actions">
+                                <a class="item-action" href="/products/<%= item.productId %>">View Product</a>
+                            </div>
+                        </div>
+                        <strong class="detail-item-price">₹<%= item.price.toLocaleString('en-IN') %></strong>
+                    </article>
+                    <% }); %>
+
+                </section>
+
+                <aside class="detail-aside" aria-label="Order and delivery information">
+                    <section class="address-panel" aria-labelledby="address-title">
+                        <h2 class="aside-title" id="address-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="2.5"></circle></svg>Shipping Address</h2>
+                        <p class="address-name"><%= order.shippingAddress.name %></p>
+                        <p class="address-copy"><%= order.shippingAddress.phone %><br><%= order.shippingAddress.fullAddress %></p>
+                    </section>
+
+                    <section class="summary-panel" aria-labelledby="summary-title">
+                        <h2 class="aside-title" id="summary-title">Order Summary</h2>
+                        <p class="summary-row"><span>Subtotal</span><strong>₹<%= order.subtotal.toLocaleString('en-IN') %></strong></p>
+                        <p class="summary-row"><span>Discount</span><strong class="discount">-₹<%= order.discount.toLocaleString('en-IN') %></strong></p>
+                        <p class="summary-row"><span>Tax (GST)</span><strong>₹<%= order.tax.toLocaleString('en-IN') %></strong></p>
+                        <p class="summary-row"><span>Shipping</span><strong><%= order.shippingCost === 0 ? 'FREE' : '₹' + order.shippingCost %></strong></p>
+                        <div class="summary-total"><span>Grand Total</span><strong>₹<%= order.grandTotal.toLocaleString('en-IN') %></strong></div>
+                    </section>
+
+                    <section class="help-panel" aria-labelledby="help-title">
+                        <h2 class="help-title" id="help-title">Need Help?</h2>
+                        <p class="help-copy">Our performance experts are available 24/7 to assist you.</p>
+                        <a class="support-link" href="/contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>Support</a>
+                    </section>
+                </aside>
+            </div>
+        </main>
+
+        <!-- Cancellation Modal -->
+        <div class="modal-overlay" id="cancelModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3>Cancel Order</h3>
+                    <button class="close-modal" data-close>×</button>
+                </div>
+                <div class="modal-body">
+                    <p>Are you sure you want to cancel this order? This action cannot be undone and stock will be returned.</p>
+                    <textarea class="modal-textarea" id="cancelReason" placeholder="Reason for cancellation (Optional)"></textarea>
+                    <div class="modal-actions">
+                        <button class="btn btn-cancel" data-close>Keep Order</button>
+                        <button class="btn btn-danger" id="btnConfirmCancel">Confirm Cancellation</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Return Modal -->
+        <div class="modal-overlay" id="returnModal">
+            <div class="modal-box">
+                <div class="modal-header">
+                    <h3>Return Order</h3>
+                    <button class="close-modal" data-close>×</button>
+                </div>
+                <div class="modal-body">
+                    <p>Please provide a reason for returning this delivered order. A reason is mandatory to process the return.</p>
+                    <textarea class="modal-textarea" id="returnReason" placeholder="Reason for return (Required)"></textarea>
+                    <div class="modal-actions">
+                        <button class="btn btn-cancel" data-close>Go Back</button>
+                        <button class="btn btn-warning" id="btnConfirmReturn">Submit Return</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <%- include('../partials/user-footer') %>
+    </div>
+
+    <!-- Script to handle Modals and AJAX actions -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const orderId = '<%= order._id %>';
+
+            // Modal Logic
+            const cancelModal = document.getElementById('cancelModal');
+            const returnModal = document.getElementById('returnModal');
+            
+            document.getElementById('btnOpenCancel')?.addEventListener('click', () => {
+                cancelModal.classList.add('active');
+            });
+            
+            document.getElementById('btnOpenReturn')?.addEventListener('click', () => {
+                returnModal.classList.add('active');
+            });
+
+            document.querySelectorAll('[data-close]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    cancelModal?.classList.remove('active');
+                    returnModal?.classList.remove('active');
+                });
+            });
+
+            // Handle Cancel Request
+            document.getElementById('btnConfirmCancel')?.addEventListener('click', async function() {
+                const btn = this;
+                const reason = document.getElementById('cancelReason').value.trim();
+                
+                btn.textContent = 'Cancelling...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`/account/orders/${orderId}/cancel`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message);
+                        btn.textContent = 'Confirm Cancellation';
+                        btn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    btn.disabled = false;
+                }
+            });
+
+            // Handle Return Request
+            document.getElementById('btnConfirmReturn')?.addEventListener('click', async function() {
+                const btn = this;
+                const reason = document.getElementById('returnReason').value.trim();
+                
+                if (!reason) {
+                    alert('Please provide a reason for the return.');
+                    return;
+                }
+
+                btn.textContent = 'Processing...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`/account/orders/${orderId}/return`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ reason })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message);
+                        btn.textContent = 'Submit Return';
+                        btn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    btn.disabled = false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

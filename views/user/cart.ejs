@@ -589,7 +589,7 @@
                             <!-- Coupon logic placeholder for future tasks -->
                             <li><span>Coupon Savings</span><strong>- ₹0</strong></li>
                             <li><span>Estimated Shipping</span><strong>₹<%= (typeof shipping !== 'undefined' ? shipping : 0).toLocaleString('en-IN') %></strong></li>
-                            <li><span>Tax (GST 18%)</span><strong>₹<%= (typeof tax !== 'undefined' ? tax : 0).toLocaleString('en-IN') %></strong></li>
+                            <li><span>Tax (GST 0.18%)</span><strong>₹<%= (typeof tax !== 'undefined' ? tax : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></li>
                         </ul>
                         <div class="summary-total">
                             <span>Total</span>
@@ -613,21 +613,6 @@
                                 <button type="button">Apply</button>
                             </div>
                             <button class="coupon-button" type="button">Coupon List</button>
-                        </div>
-
-                        <div class="delivery-box">
-                            <div class="delivery-row">
-                                <span>DELIVERY TO</span>
-                                <button class="address-btn" type="button">Add/Update Address</button>
-                            </div>
-                            <div class="delivery-address">
-                                <span class="pin">◉</span>
-                                <div>
-                                    <!-- You can replace this with dynamically loaded default address later -->
-                                    <strong>User Details</strong><br>
-                                    Address will be selected during checkout.
-                                </div>
-                            </div>
                         </div>
                     </aside>
                 </div>

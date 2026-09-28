@@ -11,6 +11,7 @@ const userShopController = require('../controllers/userShopController');
 const cartController = require ('../controllers/cartController')
 const wishlistController = require ('../controllers/wishlistController');
 const checkoutController = require('../controllers/checkoutController');
+const orderController = require('../controllers/orderController');
 require('../configuration/passport');
 
 
@@ -128,5 +129,14 @@ router.post('/wishlist/clear', requireUserSession, wishlistController.clearWishl
 
 // Checkout routes
 router.get('/checkout',requireUserSession,checkoutController.loadCheckout);
+router.post('/checkout/address/add', requireUserSession, checkoutController.addOrderAddress);
+router.post('/checkout/place-order', requireUserSession, checkoutController.placeOrder);
+router.get('/order-success/:id', requireUserSession, checkoutController.loadOrderSuccess);
+
+// Order routes
+router.get('/orders',requireUserSession,orderController.loadOrderHistory);
+router.get('/account/orders/:id',requireUserSession,orderController.loadOrderDetails);
+router.post('/account/orders/:id/cancel',requireUserSession,orderController.cancelOrder);
+router.post('/account/orders/:id/return',requireUserSession,orderController.returnOrder);
 
 module.exports = router;

@@ -106,32 +106,20 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedOption = document.querySelector('.saved-address-option.selected');
             
             if (selectedOption) {
-                const name = selectedOption.querySelector('.saved-address-name')?.textContent || '';
-                const phone = selectedOption.querySelector('.saved-address-text:nth-of-type(1)')?.textContent || '';
-                const fullAddressLine = selectedOption.querySelector('.saved-address-text:nth-of-type(2)')?.textContent || '';
-                const type = selectedOption.querySelector('.saved-address-badge')?.textContent || 'Home';
-                
-                // Grab the MongoDB _id from the hidden radio button
                 const addressId = selectedOption.querySelector('input[type="radio"]').value;
 
-                // Update the visible card UI
                 const elName = document.querySelector('.address-recipient-name');
                 const elPhone = document.querySelector('.address-recipient-phone');
                 const elLine1 = document.querySelector('.address-line-1');
+                const elLine2 = document.querySelector('.address-line-last');
                 const elPill = document.querySelector('.address-type-pill');
                 const addressContainer = document.querySelector('.address-details');
 
-                if (elName) elName.textContent = name;
-                if (elPhone) elPhone.textContent = phone;
-                if (elLine1) elLine1.textContent = fullAddressLine; 
-                
-                // Clear out line 2 if it exists to avoid duplication
-                const elLine2 = document.querySelector('.address-line-last');
-                if(elLine2) elLine2.textContent = '';
-
-                if (elPill) elPill.textContent = type;
-                
-                // CRITICAL: Update the data ID so the place-order payload uses the new address
+                if (elName) elName.textContent = selectedOption.dataset.name;
+                if (elPhone) elPhone.textContent = selectedOption.dataset.phone;
+                if (elLine1) elLine1.textContent = selectedOption.dataset.line1;
+                if (elLine2) elLine2.textContent = selectedOption.dataset.line2;
+                if (elPill) elPill.textContent = selectedOption.dataset.type;
                 if (addressContainer) addressContainer.dataset.activeAddressId = addressId;
             }
 
@@ -146,19 +134,86 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. Add New Address Form Handling (AJAX)
     const addAddressForm = document.getElementById('addAddressForm');
     if (addAddressForm) {
+        const addressFieldIds = {
+            fullName: 'newFullName',
+            phone: 'newPhone',
+            houseName: 'newHouseName',
+            street: 'newStreet',
+            landmark: 'newLandmark',
+            city: 'newCity',
+            district: 'newDistrict',
+            state: 'newState',
+            pincode: 'newPincode',
+            addressType: 'newAddressType'
+        };
+
+        const clearAddressFieldError = (fieldName) => {
+            const input = document.getElementById(addressFieldIds[fieldName]);
+            const error = addAddressForm.querySelector(`[data-field-error="${fieldName}"]`);
+            if (input) input.removeAttribute('aria-invalid');
+            if (error) {
+                error.textContent = '';
+                error.hidden = true;
+            }
+        };
+
+        const clearAddressErrors = () => {
+            Object.keys(addressFieldIds).forEach(clearAddressFieldError);
+        };
+
+        const showAddressErrors = (errors) => {
+            clearAddressErrors();
+            let firstInvalidInput = null;
+
+            Object.entries(errors || {}).forEach(([fieldName, message]) => {
+                const inputId = addressFieldIds[fieldName];
+                const input = inputId && document.getElementById(inputId);
+                const error = addAddressForm.querySelector(`[data-field-error="${fieldName}"]`);
+                if (!input || !error) return;
+
+                input.setAttribute('aria-invalid', 'true');
+                error.textContent = message;
+                error.hidden = false;
+                if (!firstInvalidInput) firstInvalidInput = input;
+            });
+
+            if (firstInvalidInput) firstInvalidInput.focus();
+            return Boolean(firstInvalidInput);
+        };
+
+        Object.entries(addressFieldIds).forEach(([fieldName, inputId]) => {
+            const input = document.getElementById(inputId);
+            input?.addEventListener('input', () => clearAddressFieldError(fieldName));
+            input?.addEventListener('change', () => clearAddressFieldError(fieldName));
+        });
+
         addAddressForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            clearAddressErrors();
             
             const payload = {
-                name: document.getElementById('newFullName').value.trim(),
+                fullName: document.getElementById('newFullName').value.trim(),
                 phone: document.getElementById('newPhone').value.trim(),
+                houseName: document.getElementById('newHouseName').value.trim(),
                 street: document.getElementById('newStreet').value.trim(),
                 landmark: document.getElementById('newLandmark').value.trim(),
                 city: document.getElementById('newCity').value.trim(),
+                district: document.getElementById('newDistrict').value.trim(),
                 state: document.getElementById('newState').value.trim(),
                 pincode: document.getElementById('newPincode').value.trim(),
-                type: document.getElementById('newAddressType').value
+                addressType: document.getElementById('newAddressType').value
             };
+
+            const requiredFields = ['fullName', 'phone', 'houseName', 'street', 'city', 'district', 'state', 'pincode'];
+            const clientErrors = Object.fromEntries(
+                requiredFields
+                    .filter(fieldName => !payload[fieldName])
+                    .map(fieldName => [fieldName, 'This field is required.'])
+            );
+
+            if (showAddressErrors(clientErrors)) {
+                return;
+            }
 
             const submitBtn = addAddressForm.querySelector('button[type="submit"]');
             const origText = submitBtn.textContent;
@@ -174,16 +229,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
                 
                 if (data.success) {
-                    // Reload the page to fetch the newly created MongoDB _id and re-render the card
-                    window.location.reload();
+                    window.showAppModal(data.message || 'Address added successfully.', 'success', {
+                        onClose: () => {
+                            window.location.href = `/checkout?addressId=${encodeURIComponent(data.addressId)}`;
+                        }
+                    });
                 } else {
-                    alert(data.message || 'Error saving address');
+                    const hasFieldErrors = showAddressErrors(data.errors);
+                    if (!hasFieldErrors) window.showAppModal(data.message || 'Error saving address.', 'error');
                     submitBtn.textContent = origText;
                     submitBtn.disabled = false;
                 }
             } catch (error) {
                 console.error('Error adding address:', error);
-                alert('Failed to add address. Please try again.');
+                window.showAppModal('Failed to add address. Please try again.', 'error');
                 submitBtn.textContent = origText;
                 submitBtn.disabled = false;
             }
@@ -198,12 +257,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const addressId = addressContainer ? addressContainer.dataset.activeAddressId : null;
 
             if (!addressId) {
-                alert('Please add or select a delivery address.');
+                window.showAppModal('Please add or select a delivery address.', 'error');
                 return;
             }
 
             if (selectedPayment !== 'cod') {
-                alert('Currently, only Cash on Delivery is supported for this milestone.');
+                window.showAppModal('Currently, only Cash on Delivery is supported for this milestone.', 'error');
                 return;
             }
 
@@ -227,13 +286,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Redirect to the Order Success Page with the unique Order ID
                     window.location.href = `/order-success/${data.orderId}`;
                 } else {
-                    alert(data.message || 'Failed to place order.');
+                    window.showAppModal(data.message || 'Failed to place order.', 'error');
                     btnPlaceOrder.textContent = origText;
                     btnPlaceOrder.disabled = false;
                 }
             } catch (error) {
                 console.error('Error placing order:', error);
-                alert('Server error occurred while placing the order.');
+                window.showAppModal('Server error occurred while placing the order.', 'error');
                 btnPlaceOrder.textContent = origText;
                 btnPlaceOrder.disabled = false;
             }

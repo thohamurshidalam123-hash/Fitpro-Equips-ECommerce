@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Orders | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <style>
+        .orders-page {
+            min-height: 100vh;
+            color: #17243a;
+            background: #f5f7fc;
+            --orders-blue: #0968ec;
+            --orders-muted: #738097;
+            --orders-line: #e4eaf4;
+        }
+
+        .orders-main { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 25px 0 68px; }
+        .orders-breadcrumb { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; color: #79869a; font-size: 10px; }
+        .orders-breadcrumb a:hover { color: var(--orders-blue); }
+        .orders-heading-row { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-bottom: 22px; }
+        .orders-title { margin: 0 0 3px; font-size: 25px; line-height: 1.1; }
+        .orders-subtitle { margin: 0; color: var(--orders-muted); font-size: 11px; }
+
+        .order-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 27px; }
+        .stat-card { display: grid; grid-template-columns: 26px 1fr; grid-template-rows: auto auto; column-gap: 10px; align-items: center; min-height: 58px; padding: 10px 12px; border: 1px solid #e6ecf6; border-radius: 6px; background: #fff; box-shadow: 0 3px 10px rgba(34, 66, 117, .035); }
+        .stat-icon { display: grid; width: 26px; height: 26px; grid-row: 1 / 3; place-items: center; border-radius: 6px; color: var(--orders-blue); background: #eaf2ff; }
+        .stat-icon svg { width: 13px; height: 13px; }
+        .stat-card.completed .stat-icon { color: #18834c; background: #e9f8ef; }
+        .stat-card.pending .stat-icon { color: #b85b16; background: #fff1e5; }
+        .stat-card.spent { border-color: #075cdc; color: #fff; background: #1761df; }
+        .stat-card.spent .stat-icon { color: #fff; background: rgba(255,255,255,.17); }
+        .stat-label { color: #748198; font-size: 9px; text-transform: uppercase; }
+        .stat-value { margin-top: 4px; font-size: 11px; font-weight: 700; }
+        .stat-card.spent .stat-label { color: #d9e7ff; }
+
+        .orders-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 11px 12px; border-radius: 6px; background: #eaf1ff; }
+        .orders-search { display: flex; flex: 0 1 390px; min-width: 250px; gap: 5px; }
+        .orders-search-field { position: relative; flex: 1; min-width: 110px; }
+        .orders-search svg { position: absolute; top: 50%; left: 10px; width: 13px; height: 13px; color: #6d7c93; transform: translateY(-50%); pointer-events: none; }
+        .orders-search input { width: 100%; height: 32px; padding: 0 10px 0 31px; border: 1px solid #dbe4f2; border-radius: 5px; outline: none; background: #fff; color: #26364f; font: inherit; font-size: 10px; }
+        .orders-search input:focus { border-color: var(--orders-blue); box-shadow: 0 0 0 2px rgba(9,104,236,.12); }
+        .orders-search-button, .orders-clear-button { min-height: 32px; padding: 0 11px; border: 1px solid #d5deec; border-radius: 5px; color: #40516b; background: #fff; font: inherit; font-size: 10px; cursor: pointer; }
+        .orders-search-button { border-color: var(--orders-blue); color: #fff; background: var(--orders-blue); }
+        .orders-search-button:hover { background: #0758c9; }
+        .orders-clear-button:hover { background: #f5f8fd; }
+        .orders-search-button:focus-visible, .orders-clear-button:focus-visible { outline: 2px solid #0b67e9; outline-offset: 2px; }
+        .order-filters { display: flex; flex-wrap: wrap; gap: 5px; }
+        .order-filter { min-height: 25px; padding: 0 10px; border: 1px solid #d5deec; border-radius: 20px; color: #52627a; background: #fff; font: inherit; font-size: 9px; cursor: pointer; }
+        .order-filter[aria-pressed="true"] { border-color: var(--orders-blue); color: #fff; background: var(--orders-blue); }
+        .order-filter:focus-visible, .detail-link:focus-visible, .download-button:focus-visible { outline: 2px solid #0b67e9; outline-offset: 2px; }
+
+        .order-list { display: grid; gap: 14px; }
+        .order-card { overflow: hidden; border: 1px solid #e4eaf4; border-radius: 7px; background: #fff; box-shadow: 0 4px 13px rgba(34, 66, 117, .04); }
+        .order-card[hidden] { display: none; }
+        .order-card-header { display: grid; grid-template-columns: minmax(110px, .8fr) minmax(125px, .9fr) minmax(80px, .55fr) auto auto; align-items: center; gap: 12px; min-height: 42px; padding: 8px 12px; border-bottom: 1px solid #edf1f7; background: #fafbfe; }
+        .order-meta-label { display: block; margin-bottom: 3px; color: #8792a4; font-size: 8px; text-transform: uppercase; }
+        .order-meta-value { display: block; color: #26354a; font-size: 9px; font-weight: 600; }
+        .order-state { display: inline-flex; align-items: center; gap: 4px; justify-self: end; padding: 4px 8px; border-radius: 20px; color: #1264c8; background: #e6f1ff; font-size: 8px; font-weight: 600; white-space: nowrap; }
+        .order-state::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+        .order-state.delivered { color: #12804a; background: #e4f7ec; }
+        .order-state.cancelled { color: #d62f3a; background: #fce7e8; }
+        .detail-link { color: var(--orders-blue); font-size: 9px; white-space: nowrap; }
+        .detail-link:hover { text-decoration: underline; }
+
+        .order-item-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 10px 12px; }
+        .order-product-image { display: grid; width: 36px; height: 36px; place-items: center; overflow: hidden; border-radius: 4px; background: #eff3f8; }
+        .order-product-image img { width: 100%; height: 100%; object-fit: contain; }
+        .order-product-name { margin: 0 0 2px; color: #27364c; font-size: 9px; font-weight: 650; }
+        .order-product-variant { margin: 0; color: var(--orders-muted); font-size: 8px; }
+        .download-button { display: grid; width: 26px; height: 26px; place-items: center; border: 1px solid #e3e9f2; border-radius: 5px; color: #61718a; background: #fff; cursor: pointer; }
+        .download-button svg { width: 12px; height: 12px; }
+
+        .tracking { display: grid; grid-template-columns: repeat(5, 1fr); position: relative; margin: 0 12px 10px; padding: 3px 0 0; list-style: none; }
+        .tracking::before, .tracking::after { position: absolute; top: 9px; left: 10%; height: 2px; content: ""; }
+        .tracking::before { right: 10%; background: #dce4f0; }
+        .tracking[data-progress="shipped"]::after { width: 60%; background: var(--orders-blue); }
+        .tracking[data-progress="delivered"]::after { width: 80%; background: var(--orders-blue); }
+        
+        /* New Tracking Dynamic States */
+        .tracking[data-progress="processing"]::after { width: 20%; background: var(--orders-blue); }
+        .tracking[data-progress="packed"]::after { width: 40%; background: var(--orders-blue); }
+        
+        .tracking-step { position: relative; z-index: 1; display: flex; min-width: 0; flex-direction: column; align-items: center; gap: 4px; color: #9aa5b5; text-align: center; }
+        .tracking-dot { display: grid; width: 12px; height: 12px; place-items: center; border: 1px solid #d6dfeb; border-radius: 50%; color: #fff; background: #eef2f8; }
+        .tracking-dot svg { width: 7px; height: 7px; }
+        .tracking-step.done { color: #27364c; }
+        .tracking-step.done .tracking-dot { border-color: var(--orders-blue); background: var(--orders-blue); }
+        .tracking-name { font-size: 8px; font-weight: 600; }
+        .tracking-date { color: #8793a5; font-size: 7px; }
+
+        .orders-empty { padding: 28px 16px; border: 1px dashed #cdd8e9; border-radius: 6px; color: var(--orders-muted); background: #fff; text-align: center; font-size: 11px; }
+        .orders-empty[hidden] { display: none; }
+        .support-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 28px; padding: 18px 20px; border-radius: 6px; background: #dfeaff; }
+        .support-title { margin: 0 0 4px; font-size: 12px; }
+        .support-copy { margin: 0; color: #62718a; font-size: 9px; line-height: 1.45; }
+        .support-button { display: inline-flex; min-height: 28px; align-items: center; justify-content: center; padding: 0 13px; border-radius: 4px; color: #fff; background: #075bd6; font-size: 9px; white-space: nowrap; }
+        .support-button:hover { background: #064bb1; }
+
+        @media (max-width: 650px) {
+            .orders-main { width: calc(100% - 32px); padding-top: 20px; }
+            .order-stats { gap: 8px; }
+            .stat-card { padding: 8px; column-gap: 7px; }
+            .orders-toolbar { align-items: stretch; }
+            .orders-search { flex-basis: 100%; }
+            .order-filters { justify-content: flex-start; }
+        }
+
+        @media (max-width: 480px) {
+            .orders-main { width: calc(100% - 26px); padding-bottom: 38px; }
+            .orders-title { font-size: 22px; }
+            .order-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .order-card-header { grid-template-columns: 1fr 1fr auto; gap: 8px; }
+            .order-card-header .order-total { display: none; }
+            .order-state { justify-self: start; }
+            .tracking-name { font-size: 7px; }
+            .tracking-date { font-size: 6px; }
+            .support-banner { align-items: flex-start; flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="orders-page">
+        <%- include('../partials/user-header', { currentPage: 'shop' }) %>
+
+        <main class="orders-main">
+            <nav class="orders-breadcrumb" aria-label="Breadcrumb">
+                <a href="/">Home</a><span aria-hidden="true">›</span>
+                <a href="/account">My Account</a><span aria-hidden="true">›</span>
+                <span aria-current="page">Order History</span>
+            </nav>
+
+            <div class="orders-heading-row">
+                <div>
+                    <h1 class="orders-title">My Orders</h1>
+                    <p class="orders-subtitle">View, track, and manage your fitness equipment purchases.</p>
+                </div>
+            </div>
+
+            <section class="order-stats" aria-label="Order statistics">
+                <article class="stat-card">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"></rect><path d="M9 8h6M9 12h6M9 16h4"></path></svg></span>
+                    <span class="stat-label">Total Orders</span><strong class="stat-value"><%= stats.total %></strong>
+                </article>
+                <article class="stat-card completed">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="m8 12 2.5 2.5L16 9"></path></svg></span>
+                    <span class="stat-label">Completed</span><strong class="stat-value"><%= stats.completed %></strong>
+                </article>
+                <article class="stat-card pending">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
+                    <span class="stat-label">Pending</span><strong class="stat-value"><%= stats.pending %></strong>
+                </article>
+                <article class="stat-card spent">
+                    <span class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="M3 10h18M7 15h3"></path></svg></span>
+                    <span class="stat-label">Total Spent</span><strong class="stat-value">₹<%= stats.spent.toLocaleString('en-IN') %></strong>
+                </article>
+            </section>
+
+            <section id="order-list" aria-label="Order history">
+                <div class="orders-toolbar">
+                    <div class="orders-search" role="search">
+                        <label class="orders-search-field">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+                            <input id="orderSearch" type="search" placeholder="Search by Order ID or Product..." aria-label="Search orders">
+                        </label>
+                        <button class="orders-search-button" id="searchOrdersButton" type="button">Search</button>
+                        <button class="orders-clear-button" id="clearOrdersButton" type="button">Clear</button>
+                    </div>
+                    <div class="order-filters" role="group" aria-label="Filter orders by status">
+                        <button class="order-filter" type="button" data-order-filter="all" aria-pressed="true">All Orders</button>
+                        <button class="order-filter" type="button" data-order-filter="pending" aria-pressed="false">Pending</button>
+                        <button class="order-filter" type="button" data-order-filter="shipped" aria-pressed="false">Shipped</button>
+                        <button class="order-filter" type="button" data-order-filter="delivered" aria-pressed="false">Delivered</button>
+                    </div>
+                </div>
+
+                <div class="order-list" id="orderList">
+                    <% if (orders.length === 0) { %>
+                        <p class="orders-empty">You haven't placed any orders yet.</p>
+                    <% } else { %>
+                        <% orders.forEach(order => { 
+                            // Determine search string for JS filtering
+                            const itemNames = order.items.map(i => i.name).join(' ');
+                            const searchStr = `${order.orderId} ${itemNames}`.toLowerCase();
+
+                            const orderStatus = order.orderStatus || 'Pending';
+                            
+                            // Determine tracking bar status
+                            let progressClass = 'pending';
+                            let s1 = 'done', s2 = '', s3 = '', s4 = '', s5 = '';
+                            
+                            if (orderStatus === 'Processing') { s2 = 'done'; progressClass = 'processing'; }
+                            if (orderStatus === 'Packed') { s2 = 'done'; s3 = 'done'; progressClass = 'packed'; }
+                            if (orderStatus === 'Shipped') { s2 = 'done'; s3 = 'done'; s4 = 'done'; progressClass = 'shipped'; }
+                            if (orderStatus === 'Delivered') { s2 = 'done'; s3 = 'done'; s4 = 'done'; s5 = 'done'; progressClass = 'delivered'; }
+                            
+                            // Format dates
+                            const orderDate = new Date(order.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            
+                            // Determine Badge Class
+                            let badgeClass = '';
+                            if (orderStatus === 'Delivered') badgeClass = 'delivered';
+                            if (orderStatus === 'Cancelled') badgeClass = 'cancelled';
+                        %>
+
+                        <article class="order-card" data-order-status="<%= orderStatus.toLowerCase() %>" data-order-search="<%= searchStr %>">
+                            <header class="order-card-header">
+                                <div><span class="order-meta-label">Order Placed</span><span class="order-meta-value"><%= orderDate %></span></div>
+                                <div><span class="order-meta-label">Order ID</span><span class="order-meta-value">#<%= order.orderId %></span></div>
+                                <div class="order-total"><span class="order-meta-label">Total</span><span class="order-meta-value">₹<%= order.grandTotal.toLocaleString('en-IN') %></span></div>
+                                <span class="order-state <%= badgeClass %>"><%= orderStatus %></span>
+                                <a class="detail-link" href="/account/orders/<%= order._id %>">View Details</a>
+                            </header>
+                            
+                            <!-- List up to 2 items for the preview card -->
+                            <% order.items.slice(0, 2).forEach(item => { %>
+                                <div class="order-item-row" id="order-<%= order._id %>">
+                                    <div class="order-product-image"><img src="<%= item.image %>" alt="<%= item.name %>"></div>
+                                    <div>
+                                        <h2 class="order-product-name"><%= item.name %></h2>
+                                        <p class="order-product-variant">Qty: <%= item.quantity %> | ₹<%= item.price.toLocaleString('en-IN') %></p>
+                                    </div>
+                                    <% if (order.orderStatus === 'Delivered') { %>
+                                        <button class="download-button" type="button" aria-label="Download invoice for order <%= order.orderId %>" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></button>
+                                    <% } %>
+                                </div>
+                            <% }); %>
+                            
+                            <% if (order.items.length > 2) { %>
+                                <div style="padding: 0 12px 10px; font-size: 10px; color: #748198;">
+                                    + <%= order.items.length - 2 %> more items
+                                </div>
+                            <% } %>
+
+                            <!-- Only show tracking bar if order is active -->
+                            <% if (orderStatus !== 'Cancelled' && orderStatus !== 'Returned') { %>
+                                <ol class="tracking" data-progress="<%= progressClass %>" aria-label="Order tracking">
+                                    <li class="tracking-step <%= s1 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Confirmed</span></li>
+                                    <li class="tracking-step <%= s2 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Processing</span></li>
+                                    <li class="tracking-step <%= s3 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Packed</span></li>
+                                    <li class="tracking-step <%= s4 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Shipped</span></li>
+                                    <li class="tracking-step <%= s5 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Delivered</span></li>
+                                </ol>
+                            <% } %>
+                        </article>
+                        <% }) %>
+                    <% } %>
+                    
+                    <p class="orders-empty" id="ordersEmpty" hidden>No orders match your search or selected status.</p>
+                </div>
+            </section>
+
+            <aside class="support-banner">
+                <div><h2 class="support-title">Need help with an order?</h2><p class="support-copy">Our support team is available 24/7 to assist<br class="desktop-break"> with tracking, returns, or technical queries.</p></div>
+                <a class="support-button" href="/contact">Contact Support</a>
+            </aside>
+        </main>
+
+        <%- include('../partials/user-footer') %>
+    </div>
+    
+    <!-- Interactive Search and Filter Script -->
+    <script>
+        const orderSearch = document.getElementById('orderSearch');
+        const orderCards = [...document.querySelectorAll('.order-card')];
+        const orderFilters = [...document.querySelectorAll('[data-order-filter]')];
+        const emptyOrders = document.getElementById('ordersEmpty');
+        const searchOrdersButton = document.getElementById('searchOrdersButton');
+        const clearOrdersButton = document.getElementById('clearOrdersButton');
+        let selectedStatus = 'all';
+
+        function filterOrders() {
+            const query = orderSearch.value.trim().toLowerCase();
+            let visibleCount = 0;
+
+            orderCards.forEach(card => {
+                const cardStatus = card.dataset.orderStatus;
+                // Group Pending/Processing/Packed together under the "pending" filter
+                const isPendingGroup = ['pending', 'processing', 'packed'].includes(cardStatus);
+                
+                let matchesStatus = false;
+                if (selectedStatus === 'all') matchesStatus = true;
+                else if (selectedStatus === 'pending') matchesStatus = isPendingGroup;
+                else matchesStatus = cardStatus === selectedStatus;
+
+                const matchesSearch = card.dataset.orderSearch.includes(query);
+                
+                card.hidden = !matchesStatus || !matchesSearch;
+                if (!card.hidden) visibleCount++;
+            });
+
+            if (emptyOrders) emptyOrders.hidden = visibleCount > 0;
+        }
+
+        orderFilters.forEach(button => {
+            button.addEventListener('click', () => {
+                selectedStatus = button.dataset.orderFilter;
+                orderFilters.forEach(filter => filter.setAttribute('aria-pressed', String(filter === button)));
+                filterOrders();
+            });
+        });
+
+        if(orderSearch) orderSearch.addEventListener('input', filterOrders);
+        if(searchOrdersButton) searchOrdersButton.addEventListener('click', filterOrders);
+        if(clearOrdersButton) clearOrdersButton.addEventListener('click', () => {
+            orderSearch.value = '';
+            filterOrders();
+            orderSearch.focus();
+        });
+    </script>
+</body>
+</html>

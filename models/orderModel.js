@@ -11,15 +11,15 @@ const orderSchema = new mongoose.Schema({
         quantity: Number,
         itemTotal: Number
     }],
-    shippingAddress: {
+    shippingAddress: new mongoose.Schema({
         name: String,
         phone: String,
         fullAddress: String,
         type: String
-    },
+    }, { _id: false }),
     paymentMethod: { type: String, required: true },
-    paymentStatus: { type: String, defualt: 'Pending'},
-    orderStatus: { type: String, defualt: 'Pending'},
+    paymentStatus: { type: String, default: 'Pending'},
+    orderStatus: { type: String, default: 'Pending'},
     subtotal: Number,
     tax: Number,
     shippingCost: Number,

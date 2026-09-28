@@ -725,6 +725,17 @@ body {
     color: #334155;
 }
 
+.field-error {
+    color: #c7372f;
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.modal-form-input[aria-invalid="true"],
+.modal-form-select[aria-invalid="true"] {
+    border-color: #c7372f;
+}
+
 .modal-form-input,
 .modal-form-select {
     height: 38px;
