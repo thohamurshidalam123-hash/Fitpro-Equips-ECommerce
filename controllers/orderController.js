@@ -1,5 +1,6 @@
 const Order =require('../models/orderModel');
 const Product = require('../models/productModel');
+const mongoose = require('mongoose');
 
 const adjustOrderItemStock = async (item, quantityChange) => {
     const product = await Product.findById(item.productId);
@@ -36,33 +37,28 @@ const loadOrderHistory = async (req, res) => {
         const userId = req.session.userId;
         if (!userId) return res.redirect('/login');
 
-        // For fetching all orders (newest will come first)
-        const allOrders = await Order.find({ userId })
-            .sort({ createdAt: -1 })
-            .lean();
+        const requestedPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = 10;
+        const currentStatus = ['all', 'pending', 'shipped', 'delivered'].includes(String(req.query.status || 'all').toLowerCase())
+            ? String(req.query.status || 'all').toLowerCase()
+            : 'all';
+        const currentSearch = String(req.query.search || '').trim();
+        const pendingStatuses = ['Pending', 'Processing', 'Packed', 'Shipped'];
 
-        // For calculating dynamic statistics for the top cards
-        const stats = {
-            total: allOrders.length,
-            completed: allOrders.filter(o => o.orderStatus === 'Delivered').length,
-            pending: allOrders.filter(o => ['Pending', 'Processing', 'Packed', 'Shipped'].includes(o.orderStatus)).length,
-            // Sum grand totals of orders that aren't cancelled or return
-            spent: allOrders.filter(o => o.orderStatus !== 'Cancelled' && o.orderStatus !== 'Returned')
-                        .reduce((sum, o) => sum + (o.grandTotal || 0), 0)
-            };
+        // For implement searching
+        const listQuery = { userId };
 
-            // For implement searching
-            let listQuery = { userId };
+        // For status filter
+        if (currentStatus === 'pending') {
+            // Capitalizing for match enum values
+            listQuery.orderStatus = { $in: ['Pending', 'Processing', 'Packed'] };
+        } else if (currentStatus === 'shipped') {
+            listQuery.orderStatus = 'Shipped';
+        } else if (currentStatus === 'delivered') {
+            listQuery.orderStatus = 'Delivered';
+        }
 
-            // For status filter
-            const currentStatus = req.query.status || 'all';
-            if(currentStatus === 'pending'){
-                // Capitalizing for match enum values
-                listQuery.orderStatus = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
-            }
-
-            // Handle search filter
-           const currentSearch = req.query.search ? req.query.search.trim() : '';
+        // Handle search filter
         if (currentSearch) {
             listQuery.$or = [
                 { orderId: { $regex: currentSearch, $options: 'i' } },
@@ -70,17 +66,39 @@ const loadOrderHistory = async (req, res) => {
             ];
         }
 
+        // For calculating dynamic statistics for the top cards
+        const userObjectId = new mongoose.Types.ObjectId(userId);
+        const [total, completed, pending, spentResult, filteredOrderCount] = await Promise.all([
+            Order.countDocuments({ userId }),
+            Order.countDocuments({ userId, orderStatus: 'Delivered' }),
+            Order.countDocuments({ userId, orderStatus: { $in: pendingStatuses } }),
+            Order.aggregate([
+                { $match: { userId: userObjectId, orderStatus: { $nin: ['Cancelled', 'Returned'] } } },
+                { $group: { _id: null, spent: { $sum: '$grandTotal' } } }
+            ]),
+            Order.countDocuments(listQuery)
+        ]);
+        const stats = { total, completed, pending, spent: spentResult[0]?.spent || 0 };
+        const totalPages = Math.ceil(filteredOrderCount / limit);
+        const page = Math.min(requestedPage, Math.max(totalPages, 1));
+
         // For fetching the specifically requested orders
         const orders = await Order.find(listQuery)
-        .sort({ createdAt: -1 })
-        .lean();
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean();
 
         res.render('user/orders',{
             currentPage: 'orders',
             orders,
             stats,
             currentSearch,
-            currentStatus
+            currentStatus,
+            page,
+            limit,
+            totalPages,
+            totalOrders: filteredOrderCount
         });
         }catch(error) {
             console.error('Error in load order details:',error);

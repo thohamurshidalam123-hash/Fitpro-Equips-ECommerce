@@ -93,6 +93,17 @@ const updateOrderStatus = async (req, res) => {
         const order = await Order.findById(orderId);
         if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
 
+        const statusFlow = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Returned'];
+        const currentStatusIndex = statusFlow.indexOf(order.orderStatus);
+        const selectedStatusIndex = statusFlow.indexOf(status);
+        const canCancel = status === 'Cancelled' && currentStatusIndex >= 0 && currentStatusIndex < statusFlow.indexOf('Delivered');
+        if (!canCancel && (selectedStatusIndex <= currentStatusIndex || currentStatusIndex < 0)) {
+            return res.status(400).json({
+                success: false,
+                message: `Can't update status to ${status} from ${order.orderStatus}. Select an upcoming order stage.`
+            });
+        }
+
         order.orderStatus = status;
         await order.save();
 

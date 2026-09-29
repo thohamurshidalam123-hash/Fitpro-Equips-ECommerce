@@ -16,13 +16,13 @@
         try {
             const response = await fetch('/wishlist/toggle', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ productId })
+                headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+                body: JSON.stringify({ productId, variantId: button.dataset.variantId })
             });
             const result = await response.json();
 
             if (response.status === 401) {
-                window.location.href = '/login';
+                showMessage(result.message || 'Please log in to use the wishlist.', 'error');
                 return;
             }
             if (!response.ok || !result.success) {

@@ -65,6 +65,25 @@ const requireUserSession = async (req, res, next) => {
     }
 };
 
+const requireWishlistSession = async (req, res, next) => {
+    if (!req.session || !req.session.userId) {
+        return res.status(401).json({ success: false, message: 'Please log in to use the wishlist.' });
+    }
+
+    try {
+        const user = await User.findById(req.session.userId).select('_id isBlocked');
+        if (!user || user.isBlocked) {
+            delete req.session.userId;
+            return res.status(401).json({ success: false, message: user ? 'Your account has been blocked.' : 'Your session has expired. Please log in again.' });
+        }
+        req.user = user;
+        return next();
+    } catch (error) {
+        console.error('Wishlist session validation error:', error.message);
+        return res.status(500).json({ success: false, message: 'Session validation failed. Please try again.' });
+    }
+};
+
 router.get('/', userShopController.loadLandingPage);
 
 // Authentication Routes
@@ -124,7 +143,7 @@ router.post('/cart/moveToWishlist',cartController.moveToWishlist);
 
 //Wishlist routes
 router.get('/wishlist', requireUserSession, wishlistController.loadWishlist);
-router.post('/wishlist/toggle', requireUserSession, wishlistController.toggleWishlist);
+router.post('/wishlist/toggle', requireWishlistSession, wishlistController.toggleWishlist);
 router.post('/wishlist/remove', requireUserSession, wishlistController.removeWishlistItem);
 router.post('/wishlist/clear', requireUserSession, wishlistController.clearWishlist);
 

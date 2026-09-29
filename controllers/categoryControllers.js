@@ -1,5 +1,6 @@
 const Category = require('../models/categoryModel');
 const Brand = require('../models/brandModel');
+const Product = require('../models/productModel');
 const { validateCategory, validateCategoryImage } = require('../validators/categoryValidators');
 
 // For loading categories, searching, pagination and sorting
@@ -26,8 +27,18 @@ const loadCategories = async (req, res) => {
             { $match: { categoryId: { $in: categories.map(category => category._id) } } },
             { $group: { _id: '$categoryId', count: { $sum: 1 } } }
         ]);
+        const productCounts = await Product.aggregate([
+            { $match: { categoryId: { $in: categories.map(category => category._id) } } },
+            { $group: { _id: '$categoryId', count: { $sum: 1 }, stock: { $sum: { $ifNull: ['$availableStock', 0] } } } }
+        ]);
         const brandCountMap = new Map(brandCounts.map(item => [String(item._id), item.count]));
-        categories.forEach(category => { category.brandCount = brandCountMap.get(String(category._id)) || 0; });
+        const productSummaryMap = new Map(productCounts.map(item => [String(item._id), item]));
+        categories.forEach(category => {
+            category.brandCount = brandCountMap.get(String(category._id)) || 0;
+            const productSummary = productSummaryMap.get(String(category._id));
+            category.productCount = productSummary?.count || 0;
+            category.totalStock = productSummary?.stock || 0;
+        });
 
         const totalCategories = await Category.countDocuments(query);
         const allCategories = await Category.countDocuments();

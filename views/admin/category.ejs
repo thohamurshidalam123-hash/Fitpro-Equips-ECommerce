@@ -35,19 +35,19 @@
 				</div>
 				<div class="table-scroll">
 					<table class="category-table">
-						<thead><tr><th>IMAGE</th><th>CATEGORY NAME</th><th>PRODUCTS</th><th>BRANDS</th><th>FEATURED</th><th>OFFERS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+						<thead><tr><th>IMAGE</th><th>CATEGORY NAME</th><th>PRODUCTS</th><th>STOCK</th><th>BRANDS</th><th>FEATURED</th><th>OFFERS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
 						<tbody>
 						<% if (categories && categories.length) { %>
 							<% categories.forEach(category => { %>
 								<tr>
 									<td><% if (category.image) { %><img class="category-image" src="<%= category.image %>" alt="<%= category.name %>"><% } else { %><div class="category-image"><%= category.name.charAt(0).toUpperCase() %></div><% } %></td>
 									<td><strong><%= category.name %></strong></td>
-									<td class="product-count">0</td><td class="product-count"><%= category.brandCount || 0 %></td><td><span class="muted-pill"><%= category.featured ? 'Featured' : 'No' %></span></td><td><span class="muted-text">No Offer</span></td>
+									<td class="product-count"><%= category.productCount || 0 %></td><td class="product-count"><%= category.totalStock || 0 %></td><td class="product-count"><%= category.brandCount || 0 %></td><td><span class="muted-pill"><%= category.featured ? 'Featured' : 'No' %></span></td><td><span class="muted-text">No Offer</span></td>
 									<td><span class="status <%= category.status === 'Active' ? 'status-active' : 'status-inactive' %>"><%= category.status === 'Active' ? '● Active' : '● Inactive' %></span></td>
 									<td><div class="row-actions"><button type="button" class="icon-button edit-category" title="Edit category" data-id="<%= category._id %>" data-name="<%= category.name %>" data-description="<%= category.description || '' %>" data-featured="<%= category.featured ? 'true' : 'false' %>" data-image="<%= category.image || '' %>">✎</button><button type="button" class="icon-button toggle-category" title="Toggle category status" data-id="<%= category._id %>">◉</button></div></td>
 								</tr>
 							<% }); %>
-						<% } else { %><tr><td colspan="8" class="empty-state">No categories found.</td></tr><% } %>
+						<% } else { %><tr><td colspan="9" class="empty-state">No categories found.</td></tr><% } %>
 						</tbody>
 					</table>
 				</div>

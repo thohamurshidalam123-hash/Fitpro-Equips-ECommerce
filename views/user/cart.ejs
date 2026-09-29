@@ -557,7 +557,7 @@
                                                 <button type="button" onclick="updateQty('<%= item._id %>', 'increase')" <%= (!item.isAvailable || item.outOfStock) ? 'disabled' : '' %> aria-label="Increase quantity">+</button>
                                             </div>
                                             <button class="mini-link remove" type="button" onclick="removeItem('<%= item._id %>')">Remove</button>
-                                            <button class="mini-link wishlist" type="button" onclick="moveToWishlist('<%= item._id %>', '<%= item.productId._id %>')">Add to Wishlist</button>
+                                            <button class="mini-link wishlist" type="button" onclick="moveToWishlist('<%= item._id %>', '<%= item.productId._id %>', '<%= item.variantId || '' %>')">Add to Wishlist</button>
                                         </div>
                                     </div>
                                     <div class="price-block">
@@ -676,12 +676,12 @@
     }
 
     // Task D.iv: Move to Wishlist
-    async function moveToWishlist(itemId, productId) {
+    async function moveToWishlist(itemId, productId, variantId) {
         try {
             const response = await fetch('/cart/moveToWishlist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ itemId, productId })
+                body: JSON.stringify({ itemId, productId, variantId })
             });
             const data = await response.json();
             if (data.success) {

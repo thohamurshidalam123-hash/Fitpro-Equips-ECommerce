@@ -34,11 +34,11 @@
 
 				<section class="shop-results" aria-label="Products">
 					<% if (!products.length) { %><p>No available products match your filters.</p><% } %>
-					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const serializedVariants = encodeURIComponent(JSON.stringify(product.variants || [])); %>
-						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" data-wishlist-toggle data-product-id="<%= product._id %>" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.brandId ? product.brandId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2><span class="product-card-category"><%= product.categoryId ? product.categoryId.name : 'Equipment' %></span></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
+					<div class="shop-product-grid"><% products.forEach(product => { const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const serializedVariants = encodeURIComponent(JSON.stringify(product.variants || [])); const maxQuantity = Math.min(Number(product.availableStock) || 0, 5); %>
+						<article class="shop-product-card"><% if (product.offerPercentage > 0) { %><span class="sale-tag"><%= product.offerPercentage %>% OFF</span><% } %><button class="wishlist" data-wishlist-toggle data-product-id="<%= product._id %>" data-variants="<%= serializedVariants %>" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button><a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>"><div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div><small><%= product.brandId ? product.brandId.name : 'FITPRO EQUIPMENT' %></small><h2><%= product.productName %></h2><span class="product-card-category"><%= product.categoryId ? product.categoryId.name : 'Equipment' %></span></a><strong class="shop-price">₹<%= Number(price).toFixed(2) %></strong><div class="product-qty-control" aria-label="Quantity selector">
 								<button type="button" data-quantity-action="decrease" aria-label="Decrease quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>−</button>
 								<span class="product-qty-value">1</span>
-								<button type="button" data-quantity-action="increase" data-max-quantity="<%= product.availableStock %>" aria-label="Increase quantity" <%= product.availableStock < 1 ? 'disabled' : '' %>>＋</button>
+								<button type="button" data-quantity-action="increase" data-max-quantity="<%= maxQuantity %>" aria-label="Increase quantity" <%= maxQuantity < 1 ? 'disabled' : '' %>>＋</button>
 								</div><span class="stock-pill"><%= product.availableStock %> in stock</span><button class="cart-button" type="button" data-product-id="<%= product._id %>" data-variants="<%= serializedVariants %>" <%= product.availableStock < 1 ? 'disabled' : '' %>>▣ Add to Cart</button></article>
 					<% }) %></div>
 					<% if (totalPages > 1) { %><nav class="pagination" aria-label="Shop pages">
@@ -80,6 +80,11 @@
 			const maximumQuantity = Number(control.querySelector('[data-max-quantity]').dataset.maxQuantity);
 			if (maximumQuantity < 1) return;
 			const change = button.dataset.quantityAction === 'increase' ? 1 : -1;
+			if (change > 0 && currentQuantity >= maximumQuantity) {
+				const message = maximumQuantity === 5 ? 'You can add a maximum of 5 units for this item.' : `Only ${maximumQuantity} units are available.`;
+				if (window.showAppModal) window.showAppModal(message, 'error');
+				return;
+			}
 			const nextQuantity = Math.min(maximumQuantity, Math.max(1, currentQuantity + change));
 
 			valueElement.textContent = nextQuantity;
@@ -140,22 +145,38 @@
 		let pickerProductId = '';
 		let pickerQuantity = 1;
 		let pickerMaxQuantity = 1;
+		let pickerAction = 'cart';
+		let pickerSourceButton = null;
 		const updatePickerQuantity = (quantity) => {
 			pickerQuantity = Math.min(pickerMaxQuantity, Math.max(1, quantity));
 			variantQuantity.textContent = pickerQuantity;
 			variantTotal.textContent = pickerQuantity;
 			variantDecrease.disabled = pickerQuantity <= 1;
-			variantIncrease.disabled = pickerQuantity >= pickerMaxQuantity;
+			variantIncrease.disabled = pickerMaxQuantity < 1;
 		};
-		function openShopVariantPicker(button, variants) {
+		function openShopVariantPicker(button, variants, action = 'cart') {
 			pickerProductId = button.dataset.productId;
+			pickerAction = action;
+			pickerSourceButton = button;
 			pickerQuantity = Number(button.closest('.shop-product-card').querySelector('.product-qty-value')?.textContent) || 1;
 			const firstAvailableVariant = variants.find(variant => Number(variant.stock) > 0);
 			variantOptions.innerHTML = variants.map(variant => `<button type="button" class="shop-variant-option ${firstAvailableVariant && String(firstAvailableVariant._id) === String(variant._id) ? 'selected' : ''}" data-variant-id="${variant._id}" data-stock="${variant.stock}" ${variant.stock < 1 ? 'disabled' : ''}><strong>${variant.name || `${variant.weight} ${variant.weightUnit || 'kg'}`}</strong><span>${variant.color || ''} · ₹${Number(variant.price || 0).toFixed(2)} · ${variant.stock} left</span></button>`).join('');
 			pickerMaxQuantity = Math.min(5, Number(firstAvailableVariant?.stock) || 1);
 			updatePickerQuantity(Math.min(pickerQuantity, pickerMaxQuantity));
+			variantPicker.querySelector('.variant-picker-quantity').hidden = action === 'wishlist';
+			variantPicker.querySelector('.variant-picker-total').hidden = action === 'wishlist';
+			variantAdd.textContent = action === 'wishlist' ? 'Add to Wishlist' : 'Add to Cart';
 			variantPicker.hidden = false;
 		}
+		document.addEventListener('click', event => {
+			const button = event.target.closest('[data-wishlist-toggle]');
+			if (!button) return;
+			const variants = JSON.parse(decodeURIComponent(button.dataset.variants || '%5B%5D'));
+			if (!variants.length) return;
+			event.preventDefault();
+			event.stopImmediatePropagation();
+			openShopVariantPicker(button, variants, 'wishlist');
+		});
 		variantOptions.addEventListener('click', event => {
 			const option = event.target.closest('.shop-variant-option');
 			if (!option || option.disabled) return;
@@ -165,18 +186,38 @@
 			updatePickerQuantity(pickerQuantity);
 		});
 		variantDecrease.addEventListener('click', () => updatePickerQuantity(pickerQuantity - 1));
-		variantIncrease.addEventListener('click', () => updatePickerQuantity(pickerQuantity + 1));
+		variantIncrease.addEventListener('click', () => {
+			if (pickerQuantity >= pickerMaxQuantity) {
+				const message = pickerMaxQuantity === 5 ? 'You can add a maximum of 5 units for this item.' : `Only ${pickerMaxQuantity} units are available.`;
+				if (window.showAppModal) window.showAppModal(message, 'error');
+				return;
+			}
+			updatePickerQuantity(pickerQuantity + 1);
+		});
 		document.querySelector('.variant-picker-close').addEventListener('click', () => { variantPicker.hidden = true; });
 		variantPicker.addEventListener('click', event => { if (event.target === variantPicker) variantPicker.hidden = true; });
 		variantAdd.addEventListener('click', async () => {
 			const selected = variantOptions.querySelector('.shop-variant-option.selected');
-			if (!selected) return;
+			if (!selected) {
+				if (window.showAppModal) window.showAppModal('Please select an available product variant.', 'error');
+				return;
+			}
 			variantAdd.disabled = true;
 			try {
-				const response = await fetch('/cart/add', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ productId: pickerProductId, variantId: selected.dataset.variantId, quantity: pickerQuantity }) });
+				const isWishlistAction = pickerAction === 'wishlist';
+				const response = await fetch(isWishlistAction ? '/wishlist/toggle' : '/cart/add', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({ productId: pickerProductId, variantId: selected.dataset.variantId, ...(!isWishlistAction && { quantity: pickerQuantity }) }) });
 				const result = await response.json();
 				if (window.showAppModal) window.showAppModal(result.message || 'Unable to add product to cart.', result.success ? 'success' : 'error');
-				if (result.success) variantPicker.hidden = true;
+				if (result.success) {
+					if (isWishlistAction && pickerSourceButton) {
+						const isAdded = result.action === 'added';
+						pickerSourceButton.textContent = isAdded ? '♥' : '♡';
+						pickerSourceButton.setAttribute('aria-label', `${isAdded ? 'Remove' : 'Add'} product ${isAdded ? 'from' : 'to'} wishlist`);
+					}
+					variantPicker.hidden = true;
+				}
+			} catch (error) {
+				if (window.showAppModal) window.showAppModal(pickerAction === 'wishlist' ? 'Unable to update wishlist right now.' : 'Unable to add product to cart right now.', 'error');
 			} finally { variantAdd.disabled = false; }
 		});
 	</script>

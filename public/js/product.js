@@ -209,15 +209,43 @@ document.getElementById('openEditProduct')?.addEventListener('click', () => {
 	if (sourceButton) sourceButton.click();
 });
 
-addForm?.addEventListener('submit', event => {
+
+addForm?.addEventListener('submit', async event => {
+	event.preventDefault();
 	const errors = validateFormFields(addForm);
 	const imageInput = addForm.querySelector('input[name="images"]');
-	const selectedImages = imageInput ? [...imageInput.files] : [];
+	const selectedImages = imageInput ? getProductImageFiles(imageInput) : [];
 	if (!selectedImages.length) errors.images = 'Please upload at least 3 JPEG or PNG images';
 	else if (selectedImages.length < 3) errors.images = 'Please upload at least 3 JPEG or PNG images';
 	if (Object.keys(errors).length) {
-		event.preventDefault();
 		showFieldErrors(addForm, errors);
+		return;
+	}
+
+	const submitButton = addForm.querySelector('[type="submit"]');
+	submitButton.disabled = true;
+	showFormError(addForm, '');
+	const formData = new FormData(addForm);
+	formData.delete('images');
+	selectedImages.forEach(file => formData.append('images', file, file.name));
+	try {
+		const response = await fetch(addForm.action, { method: 'POST', body: formData });
+		const result = await response.json();
+		if (!response.ok || !result.success) {
+			if (result.errors) {
+				showFieldErrors(addForm, result.errors);
+			} else {
+				showResultModal(result.message || 'Unable to add product.', 'error');
+			}
+			return;
+		}
+		showResultModal(result.message || 'Product added successfully.', 'success', () => window.location.reload());
+	} catch (error) {
+		const message = error.message || 'Unable to add product. Please try again.';
+		showFormError(addForm, message);
+		showResultModal(message, 'error');
+	} finally {
+		submitButton.disabled = false;
 	}
 });
 

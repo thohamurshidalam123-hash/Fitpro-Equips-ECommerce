@@ -253,6 +253,7 @@
 
         const variants = <%- JSON.stringify(product.variants || []).replace(/</g, '\\u003c') %>;
         let selectedVariant = variants.find(variant => Number(variant.stock) > 0) || variants[0] || null;
+        const wishlistButton = document.querySelector('.wishlist-button[data-wishlist-toggle]');
         const priceRow = document.querySelector('.product-price-row strong');
         const stockLabel = document.querySelector('.stock-label');
         const variantImages = document.getElementById('product-gallery');
@@ -275,6 +276,10 @@
 
         const updateSelectedVariant = (variant) => {
             selectedVariant = variant;
+            if (wishlistButton) {
+                if (variant?._id) wishlistButton.dataset.variantId = variant._id;
+                else delete wishlistButton.dataset.variantId;
+            }
             if (!variant) return;
             priceRow.textContent = `₹${Number(variant.price || 0).toFixed(2)}`;
             const inStock = Number(variant.stock) > 0;

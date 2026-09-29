@@ -19,7 +19,7 @@
 					<h1 id="wishlist-title">My Wishlist</h1>
 					<p>Save your favorite fitness equipment and purchase them anytime.</p>
 				</div>
-				<div class="wishlist-summary"><span>Saved Products</span><strong data-wishlist-count><%= itemCount %> Item<%= itemCount === 1 ? '' : 's' %></strong></div>
+				<div class="wishlist-summary"><span>Saved Products</span><strong data-wishlist-count data-total-items="<%= itemCount %>"><%= itemCount %> Item<%= itemCount === 1 ? '' : 's' %></strong></div>
 			</section>
 
 			<div class="wishlist-actions">
@@ -29,15 +29,22 @@
 			</div>
 
 			<section class="wishlist-grid" aria-label="Saved products">
-				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const oldPrice = product.salePrice > 0 ? product.regularPrice : null; const variant = (product.variants || []).find(item => Number(item.stock) > 0 && item.status !== 'Out of Stock'); %>
+				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const oldPrice = product.salePrice > 0 ? product.regularPrice : null; const savedVariant = (product.variants || []).find(productVariant => String(productVariant._id) === String(item.variantId)); const variant = savedVariant && Number(savedVariant.stock) > 0 && savedVariant.status !== 'Out of Stock' ? savedVariant : (product.variants || []).find(productVariant => Number(productVariant.stock) > 0 && productVariant.status !== 'Out of Stock'); %>
 					<article class="wishlist-card" data-wishlist-card data-product-id="<%= product._id %>">
 						<div class="wishlist-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>>
-							<button class="remove-wishlist" type="button" aria-label="Remove <%= product.productName %> from wishlist" data-remove-wishlist>×</button>
+							<button class="remove-wishlist" type="button" aria-label="Remove <%= product.productName %> from wishlist" data-remove-wishlist data-product-id="<%= product._id %>" data-variant-id="<%= item.variantId || '' %>">×</button>
 						</div>
-						<div class="wishlist-card-content"><small><%= product.brandId ? product.brandId.name : (product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT') %></small><h2><%= product.productName %></h2><div class="wishlist-price">₹<%= Number(price).toLocaleString('en-IN') %><% if (oldPrice) { %> <del>₹<%= Number(oldPrice).toLocaleString('en-IN') %></del><% } %></div><button class="card-cart-button" type="button" data-add-cart data-product-id="<%= product._id %>"<% if (!variant && product.variants && product.variants.length || product.status !== 'Active' || product.availableStock < 1) { %> disabled<% } %><% if (variant) { %> data-variant-id="<%= variant._id %>"<% } %>>Add to Cart</button></div>
+						<div class="wishlist-card-content"><small><%= product.brandId ? product.brandId.name : (product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT') %></small><h2><%= product.productName %></h2><% if (savedVariant) { %><small>Selected: <%= savedVariant.name || `${savedVariant.weight} ${savedVariant.weightUnit || 'kg'}` %></small><% } %><div class="wishlist-price">₹<%= Number(price).toLocaleString('en-IN') %><% if (oldPrice) { %> <del>₹<%= Number(oldPrice).toLocaleString('en-IN') %></del><% } %></div><button class="card-cart-button" type="button" data-add-cart data-product-id="<%= product._id %>"<% if (!variant && product.variants && product.variants.length || product.status !== 'Active' || product.availableStock < 1) { %> disabled<% } %><% if (variant) { %> data-variant-id="<%= variant._id %>"<% } %>>Add to Cart</button></div>
 					</article>
 				<% }) %>
 			</section>
+			<% if (totalPages > 1) { %>
+				<nav class="wishlist-pagination" aria-label="Wishlist pages">
+					<% if (page > 1) { %><a href="/wishlist?page=<%= page - 1 %>">Previous</a><% } else { %><span class="disabled" aria-disabled="true">Previous</span><% } %>
+					<% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a class="<%= pageNumber === page ? 'current' : '' %>" href="/wishlist?page=<%= pageNumber %>" <%= pageNumber === page ? 'aria-current="page"' : '' %>><%= pageNumber %></a><% } %>
+					<% if (page < totalPages) { %><a href="/wishlist?page=<%= page + 1 %>">Next</a><% } else { %><span class="disabled" aria-disabled="true">Next</span><% } %>
+				</nav>
+			<% } %>
 			<p class="wishlist-empty" hidden>Your wishlist is empty. <a href="/shop">Continue shopping</a></p>
 		</main>
 

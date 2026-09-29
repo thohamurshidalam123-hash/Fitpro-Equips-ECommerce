@@ -91,6 +91,11 @@
 
         .orders-empty { padding: 28px 16px; border: 1px dashed #cdd8e9; border-radius: 6px; color: var(--orders-muted); background: #fff; text-align: center; font-size: 11px; }
         .orders-empty[hidden] { display: none; }
+        .orders-pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; margin-top: 18px; }
+        .orders-pagination a, .orders-pagination span { display: inline-grid; min-width: 30px; height: 30px; place-items: center; padding: 0 8px; border: 1px solid var(--orders-line); border-radius: 5px; color: #52627a; background: #fff; font-size: 10px; text-decoration: none; }
+        .orders-pagination .current { border-color: var(--orders-blue); color: #fff; background: var(--orders-blue); }
+        .orders-pagination .disabled { color: #a5afbd; background: #f5f7fa; }
+        .orders-pagination .pagination-info { border: 0; color: var(--orders-muted); background: transparent; }
         .support-banner { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-top: 28px; padding: 18px 20px; border-radius: 6px; background: #dfeaff; }
         .support-title { margin: 0 0 4px; font-size: 12px; }
         .support-copy { margin: 0; color: #62718a; font-size: 9px; line-height: 1.45; }
@@ -161,22 +166,22 @@
                     <div class="orders-search" role="search">
                         <label class="orders-search-field">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
-                            <input id="orderSearch" type="search" placeholder="Search by Order ID or Product..." aria-label="Search orders">
+                            <input id="orderSearch" type="search" value="<%= currentSearch || '' %>" placeholder="Search by Order ID or Product..." aria-label="Search orders">
                         </label>
                         <button class="orders-search-button" id="searchOrdersButton" type="button">Search</button>
                         <button class="orders-clear-button" id="clearOrdersButton" type="button">Clear</button>
                     </div>
                     <div class="order-filters" role="group" aria-label="Filter orders by status">
-                        <button class="order-filter" type="button" data-order-filter="all" aria-pressed="true">All Orders</button>
-                        <button class="order-filter" type="button" data-order-filter="pending" aria-pressed="false">Pending</button>
-                        <button class="order-filter" type="button" data-order-filter="shipped" aria-pressed="false">Shipped</button>
-                        <button class="order-filter" type="button" data-order-filter="delivered" aria-pressed="false">Delivered</button>
+                        <button class="order-filter" type="button" data-order-filter="all" aria-pressed="<%= currentStatus === 'all' ? 'true' : 'false' %>">All Orders</button>
+                        <button class="order-filter" type="button" data-order-filter="pending" aria-pressed="<%= currentStatus === 'pending' ? 'true' : 'false' %>">Pending</button>
+                        <button class="order-filter" type="button" data-order-filter="shipped" aria-pressed="<%= currentStatus === 'shipped' ? 'true' : 'false' %>">Shipped</button>
+                        <button class="order-filter" type="button" data-order-filter="delivered" aria-pressed="<%= currentStatus === 'delivered' ? 'true' : 'false' %>">Delivered</button>
                     </div>
                 </div>
 
                 <div class="order-list" id="orderList">
                     <% if (orders.length === 0) { %>
-                        <p class="orders-empty">You haven't placed any orders yet.</p>
+                        <p class="orders-empty"><%= stats.total ? 'No orders match your search or selected status.' : "You haven't placed any orders yet." %></p>
                     <% } else { %>
                         <% orders.forEach(order => { 
                             // Determine search string for JS filtering
@@ -246,8 +251,15 @@
                         <% }) %>
                     <% } %>
                     
-                    <p class="orders-empty" id="ordersEmpty" hidden>No orders match your search or selected status.</p>
                 </div>
+                <% if (totalPages > 1) { %>
+                    <nav class="orders-pagination" aria-label="Order history pages">
+                        <% if (page > 1) { %><a href="/orders?page=<%= page - 1 %>&status=<%= encodeURIComponent(currentStatus) %>&search=<%= encodeURIComponent(currentSearch) %>">Previous</a><% } else { %><span class="disabled" aria-disabled="true">Previous</span><% } %>
+                        <% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a class="<%= pageNumber === page ? 'current' : '' %>" href="/orders?page=<%= pageNumber %>&status=<%= encodeURIComponent(currentStatus) %>&search=<%= encodeURIComponent(currentSearch) %>" <%= pageNumber === page ? 'aria-current="page"' : '' %>><%= pageNumber %></a><% } %>
+                        <% if (page < totalPages) { %><a href="/orders?page=<%= page + 1 %>&status=<%= encodeURIComponent(currentStatus) %>&search=<%= encodeURIComponent(currentSearch) %>">Next</a><% } else { %><span class="disabled" aria-disabled="true">Next</span><% } %>
+                        <span class="pagination-info">Showing <%= orders.length ? ((page - 1) * limit) + 1 : 0 %>–<%= Math.min(page * limit, totalOrders) %> of <%= totalOrders %></span>
+                    </nav>
+                <% } %>
             </section>
 
             <aside class="support-banner">
@@ -262,34 +274,18 @@
     <!-- Interactive Search and Filter Script -->
     <script>
         const orderSearch = document.getElementById('orderSearch');
-        const orderCards = [...document.querySelectorAll('.order-card')];
         const orderFilters = [...document.querySelectorAll('[data-order-filter]')];
-        const emptyOrders = document.getElementById('ordersEmpty');
         const searchOrdersButton = document.getElementById('searchOrdersButton');
         const clearOrdersButton = document.getElementById('clearOrdersButton');
-        let selectedStatus = 'all';
+        let selectedStatus = '<%= currentStatus %>';
 
         function filterOrders() {
-            const query = orderSearch.value.trim().toLowerCase();
-            let visibleCount = 0;
-
-            orderCards.forEach(card => {
-                const cardStatus = card.dataset.orderStatus;
-                // Group Pending/Processing/Packed together under the "pending" filter
-                const isPendingGroup = ['pending', 'processing', 'packed'].includes(cardStatus);
-                
-                let matchesStatus = false;
-                if (selectedStatus === 'all') matchesStatus = true;
-                else if (selectedStatus === 'pending') matchesStatus = isPendingGroup;
-                else matchesStatus = cardStatus === selectedStatus;
-
-                const matchesSearch = card.dataset.orderSearch.includes(query);
-                
-                card.hidden = !matchesStatus || !matchesSearch;
-                if (!card.hidden) visibleCount++;
-            });
-
-            if (emptyOrders) emptyOrders.hidden = visibleCount > 0;
+            // Group Pending/Processing/Packed together under the "pending" filter
+            const params = new URLSearchParams();
+            if (selectedStatus !== 'all') params.set('status', selectedStatus);
+            const query = orderSearch.value.trim();
+            if (query) params.set('search', query);
+            window.location.href = `/orders${params.size ? `?${params}` : ''}`;
         }
 
         orderFilters.forEach(button => {
@@ -300,12 +296,16 @@
             });
         });
 
-        if(orderSearch) orderSearch.addEventListener('input', filterOrders);
         if(searchOrdersButton) searchOrdersButton.addEventListener('click', filterOrders);
         if(clearOrdersButton) clearOrdersButton.addEventListener('click', () => {
             orderSearch.value = '';
             filterOrders();
-            orderSearch.focus();
+        });
+        if(orderSearch) orderSearch.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                filterOrders();
+            }
         });
     </script>
 </body>

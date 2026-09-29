@@ -105,6 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const formData = new FormData(form);
+        formData.set('featured', String(featuredInput.checked));
         const selectedLogo = getSelectedLogoFile();
         if (selectedLogo) {
             formData.set('logo', selectedLogo, selectedLogo.name);

@@ -2,19 +2,19 @@
 	const cards = () => Array.from(document.querySelectorAll('[data-wishlist-card]:not(.is-removed)'));
 	const countElement = document.querySelector('[data-wishlist-count]');
 	const emptyMessage = document.querySelector('.wishlist-empty');
-	const showMessage = (message, type) => {
-		if (typeof window.showAppModal === 'function') window.showAppModal(message, type);
+	let totalItemCount = Number(countElement?.dataset.totalItems ?? cards().length);
+	const showMessage = (message, type, options) => {
+		if (typeof window.showAppModal === 'function') window.showAppModal(message, type, options);
 	};
 
 	function updateWishlistState() {
-		const count = cards().length;
-		if (countElement) countElement.textContent = `${count} Item${count === 1 ? '' : 's'}`;
-		if (emptyMessage) emptyMessage.hidden = count !== 0;
+		if (countElement) countElement.textContent = `${totalItemCount} Item${totalItemCount === 1 ? '' : 's'}`;
+		if (emptyMessage) emptyMessage.hidden = totalItemCount !== 0;
 	}
 
 	async function removeFromWishlist(button) {
 		const card = button.closest('[data-wishlist-card]');
-		const productId = card?.dataset.productId;
+		const productId = button.dataset.productId || card?.dataset.productId;
 		if (!productId) return;
 		button.disabled = true;
 
@@ -22,7 +22,7 @@
 			const response = await fetch('/wishlist/remove', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ productId })
+				body: JSON.stringify({ productId, variantId: button.dataset.variantId || null })
 			});
 			const result = await response.json();
 			if (!response.ok || !result.success) {
@@ -30,8 +30,9 @@
 				return;
 			}
 			card.classList.add('is-removed');
+			totalItemCount = Math.max(0, totalItemCount - 1);
 			updateWishlistState();
-			showMessage(result.message, 'success');
+			showMessage(result.message, 'success', { onClose: () => window.location.reload() });
 		} catch (error) {
 			showMessage('Unable to remove product from wishlist right now.', 'error');
 		} finally {
@@ -39,7 +40,7 @@
 		}
 	}
 
-	async function addToCart(button) {
+	async function addToCart(button, showSuccess = true) {
 		const card = button.closest('[data-wishlist-card]');
 		const productId = button.dataset.productId;
 		if (!productId || button.disabled) return false;
@@ -57,7 +58,9 @@
 				return false;
 			}
 			card.classList.add('is-removed');
+			totalItemCount = Math.max(0, totalItemCount - 1);
 			updateWishlistState();
+			if (showSuccess) showMessage(result.message || 'Product added to cart.', 'success', { onClose: () => window.location.reload() });
 			return true;
 		} catch (error) {
 			showMessage('Unable to add product to cart right now.', 'error');
@@ -85,7 +88,9 @@
 					return;
 				}
 				cards().forEach(card => card.classList.add('is-removed'));
+				totalItemCount = 0;
 				updateWishlistState();
+				window.location.reload();
 			} catch (error) {
 				showMessage('Unable to clear wishlist right now.', 'error');
 			} finally {
@@ -103,9 +108,11 @@
 		const addAllButton = event.target.closest('[data-add-all]');
 		if (addAllButton) {
 			addAllButton.disabled = true;
+			let addedCount = 0;
 			for (const button of cards().map(card => card.querySelector('[data-add-cart]'))) {
-				if (button) await addToCart(button);
+				if (button && await addToCart(button, false)) addedCount++;
 			}
+			if (addedCount) showMessage(`${addedCount} product${addedCount === 1 ? '' : 's'} added to cart.`, 'success', { onClose: () => window.location.reload() });
 			addAllButton.disabled = false;
 		}
 	});

@@ -20,7 +20,7 @@ const loadCartPage = async (req, res) => {
         let subtotal = 0;
         let canCheckout = true;
         const cartItems = cart ? cart.items : [];
-        const itemsPerPage = 12;
+        const itemsPerPage = 5;
         const totalPages = Math.max(Math.ceil(cartItems.length / itemsPerPage), 1);
         const page = Math.min(Math.max(parseInt(req.query.page, 10) || 1, 1), totalPages);
 
@@ -263,7 +263,7 @@ const removeFromCart = async (req, res) => {
 const moveToWishlist = async (req, res) => {
     try {
 
-        const { itemId, productId } = req.body;
+        const { itemId, productId, variantId } = req.body;
         const userId = req.session.userId;
 
         // For adding product to user's wishlist
@@ -275,12 +275,19 @@ const moveToWishlist = async (req, res) => {
         }
 
         // For checking if the product is already in the wishlist to avoide duplication
-        const inWishlist = wishlist.products.some(p => p.productId.toString() === productId);
+        const inWishlist = wishlist.products.some(p =>
+            p.productId.toString() === productId && String(p.variantId || '') === String(variantId || '')
+        );
 
-        if (!inWishlist) {
-            wishlist.products.push({ productId });
-            await wishlist.save();
+        if (inWishlist) {
+            return res.status(409).json({
+                success: false,
+                message: variantId ? 'This product variant is already in your wishlist.' : 'This product is already in your wishlist.'
+            });
         }
+
+        wishlist.products.push({ productId, variantId: variantId || undefined });
+        await wishlist.save();
 
         // Removing item from the cart
         await Cart.updateOne(
