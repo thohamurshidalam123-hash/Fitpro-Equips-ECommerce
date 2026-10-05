@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Ensure cart badge in header reflects items
     const cartCountBadge = document.querySelector('[data-cart-count]');
@@ -249,7 +247,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 6. Place Order Button (AJAX)
+    // 6. Place Order Button (AJAX) - UPDATED FOR RAZORPAY
     const btnPlaceOrder = document.querySelector('.btn-place-order');
     if (btnPlaceOrder) {
         btnPlaceOrder.addEventListener('click', async () => {
@@ -258,11 +256,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!addressId) {
                 window.showAppModal('Please add or select a delivery address.', 'error');
-                return;
-            }
-
-            if (selectedPayment !== 'cod') {
-                window.showAppModal('Currently, only Cash on Delivery is supported for this milestone.', 'error');
                 return;
             }
 
@@ -283,8 +276,60 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await res.json();
                 
                 if (data.success) {
-                    // Redirect to the Order Success Page with the unique Order ID
-                    window.location.href = `/order-success/${data.orderId}`;
+                    // RAZORPAY INTEGRATION BLOCK
+                    if (data.paymentMethod === 'razorpay') {
+                        const options = {
+                            key: data.key,
+                            amount: data.amount,
+                            currency: "INR",
+                            name: "Fitpro Equips",
+                            description: "Order Payment",
+                            order_id: data.razorpayOrderId,
+                            handler: async function (response) {
+                                // Payment succeeded, verifying on backend
+                                const verifyRes = await fetch('/checkout/verify-payment', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        orderId: data.orderId,
+                                        paymentData: response
+                                    })
+                                });
+                                const verifyData = await verifyRes.json();
+                                if (verifyData.success) {
+                                    window.location.href = `/order-success/${data.orderId}`;
+                                } else {
+                                    window.location.href = `/order-failed/${data.orderId}`;
+                                }
+                            },
+                            modal: {
+                                ondismiss: async function () {
+                                    // User closed the Razorpay popup without finishing payment
+                                    await fetch('/checkout/payment-failed', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ orderId: data.orderId })
+                                    });
+                                    window.location.href = `/order-failed/${data.orderId}`;
+                                }
+                            }
+                        };
+                        
+                        const rzp = new Razorpay(options);
+                        rzp.on('payment.failed', async function (response) {
+                            // Payment failed at the gateway level
+                            await fetch('/checkout/payment-failed', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ orderId: data.orderId })
+                            });
+                            window.location.href = `/order-failed/${data.orderId}`;
+                        });
+                        rzp.open();
+                    } else {
+                        // COD or Wallet successful redirect
+                        window.location.href = `/order-success/${data.orderId}`;
+                    }
                 } else {
                     window.showAppModal(data.message || 'Failed to place order.', 'error');
                     btnPlaceOrder.textContent = origText;

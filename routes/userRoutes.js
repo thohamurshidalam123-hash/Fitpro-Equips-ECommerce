@@ -160,4 +160,9 @@ router.post('/account/orders/:id/cancel',requireUserSession,orderController.canc
 router.post('/account/orders/:id/return',requireUserSession,orderController.returnOrder);
 router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
 
+// Payment routes
+router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);
+router.post('/checkout/payment-failed',requireUserSession, checkoutController.paymentFailure);
+router.get('/order-failed/:id',requireUserSession, checkoutController.loadPaymentFailed);
+
 module.exports = router;

@@ -1,0 +1,16 @@
+.inline-validation-message {
+	display: block !important;
+	margin: 4px 0 0;
+	color: #d73535;
+	font-size: 12px;
+	line-height: 1.4;
+}
+
+.inline-validation-invalid {
+	border-color: #d73535 !important;
+	box-shadow: 0 0 0 2px rgba(215, 53, 53, .12) !important;
+}
+
+.inline-validation-message[hidden] {
+	display: none !important;
+}

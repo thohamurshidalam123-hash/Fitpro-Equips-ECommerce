@@ -20,17 +20,20 @@
       <div class="profile-field">
         <label for="profileImage">Profile Photo</label>
         <input id="profileImage" name="profile_image" type="file" accept="image/png,image/jpeg,image/gif,image/webp" data-image-editor data-aspect-ratio="1" data-max-width="600">
+        <span data-inline-error-for="profile_image"></span>
       </div>
 
       <div class="profile-field">
         <label for="profileName">Username</label>
         <input id="profileName" name="name" type="text" value="<%= user.name %>" required>
+        <span data-inline-error-for="name"></span>
       </div>
 
       <div class="profile-row two-col">
         <div class="profile-field">
           <label for="profileDob">Date of Birth</label>
           <input id="profileDob" name="dateOfBirth" type="date" value="<%= user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '' %>">
+          <span data-inline-error-for="dateOfBirth"></span>
         </div>
 
         <div class="profile-field">
@@ -40,6 +43,7 @@
             <option value="Female" <%= user.gender === 'Female' ? 'selected' : '' %>>Female</option>
             <option value="Other" <%= user.gender === 'Other' ? 'selected' : '' %>>Other</option>
           </select>
+          <span data-inline-error-for="gender"></span>
         </div>
       </div>
 
@@ -48,6 +52,7 @@
         <div class="profile-inline-field">
           <input id="profileEmail" name="email" type="email" value="<%= user.email %>" required>
         </div>
+        <span data-inline-error-for="email"></span>
       </div>
 
       <div class="profile-field">
@@ -56,6 +61,7 @@
           <span class="phone-prefix">+91</span>
           <input id="profilePhone" name="phone" type="tel" value="<%= user.phone ? user.phone.replace(/^\+91\s?/, '') : '' %>" placeholder="98765 43210">
         </div>
+        <span data-inline-error-for="phone"></span>
       </div>
 
       <div class="profile-actions">
@@ -83,6 +89,7 @@
       <div class="profile-field">
         <label for="profileOtpCode">OTP Code</label>
         <input id="profileOtpCode" name="otp" type="text" maxlength="6" inputmode="numeric" placeholder="Enter 6-digit code" required>
+        <span data-inline-error-for="otp"></span>
       </div>
 
       <div class="profile-actions">
@@ -93,16 +100,3 @@
   </div>
 </div>
 
-<div class="profile-update-modal" id="profileErrorModal" aria-hidden="true">
-  <div class="profile-update-backdrop"></div>
-  <div class="profile-update-dialog" role="dialog" aria-modal="true" aria-labelledby="profileErrorTitle">
-    <div class="profile-update-header">
-      <h2 id="profileErrorTitle">Please correct the errors</h2>
-      <button type="button" class="profile-close-btn" aria-label="Close error modal" onclick="closeErrorModal()">&times;</button>
-    </div>
-    <div id="profileErrorMessage" style="padding: 20px; color: #d32f2f; font-size: 13px; max-height: 300px; overflow-y: auto;"></div>
-    <div style="padding: 0 20px 20px; text-align: right;">
-      <button type="button" class="btn-primary" onclick="closeErrorModal()">OK</button>
-    </div>
-  </div>
-</div>

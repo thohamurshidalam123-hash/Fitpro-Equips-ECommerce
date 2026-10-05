@@ -1,12 +1,8 @@
-const Product = require ('../models/productModel');
-const Category = require ('../models/categoryModel');
-const Brand = require ('../models/brandModel');
+const userShopService = require('../services/userShopService');
 
 const loadLandingPage = async (req, res) => {
     try {
-        const categories = await Category.find({ status: 'Active' })
-            .sort({ createdAt: -1 })
-            .lean();
+        const categories = await userShopService.getLandingCategories();
 
         res.render('user/landing', { currentPage: 'home', categories });
     } catch (error) {
@@ -22,110 +18,27 @@ const loadShopPage = async (req, res) => {
         delete req.session.message;
         delete req.session.messageType;
 
-        // For pagination
-        let page = Math.max(parseInt(req.query.page, 10) || 1, 1);
-        let limit = 12;
-
-        // For extracting query parameters from from
-        let search = req.query.search || '';
-        let categoryFilter = req.query.category || [];
-        categoryFilter = Array.isArray(categoryFilter) ? categoryFilter : [categoryFilter];
-        categoryFilter = categoryFilter.filter(Boolean);
-        let brandFilter = req.query.brand || [];
-        brandFilter = Array.isArray(brandFilter) ? brandFilter : [brandFilter];
-        brandFilter = brandFilter.filter(Boolean);
-        let minPrice = req.query.minPrice || '';
-        let maxPrice = req.query.maxPrice || '';
-        let sortOption = req.query.sort || 'newest';
-
-        // For fecthing only active categories
-        const activeCategories = await Category.find({ status:'Active' }).lean();
-        const activeCategoryId = activeCategories.map( cat => cat._id.toString());
-        const activeBrands = await Brand.find({ status: 'Active' }).sort({ name: 1 }).lean();
-        const activeBrandId = activeBrands.map(brand => brand._id.toString());
-
-        // For build dynamic query object
-        // For starting by strictly enforcing that the product is Active AND its category is Active
-        let query ={
-            status: 'Active',
-            categoryId: { $in: activeCategoryId}
-        };
-
-        // Apply searching(with product name)
-        if(search){
-            query.productName = { $regex: search, $options: 'i' };
-        }
-
-        //For apply category checkboxes filter
-        if (categoryFilter.length){
-            // For only allowing filtering by categories that are actually active
-            const validCategories = categoryFilter.filter(id => activeCategoryId.includes(id));
-            if(validCategories.length > 0){
-                query.categoryId = { $in: validCategories };
-            }
-        }
-
-        if (brandFilter.length) {
-            const validBrands = brandFilter.filter(id => activeBrandId.includes(id));
-            if (validBrands.length > 0) query.brandId = { $in: validBrands };
-        }
-
-        //For applying price range filter
-        if(minPrice || maxPrice){
-            query.regularPrice = {};
-            if(minPrice && Number.isFinite(Number(minPrice))) query.regularPrice.$gte = Number(minPrice);
-            if(maxPrice && Number.isFinite(Number(maxPrice))) query.regularPrice.$lte = Number(maxPrice);
-        }
-
-        //For apply sorting options
-        let sortQuery = {};
-        switch (sortOption){
-            case 'price_asc' :
-                sortQuery = { regularPrice: 1 };
-                break;
-            case 'price_desc':
-                sortQuery = { regularPrice: -1 };
-                break;
-            case 'a_z':
-                sortQuery = { productName: 1 };
-                break;
-            case 'z_a':
-                sortQuery = { productName: -1 };
-                break;
-            default:
-                sortQuery = { createdAt : -1 };
-        }
-
-        // For executin query with pagination
-        const products = await Product.find(query)
-        .populate('categoryId', 'name')
-        .populate('brandId', 'name')
-        .sort(sortQuery)
-        .skip((page-1)*limit)
-        .limit(limit)
-        .lean();
-
-        products.forEach(product => {
-            if (product.variants && product.variants.length > 0) {
-                product.availableStock = product.variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
-            }
-        });
-
-        // For getting the total count of pagination
-        const totalProducts = await Product.countDocuments(query);
-        const totalPages = Math.ceil(totalProducts/limit);
+        const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const limit = 12;
+        const search = req.query.search || '';
+        const categoryFilter = (Array.isArray(req.query.category) ? req.query.category : [req.query.category || '']).filter(Boolean);
+        const brandFilter = (Array.isArray(req.query.brand) ? req.query.brand : [req.query.brand || '']).filter(Boolean);
+        const minPrice = req.query.minPrice || '';
+        const maxPrice = req.query.maxPrice || '';
+        const sortOption = req.query.sort || 'newest';
+        const data = await userShopService.getShopPageData({ page, limit, search, categoryFilter, brandFilter, minPrice, maxPrice, sortOption });
 
         // For rendering view
         res.render('user/shop',{
-            products,
-            categories: activeCategories,
-            brands: activeBrands,
+            products: data.products,
+            categories: data.categories,
+            brands: data.brands,
             message,
             messageType,
             currentPage: 'shop',
             page,
-            totalPages,
-            totalProducts,
+            totalPages: data.totalPages,
+            totalProducts: data.totalProducts,
             //For passing active filters back to UI to keep checkboxes checked and inputs filled
             activeFilters :{
                 search,
@@ -144,32 +57,15 @@ const loadShopPage = async (req, res) => {
 
 const productDetailsPage = async (req,res) => {
     try{
-        const productId = req.params.id;
-
-        const product = await Product.findById(productId)
-        .populate('categoryId', 'name status')
-        .populate('brandId', 'name status')
-        .lean();
-
-        if(!product || product.status !== 'Active' || product.availableStock <= 0 || !product.categoryId || product.categoryId.status !== 'Active'){
+        const data = await userShopService.getProductDetails(req.params.id);
+        if (data.unavailable) {
             req.session.message = 'This product is currently unavailable';
             req.session.messageType = 'error';
             return req.session.save(() => res.redirect('/shop'));
         }
 
-        // For showing related products
-        const relatedProducts = await Product.find({
-            categoryId: product.categoryId._id,
-            _id: { $ne: product._id },
-            status: 'Active',
-            availableStock: { $gt: 0 }
-        })
-        .populate('brandId', 'name')
-        .limit(4)
-        .lean();
-
-        res.render('user/productDetails',{
-            product,relatedProducts,
+        res.render('user/productDetails', {
+            ...data,
             currentPage: 'shop'
         });
     }catch(error){

@@ -31,19 +31,19 @@
         .address-card { min-height: 194px; padding: 19px 20px 17px; background: #fff; border: 1px solid transparent; border-radius: 9px; box-shadow: 0 7px 18px rgba(31, 55, 99, .07); display: flex; flex-direction: column; }
         .address-card.default { border-color: transparent; }
         .address-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .address-tags, .address-actions { display: flex; align-items: center; gap: 7px; }
+        .address-tags { display: flex; align-items: center; gap: 7px; }
         .tag { border-radius: 10px; padding: 4px 9px; color: var(--address-blue); background: #eaf2ff; font-size: 9px; font-weight: 700; }
         .address-type-label { display: inline-block; min-width: 42px; color: var(--address-blue); font-size: 11px; font-weight: 700; }
         .tag.default-tag { color: #12a961; background: #ddfae9; }
-        .address-actions button { padding: 0; border: 0; background: none; color: #99a3b4; font-size: 8px; cursor: pointer; }
-        .address-actions button:last-child { color: #f04853; }
+        .address-card-actions { display: flex; gap: 10px; margin-top: auto; }
+        .address-card-actions button { flex: 1; padding: 10px 12px; border: 1px solid; border-radius: 5px; font-size: 10px; font-weight: 700; cursor: pointer; }
+        .address-card-actions .edit-address-btn { border-color: var(--address-blue); color: #fff; background: var(--address-blue); }
+        .address-card-actions .remove-address-btn { border-color: #f2c4c8; color: #d73540; background: #fff; }
         .address-name { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; font-size: 13px; font-weight: 700; }
         .address-name span, .address-detail span { color: #9aa5b7; font-size: 12px; }
         .address-detail { display: flex; gap: 10px; margin: 0 0 8px; color: var(--address-muted); line-height: 1.45; }
         .address-detail span { flex: 0 0 10px; }
         .address-card .address-detail:last-of-type { margin-bottom: 14px; }
-        .checkout-button { width: 100%; margin-top: auto; padding: 10px; border: 1px solid var(--address-blue); border-radius: 5px; color: var(--address-blue); background: #fff; font-size: 10px; font-weight: 700; cursor: pointer; }
-        .address-card:not(.default) .checkout-button { color: #fff; background: var(--address-blue); }
         .address-card:not(.default) .address-detail { margin-bottom: 8px; }
         .address-benefits { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; margin-top: 44px; }
         .benefit { min-height: 63px; display: flex; gap: 12px; align-items: flex-start; padding: 15px 18px; border-radius: 9px; background: #fff; }
@@ -119,24 +119,6 @@
                                     <span class="address-type-label"><%= addressType %></span>
                                     <% if (address.isDefault) { %><span class="tag default-tag">✓ DEFAULT</span><% } %>
                                 </div>
-                                <div class="address-actions">
-                                    <!-- Edit Button (Passes all data to JS) -->
-                                    <button type="button" class="edit-address-btn"
-                                        data-id="<%= address._id %>"
-                                        data-fullname="<%= address.fullName %>"
-                                        data-phone="<%= address.phone %>"
-                                        data-housename="<%= address.houseName %>"
-                                        data-street="<%= address.street %>"
-                                        data-city="<%= address.city %>"
-                                        data-district="<%= address.district %>"
-                                        data-state="<%= address.state %>"
-                                        data-pincode="<%= address.pincode %>"
-                                        data-type="<%= address.addressType %>">
-                                        ✎ EDIT
-                                    </button>
-                                    <!-- Delete Button -->
-                                    <button type="button" onclick="deleteAddress('<%= address._id %>')">▥ REMOVE</button>
-                                </div>
                             </div>
                             <div class="address-name"><span>♙</span><%= address.fullName %></div>
                             <p class="address-detail"><span>♧</span><%= address.phone %></p>
@@ -146,7 +128,22 @@
                                 <%= address.city %>, <%= address.district %>, <%= address.state %> - <%= address.pincode %><br>
                                 <%= address.landmark ? 'Landmark: ' + address.landmark : '' %>
                             </p>
-                            <button class="checkout-button" type="button">Use for Checkout</button>
+                            <div class="address-card-actions">
+                                <button type="button" class="edit-address-btn"
+                                    data-id="<%= address._id %>"
+                                    data-fullname="<%= address.fullName %>"
+                                    data-phone="<%= address.phone %>"
+                                    data-housename="<%= address.houseName %>"
+                                    data-street="<%= address.street %>"
+                                    data-city="<%= address.city %>"
+                                    data-district="<%= address.district %>"
+                                    data-state="<%= address.state %>"
+                                    data-pincode="<%= address.pincode %>"
+                                    data-type="<%= address.addressType %>">
+                                    Edit
+                                </button>
+                                <button type="button" class="remove-address-btn" onclick="deleteAddress('<%= address._id %>')">Remove</button>
+                            </div>
                         </article>
                     <% }); %>
                 <% } else { %>
@@ -174,15 +171,15 @@
             </div>
             <form id="addAddressForm">
                 <div class="form-grid">
-                    <div class="form-group"><label>Full Name</label><input type="text" name="fullName" ></div>
-                    <div class="form-group"><label>Phone Number</label><input type="tel" name="phone" ></div>
-                    <div class="form-group"><label>House Name / Flat No.</label><input type="text" name="houseName" ></div>
-                    <div class="form-group"><label>Street / Area</label><input type="text" name="street" ></div>
-                    <div class="form-group"><label>City</label><input type="text" name="city" ></div>
-                    <div class="form-group"><label>District</label><input type="text" name="district" ></div>
-                    <div class="form-group"><label>State</label><input type="text" name="state" ></div>
-                    <div class="form-group"><label>Pincode</label><input type="text" name="pincode" ></div>
-                    <div class="form-group"><label>Landmark (Optional)</label><input type="text" name="landmark"></div>
+                    <div class="form-group"><label>Full Name</label><input type="text" name="fullName"><span data-inline-error-for="fullName"></span></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" name="phone"><span data-inline-error-for="phone"></span></div>
+                    <div class="form-group"><label>House Name / Flat No.</label><input type="text" name="houseName"><span data-inline-error-for="houseName"></span></div>
+                    <div class="form-group"><label>Street / Area</label><input type="text" name="street"><span data-inline-error-for="street"></span></div>
+                    <div class="form-group"><label>City</label><input type="text" name="city"><span data-inline-error-for="city"></span></div>
+                    <div class="form-group"><label>District</label><input type="text" name="district"><span data-inline-error-for="district"></span></div>
+                    <div class="form-group"><label>State</label><input type="text" name="state"><span data-inline-error-for="state"></span></div>
+                    <div class="form-group"><label>Pincode</label><input type="text" name="pincode"><span data-inline-error-for="pincode"></span></div>
+                    <div class="form-group"><label>Landmark (Optional)</label><input type="text" name="landmark"><span data-inline-error-for="landmark"></span></div>
                     <div class="form-group">
                         <label>Address Type</label>
                         <select name="addressType">
@@ -190,6 +187,7 @@
                             <option value="Work">Work</option>
                             <option value="Other">Other</option>
                         </select>
+                        <span data-inline-error-for="addressType"></span>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-cancel" onclick="closeModal('addAddressModal')">Cancel</button>
@@ -210,15 +208,15 @@
             <form id="editAddressForm">
                 <input type="hidden" id="editAddressId" name="addressId">
                 <div class="form-grid">
-                    <div class="form-group"><label>Full Name</label><input type="text" id="editFullName" name="fullName" ></div>
-                    <div class="form-group"><label>Phone Number</label><input type="tel" id="editPhone" name="phone" ></div>
-                    <div class="form-group"><label>House Name / Flat No.</label><input type="text" id="editHouseName" name="houseName" ></div>
-                    <div class="form-group"><label>Street / Area</label><input type="text" id="editStreet" name="street" ></div>
-                    <div class="form-group"><label>City</label><input type="text" id="editCity" name="city" ></div>
-                    <div class="form-group"><label>District</label><input type="text" id="editDistrict" name="district" ></div>
-                    <div class="form-group"><label>State</label><input type="text" id="editState" name="state" ></div>
-                    <div class="form-group"><label>Pincode</label><input type="text" id="editPincode" name="pincode" ></div>
-                    <div class="form-group"><label>Landmark (Optional)</label><input type="text" id="editLandmark" name="landmark"></div>
+                    <div class="form-group"><label>Full Name</label><input type="text" id="editFullName" name="fullName"><span data-inline-error-for="fullName"></span></div>
+                    <div class="form-group"><label>Phone Number</label><input type="tel" id="editPhone" name="phone"><span data-inline-error-for="phone"></span></div>
+                    <div class="form-group"><label>House Name / Flat No.</label><input type="text" id="editHouseName" name="houseName"><span data-inline-error-for="houseName"></span></div>
+                    <div class="form-group"><label>Street / Area</label><input type="text" id="editStreet" name="street"><span data-inline-error-for="street"></span></div>
+                    <div class="form-group"><label>City</label><input type="text" id="editCity" name="city"><span data-inline-error-for="city"></span></div>
+                    <div class="form-group"><label>District</label><input type="text" id="editDistrict" name="district"><span data-inline-error-for="district"></span></div>
+                    <div class="form-group"><label>State</label><input type="text" id="editState" name="state"><span data-inline-error-for="state"></span></div>
+                    <div class="form-group"><label>Pincode</label><input type="text" id="editPincode" name="pincode"><span data-inline-error-for="pincode"></span></div>
+                    <div class="form-group"><label>Landmark (Optional)</label><input type="text" id="editLandmark" name="landmark"><span data-inline-error-for="landmark"></span></div>
                     <div class="form-group">
                         <label>Address Type</label>
                         <select id="editAddressType" name="addressType">
@@ -226,6 +224,7 @@
                             <option value="Work">Work</option>
                             <option value="Other">Other</option>
                         </select>
+                        <span data-inline-error-for="addressType"></span>
                     </div>
                     <div class="form-actions">
                         <button type="button" class="btn-cancel" onclick="closeModal('editAddressModal')">Cancel</button>
@@ -250,15 +249,6 @@
                 <button class="btn-cancel" type="button" onclick="closeModal('deleteAddressModal')">Cancel</button>
                 <button class="btn-save" type="button" onclick="confirmDeleteAddress()">Yes</button>
             </div>
-        </div>
-    </div>
-
-    <!-- ERROR MODAL -->
-    <div id="errorAddressModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="errorAddressTitle">
-        <div class="modal-content success-modal-content">
-            <h2 id="errorAddressTitle">Please correct the errors</h2>
-            <div id="errorAddressMessage" style="text-align: left; margin: 15px 0; color: #d32f2f; font-size: 13px; max-height: 300px; overflow-y: auto;"></div>
-            <button class="btn-save" type="button" onclick="closeModal('errorAddressModal')">OK</button>
         </div>
     </div>
 
@@ -301,17 +291,11 @@
         });
 
         // --- Display Validation Errors ---
-        function showValidationErrors(errors, modalId) {
-            const errorDiv = document.getElementById('errorAddressMessage');
-            const errorList = Object.values(errors).map(msg => `<div style="margin-bottom: 8px;">• ${msg}</div>`).join('');
-            errorDiv.innerHTML = errorList;
-            openModal('errorAddressModal');
-        }
-
         // --- AJAX Add Address ---
         const addForm = document.getElementById('addAddressForm');
         addForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            window.clearInlineFieldErrors(addForm);
             const btn = addForm.querySelector('.btn-save');
             btn.innerText = 'Saving...'; btn.disabled = true;
 
@@ -326,20 +310,10 @@
                 const result = await res.json();
                 
                 if(result.success) {
-                    window.location.reload();
+                    document.getElementById('addressSuccessTitle').textContent = result.message || 'Address added successfully';
+                    openModal('addressSuccessModal');
                 } else if (result.errors) {
-                    // Show validation errors without refreshing
-                    showValidationErrors(result.errors);
-                    
-                    // Keep the form values that are correct (ones without errors)
-                    if (result.formData) {
-                        const formData = result.formData;
-                        // Only clear fields with errors, keep others
-                        Object.keys(result.errors).forEach(field => {
-                            const input = document.querySelector(`#addAddressForm input[name="${field}"], #addAddressForm select[name="${field}"]`);
-                            if (input) input.value = '';
-                        });
-                    }
+                    window.showInlineFieldErrors(addForm, result.errors);
                 } else {
                     window.showAppModal(result.message, 'error');
                 }
@@ -354,6 +328,7 @@
         const editForm = document.getElementById('editAddressForm');
         editForm.addEventListener('submit', async (e) => {
             e.preventDefault();
+            window.clearInlineFieldErrors(editForm);
             const btn = editForm.querySelector('.btn-save');
             btn.innerText = 'Updating...'; btn.disabled = true;
 
@@ -369,19 +344,11 @@
                 const result = await res.json();
                 
                 if(result.success) {
+                    document.getElementById('addressSuccessTitle').textContent = result.message || 'Address updated successfully';
                     closeModal('editAddressModal');
                     openModal('addressSuccessModal');
                 } else if (result.errors) {
-                    // Show validation errors without closing modal
-                    showValidationErrors(result.errors);
-                    
-                    // Only clear fields with errors, keep others
-                    if (result.formData) {
-                        Object.keys(result.errors).forEach(field => {
-                            const input = document.querySelector(`#editAddressForm input[name="${field}"], #editAddressForm select[name="${field}"]`);
-                            if (input) input.value = '';
-                        });
-                    }
+                    window.showInlineFieldErrors(editForm, result.errors);
                 } else {
                     window.showAppModal(result.message, 'error');
                 }

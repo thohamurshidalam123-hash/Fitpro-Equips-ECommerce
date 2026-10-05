@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const logoInput = document.getElementById('brandLogo');
     const title = document.getElementById('brandModalTitle');
     const formError = document.getElementById('brandFormError');
-    const clearErrors = () => { formError.textContent = ''; form.querySelectorAll('[data-error-for]').forEach(element => { element.textContent = ''; }); form.querySelectorAll('.has-error').forEach(element => element.classList.remove('has-error')); };
-    const showErrors = errors => { clearErrors(); Object.entries(errors || {}).forEach(([field, message]) => { const element = form.querySelector(`[data-error-for="${field}"]`); const input = form.querySelector(`[name="${field}"]`); if (element) element.textContent = message; else formError.textContent = message; if (input) input.classList.add('has-error'); }); };
+    const clearErrors = () => { window.clearInlineFieldErrors(form); formError.textContent = ''; form.querySelectorAll('[data-error-for]').forEach(element => { element.textContent = ''; }); form.querySelectorAll('.has-error').forEach(element => element.classList.remove('has-error')); };
+    const showErrors = errors => { clearErrors(); window.showInlineFieldErrors(form, errors); };
     const showBrandSuccessModal = (message, callback) => {
         if (typeof window.showAppModal === 'function') {
             window.showAppModal(message, 'success', { onClose: callback || (() => window.location.reload()) });

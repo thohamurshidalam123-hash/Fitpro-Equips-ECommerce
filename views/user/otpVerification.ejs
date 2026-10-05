@@ -42,12 +42,12 @@
 						<span class="email-chip"><span aria-hidden="true">&#9993;</span> j•••@example.com</span>
 						<% if (typeof message !== 'undefined' && message) { %><div data-session-message="<%= message %>" data-type="<%= typeof messageType !== 'undefined' ? messageType : 'error' %>"></div><% } %>
 						<div class="otp-inputs" role="group" aria-label="Six digit verification code">
-							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1" required>
-							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" required>
-							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" required>
-							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" required>
-							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" required>
-							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" required>
+							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" autocomplete="one-time-code" aria-label="Digit 1" data-validation-name="otp" required>
+							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 2" data-validation-name="otp" required>
+							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 3" data-validation-name="otp" required>
+							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 4" data-validation-name="otp" required>
+							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 5" data-validation-name="otp" required>
+							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" data-validation-name="otp" required>
 						</div>
 						<input type="hidden" name="otp" id="otp-value">
 						<div class="otp-meta"><span>Resend code in <strong id="countdown">00:57</strong></span><button class="resend-button" type="submit" formaction="/resend-otp" formmethod="POST" id="resend-button" disabled>Resend Code</button></div>

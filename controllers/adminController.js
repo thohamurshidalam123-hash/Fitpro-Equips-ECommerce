@@ -1,7 +1,4 @@
-const User = require('../models/user');
-const bcrypt = require('bcrypt');
-const { sendOtpEmail } = require('../services/emailServices');
-const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+const adminService = require('../services/adminService');
 
 // Render admin login page
 const loadLogin = async (req,res) => {
@@ -19,26 +16,13 @@ const loadLogin = async (req,res) => {
 // For admin's login submission
 const adminLogin = async (req,res) => {
     try{
-        const {email, password} = req.body;
-        const admin = await User.findOne({ email });
-
-        if( !admin ){
-            return res.render( 'admin/login', { message: 'Invalid email or password.'});
-        }
-        // checking is the user admin or not
-        if ( admin.role !== 'admin') {
-            return res.render( 'admin/login', { message: 'Access denied. You are not a admin' });
-        }
-
-        const passwordMatch = await bcrypt.compare( password, admin.password);
-
-        if( passwordMatch ){
+        const result = await adminService.authenticateAdmin(req.body);
+        if (result.success) {
             // Setting admin session
-            req.session.adminId = admin._id;
+            req.session.adminId = result.admin._id;
             return res.redirect('/admin/dashboard');
-         }else{
-            return res.render('admin/login', { message: 'Invalid email or password.'});
-         }
+        }
+        return res.render('admin/login', { message: result.message });
         }catch(error){
             console.log( 'Admin login error:',error.message);
             res.status(500).send('Server Error');
@@ -68,18 +52,11 @@ const forgotPassword = async (req,res) => {
     try{
         const { email } = req.body
 
-        const admin = await User.findOne({ email, role:'admin'});
-
-        if(!admin){
-            return res.status(404).json({ success: false, message: 'Admin account not found with this email'});
-        }
-
-        const otp= generateOtp();
-        const emailSent = await sendOtpEmail(email, otp);
-
-        if(emailSent){
+        const result = await adminService.sendAdminResetOtp(email);
+        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message, errors: { email: result.message } });
+        if (result.emailSent) {
             req.session.adminResetEmail = email;
-            req.session.adminResetOtp = otp;
+            req.session.adminResetOtp = result.otp;
             req.session.adminResetOtpExpiry = Date.now() + 180000;
         }
         
@@ -92,18 +69,15 @@ const forgotPassword = async (req,res) => {
 // Verifying otp entered by admin
 const verifyForgotOtp = async (req,res) => {
     try{
-         const {otp} = req.body;
-
-         if (!req.session.adminResetEmail || !req.session.adminResetOtp){
-            return res.status(400).json({ success: false, message: 'Session expired. Please login'})
-         }
-
-         if ( Date.now() > req.session.adminResetOtpExpiry){
-          return res.status(400).json({ success: false, message: 'Otp has expired. Please request new one'})
-        }
-        if (otp !== req.session.adminResetOtp){
-            return res.status(400).json({ success: false, message: 'Invalid Otp'});
-        }
+         const result = adminService.verifyAdminResetOtp({
+             otp: req.body.otp,
+             expectedOtp: req.session.adminResetOtp,
+             expiresAt: req.session.adminResetOtpExpiry
+         });
+            if (!result.success) {
+                const errors = req.session.adminResetOtp ? { otp: result.message } : null;
+                return res.status(result.statusCode).json({ success: false, message: result.message, errors });
+            }
         return res.status(200).json({ success: true, message: 'OTP verified successfully'});
     }catch(error){
             console.error('Admin verify OTP error:',error.message);
@@ -114,26 +88,18 @@ const verifyForgotOtp = async (req,res) => {
 // Update admin password
 const resetPassword = async (req,res) => {
     try{
-        const { newPassword, confirmPassword } = req.body;
-
         if(!req.session.adminResetEmail){
             return res.status(400).json({ success: false, message: 'Session expired. Please start over'});
         }
-
-        if(newPassword !== confirmPassword){
-            return res.status(400).json({ success: false, message: 'Passwords do not match'});
+        const result = await adminService.updateAdminPassword({ ...req.body, email: req.session.adminResetEmail });
+        if (!result.success) {
+            const errors = /passwords do not match/i.test(result.message) ? { confirmPassword: result.message } : null;
+            return res.status(result.statusCode).json({ success: false, message: result.message, errors });
         }
-
-        const securePassword = await bcrypt.hash(newPassword, 10);
-
-        // updating in database
-        await User.updateOne(
-            {email:req.session.adminResetEmail, role:'admin'},{$set: {password: securePassword}}
-        );
 
         // Deleting session data to make not reusable
         delete req.session.adminResetEmail;
-        delete req.session.adminresetOtp;
+        delete req.session.adminResetOtp;
         delete req.session.adminResetOtpExpiry;
 
         return res.json({ success: true, message: 'Password updated successfully.'});
@@ -153,18 +119,11 @@ const resendForgotOtp = async (req,res) => {
             return res.status(400).json({ success: false, message: 'Email is required'});
         }
 
-        const admin = await User.findOne({ email, role:'admin'});
-
-        if(!admin){
-            return res.status(404).json({ success: false, message: 'Admin account not found with this email'});
-        }
-
-        const otp = generateOtp();
-        const emailSent = await sendOtpEmail(email, otp);
-
-        if(emailSent){
+        const result = await adminService.sendAdminResetOtp(email);
+        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        if (result.emailSent) {
             req.session.adminResetEmail = email;
-            req.session.adminResetOtp = otp;
+            req.session.adminResetOtp = result.otp;
             req.session.adminResetOtpExpiry = Date.now() + 180000; // 3 minutes
         }
 
@@ -181,49 +140,22 @@ const loadCustomers = async (req, res) => {
     try{
         if(!req.session.adminId) return res.redirect('/admin/login');
 
-        //Setting up pagination
-        let page = parseInt(req.query.page) || 1;
-        let limit = 10;
-        let searchQuery = req.query.search || '';
-        let status = ['active', 'blocked'].includes(req.query.status) ? req.query.status : '';
-
-        // For search logic
-        let query = { role: 'user'};
-
-        if (status === 'active') query.isBlocked = false;
-        if (status === 'blocked') query.isBlocked = true;
-
-        if(searchQuery){
-            query.$or = [
-                { name: { $regex: searchQuery, $options: 'i'}},
-                { email: { $regex: searchQuery, $options: 'i'}}
-            ];
-        }
-        // Execute query with sorting
-        const userData = await User.find(query)
-            .sort({ createdAt: -1})
-            .skip((page-1) * limit)
-            .limit(limit)
-            .lean();
-
-        // Get total count for pagination
-        const totalUsers = await User.countDocuments(query);
-        const totalPages = Math.ceil(totalUsers / limit);
-
-        // Calculating the user status counts
-        const activeCount = await User.countDocuments({ role: 'user', isBlocked: false});
-        const blockedCount = await User.countDocuments({ role: 'user', isBlocked: true});
+        const page = parseInt(req.query.page) || 1;
+        const limit = 10;
+        const searchQuery = req.query.search || '';
+        const status = ['active', 'blocked'].includes(req.query.status) ? req.query.status : '';
+        const data = await adminService.getCustomers({ page, limit, searchQuery, status });
 
         // For showing customer management page
         res.render('admin/customers', {
-            users: userData,
+            users: data.users,
             page: page,
-            totalPages: totalPages,
+            totalPages: data.totalPages,
             searchQuery: searchQuery,
             status: status,
-            totalUsers: totalUsers,
-            activeCount: activeCount,
-            blockedCount: blockedCount,
+            totalUsers: data.totalUsers,
+            activeCount: data.activeCount,
+            blockedCount: data.blockedCount,
             currentPage: 'customers'
         });
     }catch(error){
@@ -239,21 +171,9 @@ const toggleBlockUser = async (req,res) => {
             return res.status(401).json({ success: false, message:'Unauthorized'});
         }
 
-        const userId = req.params.id;
-        const user= await User.findById(userId);
-
-        if(!user){
-            return res.status(404).json({ success: false, message: 'Customer not found'})
-        }
-        //Toggle the blocked status
-        user.isBlocked = !user.isBlocked;
-        await user.save();
-
-        res.json({
-            success: true,
-            isBlocked: user.isBlocked,
-            message: user.isBlocked ? 'Customer blocked successfully' : 'Customer unblocked successfully'
-        });
+        const result = await adminService.toggleCustomerBlock(req.params.id);
+        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        res.json(result);
     }catch(error){
         console.error('Block/Unblock error:',error.message);
         res.status(500).json({ success: false, message:'Server Error'});

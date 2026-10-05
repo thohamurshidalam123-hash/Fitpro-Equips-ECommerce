@@ -26,6 +26,7 @@ function showResultModal(message, type, onClose) {
 }
 
 function clearFieldErrors(form) {
+	window.clearInlineFieldErrors(form);
 	form.querySelectorAll('[data-field-error]').forEach(error => { error.textContent = ''; });
 	form.querySelectorAll('.has-error').forEach(field => {
 		field.classList.remove('has-error');
@@ -35,14 +36,7 @@ function clearFieldErrors(form) {
 
 function showFieldErrors(form, errors) {
 	clearFieldErrors(form);
-	Object.entries(errors || {}).forEach(([field, message]) => {
-		const messageElement = form.querySelector(`[data-field-error="${field}"]`);
-		if (messageElement) messageElement.textContent = message;
-		form.querySelectorAll(`[name="${field}"]`).forEach(input => {
-			input.classList.add('has-error');
-			input.setAttribute('aria-invalid', 'true');
-		});
-	});
+	window.showInlineFieldErrors(form, errors);
 }
 
 function validateProductName(form) {
@@ -66,8 +60,23 @@ function validateHighlightTitles(form) {
 }
 
 function validateDescription(form) {
-	const description = form.querySelector('textarea[name="description"]').value;
-	return description.includes('_') ? 'Description cannot contain underscores' : null;
+	const description = form.querySelector('textarea[name="description"]').value.trim();
+	if (!description) return 'Description is required';
+	if (description.length < 10) return 'Description must be at least 10 characters long';
+	if (description.length > 1000) return 'Description cannot exceed 1000 characters';
+	if (description.includes('_')) return 'Description cannot contain underscores';
+	return null;
+}
+
+function validateProductSelectionsAndPrice(form) {
+	const errors = {};
+	if (!form.querySelector('[name="categoryId"]').value) errors.categoryId = 'Please select a category';
+	if (!form.querySelector('[name="brandId"]').value) errors.brandId = 'Please select a brand';
+	const priceValue = form.querySelector('[name="regularPrice"]').value.trim();
+	const price = Number(priceValue);
+	if (!priceValue) errors.regularPrice = 'Price is required';
+	else if (!Number.isFinite(price) || price <= 0) errors.regularPrice = 'Price must be greater than 0';
+	return errors;
 }
 
 function validateProductImages(form) {
@@ -119,6 +128,7 @@ function validateFormFields(form) {
 	const errors = {};
 	const nameError = validateProductName(form);
 	if (nameError) errors.productName = nameError;
+	Object.assign(errors, validateProductSelectionsAndPrice(form));
 	Object.assign(errors, validateHighlightTitles(form));
 	const descriptionError = validateDescription(form);
 	if (descriptionError) errors.description = descriptionError;

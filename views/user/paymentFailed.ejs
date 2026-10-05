@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/landing.css">
+    <style>
+        /* Reuse variables from orderSuccess.ejs but alter theme to error/warning */
+        :root {
+            --error-red: #dc2626;
+            --error-surface: #fef2f2;
+            --success-ink: #1a273b;
+            --success-page: #f5f7fc;
+        }
+        .order-status-page {
+            min-height: 100vh;
+            color: var(--success-ink);
+            background: var(--success-page);
+        }
+        .status-main {
+            width: min(620px, calc(100% - 48px));
+            margin: 0 auto;
+            padding: 80px 0;
+        }
+        .status-card {
+            padding: 40px 30px;
+            border: 1px solid #fee2e2;
+            border-radius: 7px;
+            background: #fff;
+            box-shadow: 0 8px 25px rgba(220, 38, 38, .06);
+            text-align: center;
+        }
+        .status-mark {
+            display: grid;
+            width: 50px;
+            height: 50px;
+            margin: 0 auto 16px;
+            place-items: center;
+            border-radius: 50%;
+            color: #991b1b;
+            background: #fecaca;
+        }
+        .status-mark svg { width: 24px; height: 24px; }
+        .status-title { margin: 0 0 8px; font-size: 24px; color: var(--error-red); }
+        .status-copy { margin: 0 auto 24px; color: #64748b; font-size: 14px; line-height: 1.5; }
+        
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 24px;
+        }
+        .btn-retry {
+            padding: 12px 24px;
+            border-radius: 6px;
+            background: var(--error-red);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: opacity 0.2s;
+        }
+        .btn-retry:hover { opacity: 0.9; }
+        .btn-secondary {
+            padding: 12px 24px;
+            border-radius: 6px;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            background: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="order-status-page">
+        <%- include('../partials/user-header', { currentPage: 'shop' }) %>
+
+        <main class="status-main">
+            <section class="status-card">
+                <div class="status-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </div>
+                <h1 class="status-title">Payment Failed</h1>
+                <p class="status-copy">
+                    We could not process your payment. Don't worry, no money was deducted. Your order has been saved and is awaiting payment.
+                </p>
+                <div class="action-buttons">
+                    <a href="/account/orders/<%= orderId %>" class="btn-retry">Retry Payment</a>
+                    <a href="/shop" class="btn-secondary">Return to Shop</a>
+                </div>
+            </section>
+        </main>
+
+        <%- include('../partials/user-footer') %>
+    </div>
+</body>
+</html>

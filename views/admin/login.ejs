@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login | Fitpro Equips</title>
     <link rel="stylesheet" href="/css/admin-login.css">
+    <link rel="stylesheet" href="/css/inline-validation.css">
     <style>
         /* Admin Password Reset Modal Styles */
         .admin-modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -481,6 +482,7 @@
         // 1. Submit Email for OTP
         document.getElementById('forgotEmailForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            window.clearInlineFieldErrors(e.target);
             const btn = e.target.querySelector('.admin-btn-submit');
             const emailInput = e.target.querySelector('input[name="email"]');
             btn.textContent = 'Sending...'; btn.disabled = true;
@@ -501,6 +503,8 @@
                     openAdminModal('otpModal');
                     startOtpResendTimer();
                     emailInput.value = '';
+                } else if (result.errors) {
+                    window.showInlineFieldErrors(e.target, result.errors);
                 } else {
                     showNotification(result.message, 'error', 'Error');
                 }
@@ -514,6 +518,7 @@
         // 2. Submit OTP for Verification
         document.getElementById('forgotOtpForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            window.clearInlineFieldErrors(e.target);
             const btn = e.target.querySelector('.admin-btn-submit');
             btn.textContent = 'Verifying...'; btn.disabled = true;
 
@@ -531,6 +536,8 @@
                     closeAdminModal('otpModal');
                     openAdminModal('resetModal');
                     clearInterval(otpResendInterval);
+                } else if (result.errors) {
+                    window.showInlineFieldErrors(e.target, result.errors);
                 } else {
                     showNotification(result.message, 'error', 'Error');
                 }
@@ -544,6 +551,7 @@
         // 3. Submit New Password
         document.getElementById('resetPasswordForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            window.clearInlineFieldErrors(e.target);
             const btn = e.target.querySelector('.admin-btn-submit');
             btn.textContent = 'Updating...'; btn.disabled = true;
 
@@ -563,6 +571,8 @@
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
+                } else if (result.errors) {
+                    window.showInlineFieldErrors(e.target, result.errors);
                 } else {
                     showNotification(result.message, 'error', 'Error');
                 }
@@ -588,5 +598,6 @@
             }
         });
     </script>
+    <script src="/js/inline-validation.js"></script>
 </body>
 </html>

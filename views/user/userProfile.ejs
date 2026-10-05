@@ -184,6 +184,7 @@
         if (profileUpdateForm) {
             profileUpdateForm.addEventListener('submit', async (e) => {
                 e.preventDefault(); // Stop normal form submission
+                window.clearInlineFieldErrors(profileUpdateForm);
 
                 const formData = new FormData(profileUpdateForm);
                 const submitBtn = profileUpdateForm.querySelector('button[type="submit"]');
@@ -211,16 +212,7 @@
                         }
                         window.showAppModal('Account is blocked', 'error');
                     } else if (result.errors) {
-                        // Show validation errors without refreshing
-                        showProfileValidationErrors(result.errors);
-                        
-                        // Only clear fields with errors, keep others
-                        if (result.formData) {
-                            Object.keys(result.errors).forEach(field => {
-                                const input = profileUpdateForm.querySelector(`input[name="${field}"], select[name="${field}"]`);
-                                if (input) input.value = '';
-                            });
-                        }
+                        window.showInlineFieldErrors(profileUpdateForm, result.errors);
                     } else if (result.requireOtp) {
                         const otpEmail = document.getElementById('profileOtpEmail');
                         if (otpEmail && result.pendingEmail) {
@@ -247,23 +239,13 @@
             });
         }
 
-        function showProfileValidationErrors(errors) {
-            const errorDiv = document.getElementById('profileErrorMessage');
-            const errorList = Object.values(errors).map(msg => `<div style="margin-bottom: 8px;">• ${msg}</div>`).join('');
-            errorDiv.innerHTML = errorList;
-            openModal(document.getElementById('profileErrorModal'));
-        }
-
-        function closeErrorModal() {
-            closeModal(document.getElementById('profileErrorModal'));
-        }
-
         // --- Fetch AJAX Implementation for Profile OTP ---
         const otpForm = document.getElementById('profileOtpForm');
         
         if (otpForm) {
             otpForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
+                window.clearInlineFieldErrors(otpForm);
                 
                 const submitBtn = otpForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
@@ -285,6 +267,8 @@
 
                     if (result.success && result.redirectUrl) {
                         window.location.href = result.redirectUrl;
+                    } else if (result.errors) {
+                        window.showInlineFieldErrors(otpForm, result.errors);
                     } else {
                         window.showAppModal(result.message || 'Invalid OTP', 'error');
                     }
