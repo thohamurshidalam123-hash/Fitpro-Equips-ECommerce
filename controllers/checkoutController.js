@@ -108,7 +108,7 @@ const verifyPayment = async (req, res) => {
 // For handling payment fialure callback
 const paymentFailure = async (req, res) => {
     try{
-        await checkpoutService.handlePaymentFailure({ orderId: req.body.orderId });
+        await checkoutService.handlePaymentFailure({ orderId: req.body.orderId });
         return res.status(200).json({ success: true});
     }catch(error) {
         console.error('Error handling payment failure:',error);

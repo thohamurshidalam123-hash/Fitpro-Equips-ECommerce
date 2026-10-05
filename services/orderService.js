@@ -124,13 +124,13 @@ const initiateRetryPayment = async ({ orderId, userId }) => {
     }
 
     try{
-        const options = {
-            amount: MAth.round(order.grandTotal * 100),
-            currency: "INR",
-            receipt: order._id.toString()
+            const options = {
+                amount: Math.round(order.grandTotal * 100),
+                currency: 'INR',
+                receipt: `${order._id}${Date.now()}`
         };
 
-        const razorpayorder = await razorpayInstance.orders.create(options);
+            const razorpayOrder = await razorpayInstance.orders.create(options);
 
         return{
             success: true,
@@ -141,7 +141,7 @@ const initiateRetryPayment = async ({ orderId, userId }) => {
         };
     }catch (error) {
         console.error('Error in razorpay retrying:',error);
-        return { statusCode: 500, message: 'Failed to inialize payment gateway.'};
+            return { statusCode: 500, message: 'Failed to initialize payment gateway.'};
     }
 };
 

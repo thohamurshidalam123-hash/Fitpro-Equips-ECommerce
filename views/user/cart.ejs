@@ -411,6 +411,216 @@
         cursor: pointer;
     }
 
+    .coupon-button:hover {
+        border-color: #b9c9e2;
+        background: #f8faff;
+    }
+
+    .coupon-status {
+        margin: 8px 0 0;
+        color: #16804a;
+        font-size: 12px;
+    }
+
+    .coupon-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 1200;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(218, 230, 251, 0.78);
+        backdrop-filter: blur(5px);
+    }
+
+    .coupon-modal-backdrop.active { display: flex; }
+
+    .coupon-modal {
+        display: flex;
+        flex-direction: column;
+        width: min(100%, 430px);
+        max-height: min(680px, 90vh);
+        overflow: hidden;
+        border: 1px solid #dce7fc;
+        border-radius: 10px;
+        background: #fff;
+        box-shadow: 0 16px 42px rgba(42, 75, 140, 0.17);
+    }
+
+    .coupon-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-shrink: 0;
+        padding: 14px 16px;
+        border-bottom: 1px solid #e9eef8;
+    }
+
+    .coupon-modal-title {
+        margin: 0;
+        color: #172338;
+        font-size: 15px;
+        font-weight: 650;
+    }
+
+    .coupon-modal-close {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: #64748b;
+        font-size: 21px;
+        line-height: 1;
+        cursor: pointer;
+    }
+
+    .coupon-modal-close:hover { background: #f1f5f9; }
+
+    .coupon-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        overflow-y: auto;
+        padding: 16px;
+    }
+
+    .coupon-card {
+        flex-shrink: 0;
+        padding: 12px;
+        border: 1px solid #e8edf5;
+        border-radius: 8px;
+        background: #fff;
+    }
+
+    .coupon-card-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .coupon-code {
+        display: inline-block;
+        padding: 3px 7px;
+        border: 1px solid #d8e5ff;
+        border-radius: 4px;
+        background: #f3f7ff;
+        color: #0752c9;
+        font-size: 10px;
+        font-weight: 600;
+    }
+
+    .coupon-name {
+        margin: 5px 0 0;
+        color: #1e293b;
+        font-size: 11px;
+        font-weight: 500;
+    }
+
+    .coupon-apply-button,
+    .coupon-expired-label {
+        flex-shrink: 0;
+        min-width: 52px;
+        padding: 6px 9px;
+        border: 1px solid #0f67ea;
+        border-radius: 5px;
+        background: #fff;
+        color: #0f67ea;
+        font: inherit;
+        font-size: 10px;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .coupon-apply-button { cursor: pointer; }
+    .coupon-apply-button:hover { background: #0752c9; color: #fff; }
+
+    .coupon-discount {
+        margin: 4px 0 10px;
+        color: #0752c9;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .coupon-discount.is-green { color: #07833d; }
+
+    .coupon-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px 12px;
+        padding-top: 8px;
+        border-top: 1px solid #edf1f7;
+        color: #64748b;
+        font-size: 10px;
+    }
+
+    .coupon-card.is-expired {
+        background: #fbfcfe;
+        opacity: 0.58;
+    }
+
+    .coupon-card.is-expired .coupon-code {
+        border-color: #e2e8f0;
+        background: #f1f5f9;
+        color: #64748b;
+        text-decoration: line-through;
+    }
+
+    .coupon-expired-label {
+        border-color: transparent;
+        background: #edf2fa;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .coupon-card.is-expired .coupon-discount,
+    .coupon-card.is-expired .coupon-meta { color: #64748b; }
+
+    .coupon-manual-entry {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        flex-shrink: 0;
+        margin-top: auto;
+        padding: 12px;
+        border-top: 1px solid #e9eef8;
+        background: #f8faff;
+    }
+
+    .coupon-manual-icon {
+        color: #475569;
+        font-size: 20px;
+        line-height: 1;
+    }
+
+    .coupon-manual-entry input {
+        width: 100%;
+        min-width: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #1d2b3d;
+        font: inherit;
+        font-size: 11px;
+    }
+
+    .coupon-manual-entry input::placeholder { color: #7b8799; }
+    .coupon-manual-entry:focus-within { box-shadow: inset 0 0 0 1px #bfdbfe; }
+
+    .coupon-manual-check {
+        border: 0;
+        background: transparent;
+        color: #0f67ea;
+        font: inherit;
+        font-size: 11px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
     .delivery-box {
         margin-top: 18px;
         padding-top: 18px;
@@ -609,15 +819,69 @@
 
                         <div class="coupon-box">
                             <div class="coupon-row">
-                                <input type="text" placeholder="Enter code" aria-label="Coupon code" />
-                                <button type="button">Apply</button>
+                                <input id="cartCouponCode" type="text" placeholder="Enter code" aria-label="Coupon code" />
+                                <button id="btnApplyCartCoupon" type="button">Apply</button>
                             </div>
-                            <button class="coupon-button" type="button">Coupon List</button>
+                            <button class="coupon-button" id="btnOpenCouponList" type="button">Coupon List</button>
+                            <p class="coupon-status" id="cartCouponStatus" aria-live="polite" hidden></p>
                         </div>
                     </aside>
                 </div>
             </div>
         </main>
+
+        <div class="coupon-modal-backdrop" id="cartCouponModal" aria-hidden="true">
+            <section class="coupon-modal" role="dialog" aria-modal="true" aria-labelledby="cartCouponModalTitle">
+                <header class="coupon-modal-header">
+                    <h2 class="coupon-modal-title" id="cartCouponModalTitle">Available Coupons</h2>
+                    <button type="button" class="coupon-modal-close" data-close-coupon-modal aria-label="Close coupons">&times;</button>
+                </header>
+
+                <div class="coupon-list">
+                    <article class="coupon-card">
+                        <div class="coupon-card-top">
+                            <div>
+                                <span class="coupon-code">FIT10</span>
+                                <p class="coupon-name">Fitness New Year '24</p>
+                            </div>
+                            <button type="button" class="coupon-apply-button" data-cart-coupon-code="FIT10">Apply</button>
+                        </div>
+                        <p class="coupon-discount">10% Off</p>
+                        <div class="coupon-meta"><span>Min: ₹999</span><span>Ends Oct 31, 2026</span></div>
+                    </article>
+
+                    <article class="coupon-card">
+                        <div class="coupon-card-top">
+                            <div>
+                                <span class="coupon-code">WELCOME500</span>
+                                <p class="coupon-name">New User Special</p>
+                            </div>
+                            <button type="button" class="coupon-apply-button" data-cart-coupon-code="WELCOME500">Apply</button>
+                        </div>
+                        <p class="coupon-discount is-green">₹500 Flat Off</p>
+                        <div class="coupon-meta"><span>Min: ₹1999</span><span>Ends Nov 15, 2026</span></div>
+                    </article>
+
+                    <article class="coupon-card is-expired" aria-label="Expired coupon WHYEXPRO20">
+                        <div class="coupon-card-top">
+                            <div>
+                                <span class="coupon-code">WHYEXPRO20</span>
+                                <p class="coupon-name">Protein Power Up</p>
+                            </div>
+                            <span class="coupon-expired-label">Expired</span>
+                        </div>
+                        <p class="coupon-discount">20% Off</p>
+                        <div class="coupon-meta"><span>Min: ₹2500</span><span>Ended Sep 30, 2026</span></div>
+                    </article>
+                </div>
+
+                <form class="coupon-manual-entry" id="cartManualCouponForm">
+                    <label class="coupon-manual-icon" for="cartManualCouponCode" aria-hidden="true">◇</label>
+                    <input id="cartManualCouponCode" type="text" placeholder="Enter coupon code manually" autocomplete="off" required>
+                    <button type="submit" class="coupon-manual-check">Check</button>
+                </form>
+            </section>
+        </div>
 
         <%- include('../partials/user-footer') %>
     </div>
@@ -703,6 +967,60 @@
             }
         }
     }
+
+    const couponModal = document.getElementById('cartCouponModal');
+    const openCouponListButton = document.getElementById('btnOpenCouponList');
+    const cartCouponCode = document.getElementById('cartCouponCode');
+    const cartCouponStatus = document.getElementById('cartCouponStatus');
+    let couponModalPreviousFocus = null;
+    let previousBodyOverflow = '';
+
+    function closeCouponModal() {
+        couponModal.classList.remove('active');
+        couponModal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = previousBodyOverflow;
+        couponModalPreviousFocus?.focus();
+    }
+
+    function selectCartCoupon(code) {
+        if (!code) return;
+        cartCouponCode.value = code;
+        cartCouponStatus.textContent = `Coupon code selected: ${code}`;
+        cartCouponStatus.hidden = false;
+        window.dispatchEvent(new CustomEvent('cart:coupon-apply', { detail: { code } }));
+        closeCouponModal();
+    }
+
+    openCouponListButton.addEventListener('click', () => {
+        couponModalPreviousFocus = document.activeElement;
+        previousBodyOverflow = document.body.style.overflow;
+        couponModal.classList.add('active');
+        couponModal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        couponModal.querySelector('[data-close-coupon-modal]').focus();
+    });
+
+    couponModal.querySelector('[data-close-coupon-modal]').addEventListener('click', closeCouponModal);
+    couponModal.addEventListener('click', event => {
+        if (event.target === couponModal) closeCouponModal();
+    });
+    document.addEventListener('keydown', event => {
+        if (event.key === 'Escape' && couponModal.classList.contains('active')) closeCouponModal();
+    });
+
+    couponModal.querySelectorAll('[data-cart-coupon-code]').forEach(button => {
+        button.addEventListener('click', () => selectCartCoupon(button.dataset.cartCouponCode));
+    });
+
+    document.getElementById('cartManualCouponForm').addEventListener('submit', event => {
+        event.preventDefault();
+        const code = document.getElementById('cartManualCouponCode').value.trim().toUpperCase();
+        selectCartCoupon(code);
+    });
+
+    document.getElementById('btnApplyCartCoupon').addEventListener('click', () => {
+        selectCartCoupon(cartCouponCode.value.trim().toUpperCase());
+    });
 </script>
 </body>
 </html>

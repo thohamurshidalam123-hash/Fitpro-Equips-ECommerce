@@ -41,7 +41,12 @@ const upload = multer({
 });
 
 const requireUserSession = async (req, res, next) => {
+    const expectsJson = req.xhr
+        || String(req.get('accept') || '').includes('application/json')
+        || String(req.get('content-type') || '').includes('application/json');
+
     if (!req.session || !req.session.userId) {
+        if (expectsJson) return res.status(401).json({ success: false, message: 'Your session expired. Please log in again.' });
         return res.redirect('/login');
     }
 
@@ -52,6 +57,9 @@ const requireUserSession = async (req, res, next) => {
             delete req.session.userId;
             req.session.message = user ? 'Your account has been blocked.' : 'Your session has expired. Please log in again.';
             req.session.messageType = 'error';
+            if (expectsJson) {
+                return res.status(user ? 403 : 401).json({ success: false, message: req.session.message });
+            }
             return res.redirect('/login?authMessage=1');
         }
 
@@ -61,6 +69,7 @@ const requireUserSession = async (req, res, next) => {
         console.error('User session validation error:', error.message);
         req.session.message = 'Session validation failed. Please log in again.';
         req.session.messageType = 'error';
+        if (expectsJson) return res.status(500).json({ success: false, message: req.session.message });
         return res.redirect('/login?authMessage=1');
     }
 };
@@ -164,6 +173,6 @@ router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
 router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);
 router.post('/checkout/payment-failed',requireUserSession, checkoutController.paymentFailure);
 router.get('/order-failed/:id',requireUserSession, checkoutController.loadPaymentFailed);
-router.post('/orders/:id/retry-payment',requireUserSession,orderController.retryPayment);
+router.post('/account/orders/:id/retry-payment',requireUserSession,orderController.retryPayment);
 
 module.exports = router;

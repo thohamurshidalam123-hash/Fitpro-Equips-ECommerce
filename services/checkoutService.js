@@ -84,7 +84,7 @@ const createOrderAddress = async ({ userId, data }) => {
 
 // For placing an order and updating stock
 const placeOrder = async ({ userId, addressId, paymentMethod }) => {
-    if (!['cod','razorpay','wqallet'].includes(paymentMethod)){
+    if (!['cod', 'razorpay', 'wallet'].includes(paymentMethod)) {
         return { statusCode: 400, message: 'Invalid payment method selected'}
     }
 
@@ -152,7 +152,7 @@ const placeOrder = async ({ userId, addressId, paymentMethod }) => {
             fullAddress,
             type: selectedAddress.addressType
         },
-        paymentMethod: 'Cash on Delivery',
+        paymentMethod: formattedPaymentMethod,
         paymentStatus: 'Pending',
         subtotal,
         tax,
@@ -160,6 +160,21 @@ const placeOrder = async ({ userId, addressId, paymentMethod }) => {
         discount: 0,
         grandTotal
     });
+
+    let razorpayOrder = null;
+    if (paymentMethod === 'razorpay') {
+        try {
+            razorpayOrder = await razorpayInstance.orders.create({
+                amount: Math.round(grandTotal * 100),
+                currency: 'INR',
+                receipt: newOrder._id.toString()
+            });
+        } catch (error) {
+            console.error('Razorpay order initialization error:', error.message);
+            return { statusCode: 502, message: 'Failed to initialize payment gateway. Your cart has not been changed.' };
+        }
+    }
+
     await newOrder.save();
 
     for (const item of cart.items) {
@@ -182,27 +197,15 @@ const placeOrder = async ({ userId, addressId, paymentMethod }) => {
     }
     await Cart.findOneAndDelete({ userId });
 
-    //For generating razorpay order if applicable
     if (paymentMethod === 'razorpay') {
-        const options = {
-            amount: Math.round(grandTotal * 100),
-            currency: "INR",
-            receipt: newOrder._id.toSTrinbg()
+        return {
+            success: true,
+            orderId: newOrder._id,
+            paymentMethod: 'razorpay',
+            razorpayOrderId: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            key: process.env.RAZORPAY_KEY_ID
         };
-
-        try{
-            const razorpayOrder = await razorpayInstance.orders.create(options);
-            return {
-                success: true,
-                orderId: newOrder._id,
-                paymentMethod: 'razorpay',
-                razorpayOrderId: razorpayOrder.id,
-                amount: razorpayOrder.amount,
-                key: process.env.RAZORPAY_KEY_ID
-            };
-        }catch (error) {
-            return { statusCode: 500, message: 'Failed to initialize payment gateway.'};
-        }
     }
     return { success: true, orderId: newOrder._id, paymentMethod: 'cod' };
 };
@@ -218,7 +221,7 @@ const verifyRazorpayPayment = async ({ orderId, paymentData }) => {
     .digest("hex");
 
     if (razorpay_signature === expectedSign) {
-        await Order.findByAndUpdate(orderId, { paymentStatus: 'Completed', orderStatus: 'Processing' });
+        await Order.findByIdAndUpdate(orderId, { paymentStatus: 'Completed', orderStatus: 'Processing' });
         return { success: true }; 
     }else{
         await Order.findByIdAndUpdate(orderId, { paymentStatus:  'Failed' });
@@ -228,7 +231,7 @@ const verifyRazorpayPayment = async ({ orderId, paymentData }) => {
 
 // For handling payment failure/ modal close
 const handlePaymentFailure = async ({ orderId }) => {
-    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'Failed '});
+    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'Failed' });
     return { success: true };
 };
 

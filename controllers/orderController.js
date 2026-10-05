@@ -82,7 +82,7 @@ const retryPayment = async (req, res) => {
             return res.status(result.statusCode).json({ success: false, message: result.message});
         }
 
-        return res.staus(200).json(result);
+        return res.status(200).json(result);
     }catch (error) {
         console.error('Error in retry payment:',error);
         res.status(500).json({ success: false, message: 'ServerError'});

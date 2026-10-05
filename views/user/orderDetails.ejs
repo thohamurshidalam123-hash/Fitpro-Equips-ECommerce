@@ -350,6 +350,18 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const orderId = '<%= order._id %>';
+            const ensureRazorpayLoaded = () => {
+                if (typeof window.Razorpay === 'function') return Promise.resolve();
+                return new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+                    script.onload = () => typeof window.Razorpay === 'function'
+                        ? resolve()
+                        : reject(new Error('Razorpay checkout did not initialize.'));
+                    script.onerror = () => reject(new Error('Razorpay checkout could not be loaded. Check your connection and try again.'));
+                    document.head.appendChild(script);
+                });
+            };
 
             // Modal Logic
             const cancelModal = document.getElementById('cancelModal');
@@ -462,10 +474,15 @@
                 btn.disabled = true;
 
                 try {
+                    await ensureRazorpayLoaded();
                     const res = await fetch(`/account/orders/${orderId}/retry-payment`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' }
+                        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
                     });
+                    if (res.redirected) throw new Error('Your session has expired. Please log in again.');
+                    if (!res.headers.get('content-type')?.includes('application/json')) {
+                        throw new Error(`Unexpected server response (HTTP ${res.status}). Please refresh and try again.`);
+                    }
                     const data = await res.json();
                     
                     if (data.success) {
@@ -502,7 +519,7 @@
                                 }
                             }
                         };
-                        const rzp = new Razorpay(options);
+                        const rzp = new window.Razorpay(options);
                         rzp.on('payment.failed', function (response) {
                             window.showAppModal ? window.showAppModal('Payment failed. Please try again.', 'error') : alert('Payment failed. Please try again.');
                             btn.innerHTML = originalText;
@@ -516,7 +533,8 @@
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    window.showAppModal ? window.showAppModal('Something went wrong.', 'error') : alert('Something went wrong.');
+                    const message = error.message || 'Unable to start payment. Please try again.';
+                    window.showAppModal ? window.showAppModal(message, 'error') : alert(message);
                     btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
