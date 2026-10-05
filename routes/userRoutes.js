@@ -164,5 +164,6 @@ router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
 router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);
 router.post('/checkout/payment-failed',requireUserSession, checkoutController.paymentFailure);
 router.get('/order-failed/:id',requireUserSession, checkoutController.loadPaymentFailed);
+router.post('/orders/:id/retry-payment',requireUserSession,orderController.retryPayment);
 
 module.exports = router;

@@ -70,9 +70,29 @@ const returnOrder = async (req, res) => {
     }
 }
 
+// For retrying a failed payment
+const retryPayment = async (req, res) => {
+    try{
+        const userId = req.session.userId;
+        if(!userId) return res.status(401).json({ success: false, message: 'Please log in.'});
+
+        const result = await orderService.initiateRetryPayment({ orderId: req.params.id, userId});
+
+        if (!result.success) {
+            return res.status(result.statusCode).json({ success: false, message: result.message});
+        }
+
+        return res.staus(200).json(result);
+    }catch (error) {
+        console.error('Error in retry payment:',error);
+        res.status(500).json({ success: false, message: 'ServerError'});
+    }
+};
+
 module.exports = {
     loadOrderHistory,
     loadOrderDetails,
     cancelOrder,
-    returnOrder
+    returnOrder,
+    retryPayment
 }

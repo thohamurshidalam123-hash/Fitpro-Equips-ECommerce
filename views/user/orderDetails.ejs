@@ -36,9 +36,10 @@
         
         .invoice-button,
         .cancel-order-button,
-        .return-order-button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 5px; font: inherit; font-size: 9px; cursor: pointer; transition: background 0.15s ease; }
+        .return-order-button,
+        .retry-payment-button { display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border-radius: 5px; font: inherit; font-size: 9px; cursor: pointer; transition: background 0.15s ease; text-decoration: none; }
         
-        .invoice-button { border: 1px solid #d6e4fa; color: #35445c; background: #edf4ff; text-decoration: none; }
+        .invoice-button { border: 1px solid #d6e4fa; color: #35445c; background: #edf4ff; }
         .invoice-button:hover { background: #e2edff; }
         
         .cancel-order-button { border: 1px solid #f0c6ca; color: #c53540; background: #fff; }
@@ -48,7 +49,10 @@
         .return-order-button:hover { border-color: #fdba74; background: #fff7ed; }
         .return-order-button:disabled { border-color: #e3e8ef; color: #8994a5; background: #f5f7fa; cursor: not-allowed; }
 
-        .invoice-button svg, .cancel-order-button svg, .return-order-button svg { width: 12px; height: 12px; }
+        .retry-payment-button { border: 1px solid #10b981; color: #fff; background: #10b981; }
+        .retry-payment-button:hover { background: #059669; border-color: #059669; }
+
+        .invoice-button svg, .cancel-order-button svg, .return-order-button svg, .retry-payment-button svg { width: 12px; height: 12px; }
 
         .tracking-panel { margin-top: 17px; padding: 16px 18px 13px; }
         .section-title { margin: 0 0 17px; font-size: 13px; font-weight: 650; }
@@ -139,7 +143,7 @@
             .order-detail-main { width: calc(100% - 26px); padding-bottom: 38px; }
             .order-overview { align-items: flex-start; flex-direction: column; gap: 13px; }
             .overview-actions { width: 100%; flex-basis: auto; flex-direction: row; }
-            .invoice-button, .cancel-order-button, .return-order-button { flex: 1; }
+            .invoice-button, .cancel-order-button, .return-order-button, .retry-payment-button { flex: 1; }
             .order-detail-grid { grid-template-columns: 1fr; }
             .detail-aside { grid-template-columns: 1fr 1fr; align-items: start; }
             .help-panel { grid-column: 1 / -1; }
@@ -183,6 +187,13 @@
                 </div>
                 
                 <div class="overview-actions">
+                    <% if (order.paymentStatus === 'Failed') { %>
+                        <button class="retry-payment-button" id="btnRetryPayment" type="button">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                            Retry Payment
+                        </button>
+                    <% } %>
+
                     <a class="invoice-button" href="/account/orders/<%= order._id %>/invoice">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg>
                         Download Invoice
@@ -332,6 +343,9 @@
         <%- include('../partials/user-footer') %>
     </div>
 
+    <!-- Razorpay SDK -->
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
     <!-- Script to handle Modals and AJAX actions -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -383,12 +397,13 @@
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        window.showAppModal(data.message || 'Unable to cancel this order.', 'error');
+                        window.showAppModal ? window.showAppModal(data.message || 'Unable to cancel this order.', 'error') : alert(data.message || 'Unable to cancel this order.');
                         btn.textContent = 'Confirm Cancellation';
                         btn.disabled = false;
                     }
                 } catch (error) {
                     console.error('Error:', error);
+                    window.showAppModal ? window.showAppModal('Something went wrong.', 'error') : alert('Something went wrong.');
                     btn.disabled = false;
                 }
             });
@@ -427,13 +442,82 @@
                             returnReason.classList.add('inline-validation-invalid');
                             returnReason.setAttribute('aria-invalid', 'true');
                         } else {
-                            window.showAppModal(data.message || 'Unable to submit the return request.', 'error');
+                            window.showAppModal ? window.showAppModal(data.message || 'Unable to submit the return request.', 'error') : alert(data.message || 'Unable to submit the return request.');
                         }
                         btn.textContent = 'Submit Return';
                         btn.disabled = false;
                     }
                 } catch (error) {
                     console.error('Error:', error);
+                    btn.disabled = false;
+                }
+            });
+
+            // Handle Retry Payment
+            document.getElementById('btnRetryPayment')?.addEventListener('click', async function() {
+                const btn = this;
+                const originalText = btn.innerHTML;
+                
+                btn.textContent = 'Processing...';
+                btn.disabled = true;
+
+                try {
+                    const res = await fetch(`/account/orders/${orderId}/retry-payment`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+                    
+                    if (data.success) {
+                        const options = {
+                            key: data.key,
+                            amount: data.amount,
+                            currency: "INR",
+                            name: "Fitpro Equips",
+                            description: "Order Payment Retry",
+                            order_id: data.razorpayOrderId,
+                            handler: async function (response) {
+                                // Reusing your existing checkout verification route
+                                const verifyRes = await fetch('/checkout/verify-payment', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        orderId: data.orderId,
+                                        paymentData: response
+                                    })
+                                });
+                                const verifyData = await verifyRes.json();
+                                if (verifyData.success) {
+                                    window.location.reload(); 
+                                } else {
+                                    window.showAppModal ? window.showAppModal('Payment verification failed.', 'error') : alert('Payment verification failed.');
+                                    btn.innerHTML = originalText;
+                                    btn.disabled = false;
+                                }
+                            },
+                            modal: {
+                                ondismiss: function () {
+                                    btn.innerHTML = originalText;
+                                    btn.disabled = false;
+                                }
+                            }
+                        };
+                        const rzp = new Razorpay(options);
+                        rzp.on('payment.failed', function (response) {
+                            window.showAppModal ? window.showAppModal('Payment failed. Please try again.', 'error') : alert('Payment failed. Please try again.');
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        });
+                        rzp.open();
+                    } else {
+                        window.showAppModal ? window.showAppModal(data.message || 'Unable to initiate payment.', 'error') : alert(data.message || 'Unable to initiate payment.');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    window.showAppModal ? window.showAppModal('Something went wrong.', 'error') : alert('Something went wrong.');
+                    btn.innerHTML = originalText;
                     btn.disabled = false;
                 }
             });

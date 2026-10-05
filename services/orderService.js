@@ -1,5 +1,6 @@
 const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
+const Razorpay = require('razorpay'); 
 const mongoose = require('mongoose');
 
 // For adjusting stock of order items
@@ -107,4 +108,47 @@ const returnOrder = async ({ orderId, userId, reason }) => {
     return { success: true, message: 'Order return initiates successfully' };
 };
 
-module.exports = { getOrderHistory, getOrderDetails, cancelOrder, returnOrder };
+// For initiating razorpay
+const razorpayInstance = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET
+});
+
+const initiateRetryPayment = async ({ orderId, userId }) => {
+    const order = await Order.findOne({ _id: orderId, userId });
+
+    if(!order) return { statusCode: 404, message: 'Order not found'}
+
+    if(order.paymentStatus !== 'Failed') {
+        return { statusCode: 400, message: 'Payment for this order is not in a failed state.'};
+    }
+
+    try{
+        const options = {
+            amount: MAth.round(order.grandTotal * 100),
+            currency: "INR",
+            receipt: order._id.toString()
+        };
+
+        const razorpayorder = await razorpayInstance.orders.create(options);
+
+        return{
+            success: true,
+            razorpayOrderId: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            key: process.env.RAZORPAY_KEY_ID,
+            orderId: order._id
+        };
+    }catch (error) {
+        console.error('Error in razorpay retrying:',error);
+        return { statusCode: 500, message: 'Failed to inialize payment gateway.'};
+    }
+};
+
+module.exports = { 
+    getOrderHistory, 
+    getOrderDetails, 
+    cancelOrder, 
+    returnOrder ,
+    initiateRetryPayment
+};
