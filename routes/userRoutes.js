@@ -169,6 +169,7 @@ router.get('/account/orders/:id',requireUserSession,orderController.loadOrderDet
 router.post('/account/orders/:id/cancel',requireUserSession,orderController.cancelOrder);
 router.post('/account/orders/:id/return',requireUserSession,orderController.returnOrder);
 router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
+router.post('/account/orders/:id/retry-payment', requireUserSession, orderController.retryPayment);
 
 // Payment routes
 router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);

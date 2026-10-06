@@ -9,6 +9,7 @@ const productController = require('../controllers/productController');
 const brandController = require('../controllers/brandController');
 const adminOrderController = require('../controllers/adminOrderController')
 const invoiceController = require('../controllers/invoiceController');
+const couponController = require('../controllers/couponController');
 
 const productUploadDir = path.join(__dirname, '..', 'uploads', 'products');
 fs.mkdirSync(productUploadDir, { recursive: true });
@@ -62,6 +63,11 @@ const parseBrandUpload = (req, res, next) => multer({ dest: brandUploadDir, limi
 	next();
 });
 
+const requireAdminSession = (req, res, next) => {
+	if (!req.session.adminId) return res.status(401).json({ success: false, message: 'Admin authentication required.' });
+	next();
+};
+
 router.get('/login',adminController.loadLogin);
 router.post('/login',adminController.adminLogin);
 router.get('/logout',adminController.adminLogout);
@@ -105,5 +111,10 @@ router.get('/orders/:id/invoice', invoiceController.downloadAdminInvoice);
 router.get('/orders/:id',adminOrderController.loadAdminOrderDetails);
 router.post('/orders/:id/status',adminOrderController.updateOrderStatus)
 
+// Coupon management routes
+router.get('/coupons', couponController.getCoupons);
+router.post('/coupons', requireAdminSession, couponController.createCoupon);
+router.put('/coupons/:id', requireAdminSession, couponController.updateCoupon);
+router.delete('/coupons/:id', requireAdminSession, couponController.deleteCoupon);
 
 module.exports = router;

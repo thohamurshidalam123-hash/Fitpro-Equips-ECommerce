@@ -15,7 +15,7 @@ const couponSchema = new mongoose.Schema({
     },
     discountType: {
         type: String,
-        enum: ['percentage', 'ficed'],
+        enum: ['percentage', 'fixed'],
         required: true
     },
     discountValue: {
@@ -43,6 +43,11 @@ const couponSchema = new mongoose.Schema({
     usageLimitPerUser: {
         type: Number,
         default: 1
+    },
+    description:{
+        type: String,
+        required: true,
+        trim: true
     },
     usedBy: [{
         userId: {

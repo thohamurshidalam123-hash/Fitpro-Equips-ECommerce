@@ -17,6 +17,9 @@ const loadCartPage = async (req, res) => {
 
             if (couponResult.success) {
                 discount = couponResult.discountAmount;
+                req.session.appliedCoupon.id = couponResult.couponId;
+                req.session.appliedCoupon.code = couponResult.couponCode;
+                req.session.appliedCoupon.name = couponResult.couponName;
                 req.session.appliedCoupon.discountAmount = discount;
             } else {
                 delete req.session.appliedCoupon;

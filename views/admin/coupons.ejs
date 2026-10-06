@@ -1,0 +1,119 @@
+<% 
+    const demoCoupons = [
+        { couponCode: 'FIT10', couponName: 'Fitness New Year 24', discountType: 'percentage', discountValue: 10, minPurchaseAmount: 999, usageLimitPerUser: 500, expiryDate: '2026-10-31', description: 'A discount for your next fitness purchase.', isActive: true, maxDiscountAmount: 500, usageCount: 342 },
+        { couponCode: 'WELCOM500', couponName: 'Welcome Campaign', discountType: 'fixed', discountValue: 500, minPurchaseAmount: 2499, usageLimitPerUser: 1000, expiryDate: '2026-11-15', description: 'Welcome offer for first-time customers.', isActive: true, maxDiscountAmount: 500, usageCount: 48 },
+        { couponCode: 'FLASH50', couponName: 'Flash Sale Friday', discountType: 'percentage', discountValue: 50, minPurchaseAmount: 1000, usageLimitPerUser: 200, expiryDate: '2026-02-10', description: 'Limited-time flash sale discount.', isActive: false, maxDiscountAmount: 1000, usageCount: 200 }
+    ];
+    const couponRows = typeof coupons !== 'undefined' && coupons ? coupons : demoCoupons;
+    const activeCouponCount = couponRows.filter(coupon => coupon.isActive && new Date(coupon.expiryDate) >= new Date()).length;
+    const expiredCouponCount = couponRows.filter(coupon => new Date(coupon.expiryDate) < new Date()).length;
+%>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coupons | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-scale.css">
+    <link rel="stylesheet" href="/css/coupons.css">
+</head>
+<body>
+    <div class="admin-dashboard">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'coupons' }) %>
+
+        <main class="main-content coupons-content">
+            <div class="coupons-topbar">
+                <label class="global-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search admin pages"></label>
+                <div class="topbar-actions"><button type="button" aria-label="Notifications">♧</button><a href="mailto:support@fitpro.com">Support</a></div>
+            </div>
+
+            <section class="coupons-heading">
+                <div><h1>Coupon Management</h1><p>Create, manage, and monitor promotional coupons and discount campaigns.</p></div>
+                <button class="primary-button" type="button" data-open-coupon="create">＋ Create Coupon</button>
+            </section>
+
+            <section class="coupon-stats" aria-label="Coupon summary">
+                <article class="coupon-stat"><span class="stat-icon blue" aria-hidden="true">▤</span><small>Total Coupons</small><strong><%= couponRows.length %></strong><div class="stat-progress blue-progress"><span></span></div></article>
+                <article class="coupon-stat"><span class="stat-icon green" aria-hidden="true">✓</span><small>Active Coupons</small><strong><%= activeCouponCount %></strong><div class="stat-progress green-progress"><span></span><span></span><span></span></div></article>
+                <article class="coupon-stat"><span class="stat-icon red" aria-hidden="true">⊘</span><small>Expired Coupons</small><strong><%= expiredCouponCount %></strong><small class="stat-note">Archived automatically</small></article>
+            </section>
+
+            <section class="coupon-table-card" aria-label="Coupons">
+                <div class="coupon-toolbar">
+                    <label class="coupon-search"><span aria-hidden="true">⌕</span><input type="search" id="couponSearch" placeholder="Search code or campaign..." aria-label="Search coupons"></label>
+                    <div class="coupon-filters">
+                        <label>Type:
+                            <select id="couponTypeFilter" aria-label="Filter by coupon type"><option value="all">All</option><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select>
+                        </label>
+                        <label>Status:
+                            <select id="couponStatusFilter" aria-label="Filter by coupon status"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="expired">Expired</option></select>
+                        </label>
+                        <button class="filter-button" type="button" id="clearCouponFilters" aria-label="Clear filters">☰</button>
+                    </div>
+                </div>
+
+                <div class="coupon-table-scroll">
+                    <table class="coupon-table">
+                        <thead><tr><th>COUPON CODE</th><th>CAMPAIGN</th><th>TYPE/VALUE</th><th>USAGE</th><th>VALIDITY</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+                        <tbody id="couponTableBody">
+                            <% couponRows.forEach(coupon => {
+                                const expired = new Date(coupon.expiryDate) < new Date();
+                                const status = expired ? 'expired' : (coupon.isActive ? 'active' : 'inactive');
+                                const usageCount = coupon.usageCount || (coupon.usedBy || []).reduce((sum, entry) => sum + (entry.usedCount || 0), 0);
+                                const usageLimit = coupon.usageLimit || coupon.usageLimitPerUser || 0;
+                                const usagePercent = usageLimit ? Math.min(Math.round((usageCount / usageLimit) * 100), 100) : 0;
+                            %>
+                                <tr data-code="<%= coupon.couponCode %>" data-name="<%= coupon.couponName %>" data-type="<%= coupon.discountType %>" data-status="<%= status %>">
+                                    <td><div class="coupon-code-cell"><span class="coupon-type-icon"><%= coupon.discountType === 'percentage' ? '%' : '▣' %></span><div><strong><%= coupon.couponCode %></strong><small><%= coupon.discountType === 'percentage' ? 'PERCENTAGE' : 'FIXED AMOUNT' %></small></div></div></td>
+                                    <td><strong><%= coupon.couponName %></strong><small><%= coupon.description || '—' %></small></td>
+                                    <td><strong><%= coupon.discountType === 'percentage' ? `\({coupon.discountValue}% Off` : `₹\){Number(coupon.discountValue).toLocaleString('en-IN')} Off` %></strong><small>Min: ₹<%= Number(coupon.minPurchaseAmount || 0).toLocaleString('en-IN') %><% if (coupon.maxDiscountAmount) { %> | Max: ₹<%= Number(coupon.maxDiscountAmount).toLocaleString('en-IN') %><% } %></small></td>
+                                    <td><div class="usage-numbers"><strong><%= usageCount %> / <%= usageLimit || '—' %></strong><small><%= usagePercent %>%</small></div><div class="usage-track"><span style="width: <%= usagePercent %>%"></span></div></td>
+                                    <td><%= coupon.expiryDate ? new Date(coupon.expiryDate).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' %><% if (expired) { %><small class="expired-note">Expired</small><% } %></td>
+                                    <td><span class="coupon-status <%= status %>"><%= status.toUpperCase() %></span></td>
+                                    <td>
+                                        <button class="icon-button edit-coupon" type="button" title="Edit coupon" aria-label="Edit <%= coupon.couponCode %>"
+                                            data-id="<%= coupon._id %>" data-code="<%= coupon.couponCode %>" data-name="<%= coupon.couponName %>" data-type="<%= coupon.discountType %>"
+                                            data-value="<%= coupon.discountValue %>" data-minimum="<%= coupon.minPurchaseAmount || 0 %>" data-limit="<%= coupon.usageLimitPerUser || 1 %>"
+                                            data-expiry="<%= coupon.expiryDate ? new Date(coupon.expiryDate).toISOString().slice(0, 10) : '' %>" data-description="<%= coupon.description || '' %>"
+                                            data-active="<%= coupon.isActive ? 'true' : 'false' %>" data-maximum="<%= coupon.maxDiscountAmount || '' %>">✎</button>
+                                        <button class="icon-button delete-coupon" type="button" title="Delete coupon" data-id="<%= coupon._id %>" aria-label="Delete <%= coupon.couponCode %>">🗑</button>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                            <tr class="coupon-empty hidden"><td colspan="7">No coupons match your search.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="coupon-table-footer"><span id="couponCount">Showing <%= couponRows.length ? 1 : 0 %> to <%= couponRows.length %> of <%= couponRows.length %> entries</span><nav class="coupon-pagination" aria-label="Coupon pagination"><button type="button" disabled>1</button><button type="button" disabled>2</button><button type="button" disabled>3</button><span>…</span><button type="button" disabled>5</button></nav></footer>
+            </section>
+        </main>
+    </div>
+
+    <div class="coupon-modal hidden" id="couponModal" aria-hidden="true">
+        <div class="coupon-modal-panel" role="dialog" aria-modal="true" aria-labelledby="couponModalTitle">
+            <button class="modal-close" type="button" data-close-coupon aria-label="Close modal">×</button>
+            <div class="modal-heading"><span class="modal-icon" aria-hidden="true">%</span><div><h2 id="couponModalTitle">Create Coupon</h2><p>Set up a promotional offer for your customers.</p></div></div>
+            <form id="couponForm">
+                <input type="hidden" id="couponId" name="couponId" />
+                <div class="coupon-form-grid">
+                    <div class="form-field"><label for="couponCode">Coupon code</label><input id="couponCode" name="couponCode" placeholder="e.g. FIT10" required></div>
+                    <div class="form-field"><label for="couponName">Coupon name</label><input id="couponName" name="couponName" placeholder="e.g. Fitness New Year" required></div>
+                    <div class="form-field"><label for="discountType">Discount type</label><select id="discountType" name="discountType" required><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></div>
+                    <div class="form-field"><label for="discountValue">Discount value</label><input id="discountValue" name="discountValue" type="number" min="0" step="0.01" placeholder="e.g. 10" required></div>
+                    <div class="form-field"><label for="minimumPurchase">Minimum purchase</label><div class="input-prefix"><span>₹</span><input id="minimumPurchase" name="minPurchaseAmount" type="number" min="0" step="0.01" placeholder="0" required></div></div>
+                    <div class="form-field"><label for="usageLimit">Usage limit (per user)</label><input id="usageLimit" name="usageLimitPerUser" type="number" min="1" step="1" placeholder="e.g. 1" required></div>
+                    <div class="form-field"><label for="expiryDate">Expiry date</label><input id="expiryDate" name="expiryDate" type="date" required></div>
+                    <div class="form-field"><label for="maximumDiscount">Maximum discount (Optional)</label><div class="input-prefix"><span>₹</span><input id="maximumDiscount" name="maxDiscountAmount" type="number" min="0" step="0.01" placeholder="No limit"></div></div>
+                    <div class="form-field form-field-wide"><label for="couponDescription">Description</label><textarea id="couponDescription" name="description" rows="3" placeholder="Describe this coupon..." required></textarea></div>
+                    <div class="form-field form-field-wide status-field"><div><label for="couponActive">Status</label><small>Make this coupon available to customers.</small></div><label class="switch"><input id="couponActive" name="isActive" type="checkbox" checked><span class="slider"></span></label></div>
+                </div>
+                <div class="modal-actions"><button class="secondary-button" type="button" data-close-coupon>Cancel</button><button class="primary-button" type="submit"><span id="couponSubmitLabel">Create Coupon</span></button></div>
+            </form>
+        </div>
+    </div>
+
+    <%- include('../partials/admin-footer.ejs') %>
+    <script src="/js/coupons.js"></script>
+</body>
+</html>

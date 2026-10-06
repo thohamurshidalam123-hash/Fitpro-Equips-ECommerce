@@ -302,6 +302,34 @@
         font-size: 14px;
     }
 
+    .summary-coupon-name {
+        display: block;
+        margin-top: 3px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 400;
+    }
+
+    .summary-coupon-value {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .summary-coupon-remove {
+        padding: 3px 7px;
+        border: 1px solid #fecaca;
+        border-radius: 4px;
+        background: #fff;
+        color: #b91c1c;
+        font: inherit;
+        font-size: 11px;
+        cursor: pointer;
+    }
+
+    .summary-coupon-remove:hover { background: #fef2f2; }
+
     .summary-total {
         display: flex;
         justify-content: space-between;
@@ -486,6 +514,14 @@
         gap: 12px;
         overflow-y: auto;
         padding: 16px;
+    }
+
+    .coupon-list-empty {
+        margin: 0;
+        padding: 18px 12px;
+        color: #64748b;
+        font-size: 12px;
+        text-align: center;
     }
 
     .coupon-card {
@@ -796,7 +832,13 @@
                         <h3 class="summary-title">Order Summary</h3>
                         <ul class="summary-list">
                             <li><span>Subtotal (<%= itemCount || 0 %> items)</span><strong>₹<%= (typeof subtotal !== 'undefined' ? subtotal : 0).toLocaleString('en-IN') %></strong></li>
-                            <li><span>Coupon Savings</span><strong>- ₹<%= (discount || 0).toLocaleString('en-IN') %></strong></li>
+                            <li>
+                                <span>Coupon Savings<% if (appliedCoupon && discount > 0) { %><small class="summary-coupon-name"><%= appliedCoupon.name || appliedCoupon.code %></small><% } %></span>
+                                <strong class="summary-coupon-value">
+                                    - ₹<%= (discount || 0).toLocaleString('en-IN') %>
+                                    <% if (appliedCoupon && discount > 0) { %><button class="summary-coupon-remove" id="btnRemoveCartCoupon" type="button">Remove</button><% } %>
+                                </strong>
+                            </li>
                             <li><span>Estimated Shipping</span><strong>₹<%= (typeof shipping !== 'undefined' ? shipping : 0).toLocaleString('en-IN') %></strong></li>
                             <li><span>Tax (GST 0.18%)</span><strong>₹<%= (typeof tax !== 'undefined' ? tax : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></li>
                         </ul>
@@ -837,41 +879,23 @@
                 </header>
 
                 <div class="coupon-list">
-                    <article class="coupon-card">
-                        <div class="coupon-card-top">
-                            <div>
-                                <span class="coupon-code">FIT10</span>
-                                <p class="coupon-name">Fitness New Year '24</p>
-                            </div>
-                            <button type="button" class="coupon-apply-button" data-cart-coupon-code="FIT10">Apply</button>
-                        </div>
-                        <p class="coupon-discount">10% Off</p>
-                        <div class="coupon-meta"><span>Min: ₹999</span><span>Ends Oct 31, 2026</span></div>
-                    </article>
-
-                    <article class="coupon-card">
-                        <div class="coupon-card-top">
-                            <div>
-                                <span class="coupon-code">WELCOME500</span>
-                                <p class="coupon-name">New User Special</p>
-                            </div>
-                            <button type="button" class="coupon-apply-button" data-cart-coupon-code="WELCOME500">Apply</button>
-                        </div>
-                        <p class="coupon-discount is-green">₹500 Flat Off</p>
-                        <div class="coupon-meta"><span>Min: ₹1999</span><span>Ends Nov 15, 2026</span></div>
-                    </article>
-
-                    <article class="coupon-card is-expired" aria-label="Expired coupon WHYEXPRO20">
-                        <div class="coupon-card-top">
-                            <div>
-                                <span class="coupon-code">WHYEXPRO20</span>
-                                <p class="coupon-name">Protein Power Up</p>
-                            </div>
-                            <span class="coupon-expired-label">Expired</span>
-                        </div>
-                        <p class="coupon-discount">20% Off</p>
-                        <div class="coupon-meta"><span>Min: ₹2500</span><span>Ended Sep 30, 2026</span></div>
-                    </article>
+                    <% if (availableCoupons.length) { %>
+                        <% availableCoupons.forEach(coupon => { %>
+                            <article class="coupon-card">
+                                <div class="coupon-card-top">
+                                    <div>
+                                        <span class="coupon-code"><%= coupon.couponCode %></span>
+                                        <p class="coupon-name"><%= coupon.couponName %></p>
+                                    </div>
+                                    <button type="button" class="coupon-apply-button" data-cart-coupon-code="<%= coupon.couponCode %>">Apply</button>
+                                </div>
+                                <p class="coupon-discount <%= coupon.discountType === 'fixed' ? 'is-green' : '' %>"><%= coupon.discountType === 'percentage' ? `${coupon.discountValue}% Off` : `₹${Number(coupon.discountValue).toLocaleString('en-IN')} Flat Off` %></p>
+                                <div class="coupon-meta"><span>Min: ₹<%= Number(coupon.minPurchaseAmount).toLocaleString('en-IN') %></span><span>Ends <%= new Date(coupon.expiryDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }) %></span></div>
+                            </article>
+                        <% }); %>
+                    <% } else { %>
+                        <p class="coupon-list-empty">No active coupons are available right now.</p>
+                    <% } %>
                 </div>
 
                 <form class="coupon-manual-entry" id="cartManualCouponForm">
@@ -982,12 +1006,72 @@
     }
 
     function selectCartCoupon(code) {
-        if (!code) return;
-        cartCouponCode.value = code;
-        cartCouponStatus.textContent = `Coupon code selected: ${code}`;
-        cartCouponStatus.hidden = false;
-        window.dispatchEvent(new CustomEvent('cart:coupon-apply', { detail: { code } }));
+        const normalizedCode = String(code || '').trim().toUpperCase();
+        if (!normalizedCode) {
+            window.showAppModal('Please enter a coupon code.', 'error');
+            return;
+        }
+
+        cartCouponCode.value = normalizedCode;
+        cartCouponStatus.hidden = true;
         closeCouponModal();
+        applyCartCoupon(normalizedCode);
+    }
+
+    async function applyCartCoupon(code) {
+        const applyButton = document.getElementById('btnApplyCartCoupon');
+        const originalButtonText = applyButton.textContent;
+        applyButton.disabled = true;
+        applyButton.textContent = 'Applying...';
+
+        try {
+            const response = await fetch('/apply-coupon', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ couponCode: code })
+            });
+            const data = await response.json();
+
+            if (!response.ok || !data.success) {
+                window.showAppModal(data.message || 'Unable to apply this coupon.', 'error');
+                return;
+            }
+
+            cartCouponStatus.textContent = `Coupon ${data.couponCode || code} applied successfully.`;
+            cartCouponStatus.hidden = false;
+            window.showAppModal(data.message || 'Coupon applied successfully.', 'success', {
+                onClose: () => window.location.reload()
+            });
+        } catch (error) {
+            console.error('Error applying coupon:', error);
+            window.showAppModal('Unable to apply this coupon. Please try again.', 'error');
+        } finally {
+            applyButton.disabled = false;
+            applyButton.textContent = originalButtonText;
+        }
+    }
+
+    const removeCartCouponButton = document.getElementById('btnRemoveCartCoupon');
+    if (removeCartCouponButton) {
+        removeCartCouponButton.addEventListener('click', async () => {
+            removeCartCouponButton.disabled = true;
+            try {
+                const response = await fetch('/remove-coupon', { method: 'POST' });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    window.showAppModal(data.message || 'Unable to remove the coupon.', 'error');
+                    removeCartCouponButton.disabled = false;
+                    return;
+                }
+                window.showAppModal(data.message || 'Coupon removed successfully.', 'success', {
+                    onClose: () => window.location.reload()
+                });
+            } catch (error) {
+                console.error('Error removing coupon:', error);
+                window.showAppModal('Unable to remove the coupon. Please try again.', 'error');
+                removeCartCouponButton.disabled = false;
+            }
+        });
     }
 
     openCouponListButton.addEventListener('click', () => {

@@ -24,6 +24,8 @@ const orderSchema = new mongoose.Schema({
     subtotal: Number,
     tax: Number,
     shippingCost: Number,
+    couponId: { type: mongoose.Schema.Types.ObjectId, ref: 'Coupon' },
+    couponCode: String,
     discount: Number,
     grandTotal: Number
 },{ timestamps: true });

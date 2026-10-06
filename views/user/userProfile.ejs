@@ -46,7 +46,7 @@
                 <a class="account-card" href="/addresses"><span class="card-icon">◎</span><h2>Saved Addresses</h2><p>Manage delivery addresses</p><span class="card-link">Manage Addresses →</span></a>
                 <a class="account-card" href="/wishlist"><span class="card-icon heart">♡</span><h2>Wishlist</h2><p>Products you've saved</p><span class="card-link">Open Wishlist →</span></a>
                 <a class="account-card" href="#"><span class="card-icon"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4V7Z"></path><path d="M13 7v2m0 3v2m0 3v1"></path></svg></span><h2>Coupons</h2><p>View coupons you can avail</p><span class="card-link">View Coupons →</span></a>
-                <a class="account-card" href="#wallet"><span class="card-icon">▤</span><h2>Wallet</h2><p>Manage your balance and payment methods</p><span class="card-link">Manage Wallet →</span></a>
+                <a class="account-card" href="#wallet" data-open-wallet-modal><span class="card-icon">▤</span><h2>Wallet</h2><p>Manage your balance and payment methods</p><span class="card-link">Manage Wallet →</span></a>
             </section>
 
             <section class="trust-strip" aria-label="Fitpro Equips benefits">
@@ -114,6 +114,44 @@
             </div>
         </div>
     </div>
+    <div class="profile-details-modal" id="walletModal" aria-hidden="true">
+        <div class="profile-update-backdrop" data-close-wallet-modal></div>
+        <section class="profile-update-dialog wallet-dialog" role="dialog" aria-modal="true" aria-labelledby="walletTitle">
+            <header class="profile-update-header wallet-header">
+                <h2 id="walletTitle"><span class="wallet-title-icon" aria-hidden="true">▣</span>Wallet</h2>
+                <button type="button" class="profile-close-btn" aria-label="Close wallet" data-close-wallet-modal>&times;</button>
+            </header>
+            <div class="wallet-content">
+                <section class="wallet-balance" aria-label="Current wallet balance">
+                    <span class="wallet-overline">Current Balance</span>
+                    <strong>₹2,450.00</strong>
+                    <button type="button" class="wallet-add-button" data-wallet-add-balance>Add Balance</button>
+                    <p class="wallet-notice" id="walletNotice" aria-live="polite" hidden>Wallet balance actions are not connected yet.</p>
+                </section>
+                <section class="wallet-history" aria-labelledby="walletHistoryTitle">
+                    <h3 id="walletHistoryTitle">Transaction History</h3>
+                    <p class="wallet-history-caption">Recent wallet activity</p>
+                    <ul class="wallet-transaction-list">
+                        <li class="wallet-transaction">
+                            <span class="wallet-transaction-icon credit" aria-hidden="true">↙</span>
+                            <span class="wallet-transaction-copy"><strong>Refund for order FP-2026-10564</strong><small>Credit</small></span>
+                            <strong class="wallet-transaction-amount credit">+₹500</strong>
+                        </li>
+                        <li class="wallet-transaction">
+                            <span class="wallet-transaction-icon credit" aria-hidden="true">＋</span>
+                            <span class="wallet-transaction-copy"><strong>Balance added by user</strong><small>Top-up</small></span>
+                            <strong class="wallet-transaction-amount credit">+₹600</strong>
+                        </li>
+                        <li class="wallet-transaction">
+                            <span class="wallet-transaction-icon debit" aria-hidden="true">↗</span>
+                            <span class="wallet-transaction-copy"><strong>Payment for order FP-2026-10564</strong><small>Debit</small></span>
+                            <strong class="wallet-transaction-amount">-₹1,599</strong>
+                        </li>
+                    </ul>
+                </section>
+            </div>
+        </section>
+    </div>
     <div id="otp-state" data-show-otp-verification="<%= showOtpVerification ? 'true' : 'false' %>" hidden></div>
     <%- include('userProfileUpdate') %>
     <script src="/js/image-editor.js"></script>
@@ -122,6 +160,7 @@
         const otpModal = document.getElementById('profileOtpModal');
         const userDetailsModal = document.getElementById('userDetailsModal');
         const profileImageModal = document.getElementById('profileImageModal');
+        const walletModal = document.getElementById('walletModal');
         const openProfileButtons = document.querySelectorAll('[data-open-profile-modal]');
         const closeProfileButtons = document.querySelectorAll('[data-close-profile-modal]');
         const closeOtpButtons = document.querySelectorAll('[data-close-profile-otp-modal]');
@@ -170,6 +209,28 @@
 
         closeProfileImageButtons.forEach((button) => {
             button.addEventListener('click', () => closeModal(profileImageModal));
+        });
+
+        document.querySelectorAll('[data-open-wallet-modal]').forEach((button) => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                openModal(walletModal);
+                walletModal.querySelector('[data-close-wallet-modal]').focus();
+            });
+        });
+
+        document.querySelectorAll('[data-close-wallet-modal]').forEach((button) => {
+            button.addEventListener('click', () => closeModal(walletModal));
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && walletModal.classList.contains('active')) {
+                closeModal(walletModal);
+            }
+        });
+
+        document.querySelector('[data-wallet-add-balance]').addEventListener('click', () => {
+            document.getElementById('walletNotice').hidden = false;
         });
 
         const otpState = document.getElementById('otp-state');

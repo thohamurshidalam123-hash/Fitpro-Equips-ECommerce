@@ -57,6 +57,13 @@ const createInvoicePdf = order => new Promise((resolve, reject) => {
     doc.text('Shipping:', rightX, y)
         .text(order.shippingCost === 0 ? 'FREE' : formatCurrency(order.shippingCost), 470, y, { align: 'right' });
     y += 24;
+    if (Number(order.discount) > 0) {
+        const couponLabel = order.couponCode ? `Coupon Discount (${order.couponCode}):` : 'Coupon Discount:';
+        doc.fontSize(10).font('Helvetica').fillColor('#15814b')
+            .text(couponLabel, rightX, y, { width: 145 })
+            .text(`-${formatCurrency(order.discount)}`, 470, y, { align: 'right' });
+        y += doc.heightOfString(couponLabel, { width: 145 }) + 12;
+    }
     doc.fontSize(12).font('Helvetica-Bold').fillColor('#0f172a')
         .text('Grand Total:', rightX, y)
         .text(formatCurrency(order.grandTotal), 460, y, { width: 80, align: 'right' });

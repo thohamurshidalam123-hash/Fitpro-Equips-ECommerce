@@ -163,8 +163,11 @@
                             </div>
                             <% if (totals.discount > 0) { %>
                                 <div class="breakdown-row discount">
-                                    <span class="breakdown-label">Discount</span>
-                                    <span class="breakdown-value">-₹<%= totals.discount.toLocaleString('en-IN') %></span>
+                                    <span class="breakdown-label">Coupon Savings<small class="applied-coupon-name"><%= appliedCoupon.name || appliedCoupon.code %></small></span>
+                                    <span class="breakdown-value discount-value">
+                                        -₹<%= totals.discount.toLocaleString('en-IN') %>
+                                        <button type="button" class="btn-remove-coupon">Remove</button>
+                                    </span>
                                 </div>
                             <% } %>
                             <div class="breakdown-row">

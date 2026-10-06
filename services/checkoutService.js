@@ -2,6 +2,7 @@ const Cart = require('../models/cartModel');
 const Order = require('../models/orderModel');
 const Address = require('../models/addressModel');
 const Product = require('../models/productModel');
+const couponService = require('./couponService');
 const { validateAddress } = require('../validators/addressValidators');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
@@ -13,7 +14,7 @@ const razorpayInstance = new Razorpay({
 });
 
 // For loading checkout data and calculating totals
-const getCheckoutData = async ({ userId, addressId }) => {
+const getCheckoutData = async ({ userId, addressId, appliedCouponCode }) => {
     const cart = await Cart.findOne({ userId }).populate('items.productId');
     if (!cart || !cart.items || cart.items.length === 0) return null;
 
@@ -27,7 +28,8 @@ const getCheckoutData = async ({ userId, addressId }) => {
     const formattedItems = cart.items.map(item => {
         const product = item.productId;
         if (!product) return null;
-        const price = product.salePrice > 0 ? product.salePrice : product.regularPrice;
+        const variant = item.variantId ? product.variants.id(item.variantId) : null;
+        const price = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
         const itemTotal = price * item.quantity;
         subtotal += itemTotal;
         return {
@@ -40,11 +42,24 @@ const getCheckoutData = async ({ userId, addressId }) => {
         };
     }).filter(item => item !== null);
 
+    let appliedCoupon = null;
+    if (appliedCouponCode) {
+        const couponResult = await couponService.applyCoupon(userId, appliedCouponCode);
+        if (couponResult.success) {
+            appliedCoupon = {
+                id: couponResult.couponId,
+                code: couponResult.couponCode,
+                name: couponResult.couponName,
+                discountAmount: couponResult.discountAmount
+            };
+        }
+    }
+
     const tax = Number((subtotal * 0.0018).toFixed(2));
     const shipping = subtotal > 5000 ? 0 : 500;
-    const discount = 0;
+    const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
     const grandTotal = subtotal + tax + shipping - discount;
-    return { cartItems: formattedItems, addresses, activeAddress, totals: { subtotal, tax, shipping, discount, grandTotal } };
+    return { cartItems: formattedItems, addresses, activeAddress, appliedCoupon, totals: { subtotal, tax, shipping, discount, grandTotal } };
 };
 
 // For adding an address during checkout
@@ -83,7 +98,7 @@ const createOrderAddress = async ({ userId, data }) => {
 };
 
 // For placing an order and updating stock
-const placeOrder = async ({ userId, addressId, paymentMethod }) => {
+const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
     if (!['cod', 'razorpay', 'wallet'].includes(paymentMethod)) {
         return { statusCode: 400, message: 'Invalid payment method selected'}
     }
@@ -131,9 +146,17 @@ const placeOrder = async ({ userId, addressId, paymentMethod }) => {
         selectedAddress.state
     ].filter(Boolean).join(', ') + ` - ${selectedAddress.pincode}`;
 
+    let appliedCoupon = null;
+    if (couponCode) {
+        const couponResult = await couponService.applyCoupon(userId, couponCode);
+        if (!couponResult.success) return { statusCode: 400, message: couponResult.message };
+        appliedCoupon = couponResult;
+    }
+
     const tax = Number((subtotal * 0.0018).toFixed(2));
     const shippingCost = subtotal > 5000 ? 0 : 500;
-    const grandTotal = subtotal + tax + shippingCost;
+    const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+    const grandTotal = subtotal + tax + shippingCost - discount;
     const year = new Date().getFullYear();
     const randomId = Math.floor(10000 + Math.random() * 90000);
     const orderId = `FP-${year}-${randomId}`;
@@ -157,7 +180,9 @@ const placeOrder = async ({ userId, addressId, paymentMethod }) => {
         subtotal,
         tax,
         shippingCost,
-        discount: 0,
+        couponId: appliedCoupon ? appliedCoupon.couponId : undefined,
+        couponCode: appliedCoupon ? appliedCoupon.couponCode : undefined,
+        discount,
         grandTotal
     });
 

@@ -8,8 +8,13 @@ const loadCheckout = async (req, res) => {
         if (!userId) {
             return res.redirect('/login');
         }
-        const data = await checkoutService.getCheckoutData({ userId, addressId: req.query.addressId });
+        const data = await checkoutService.getCheckoutData({
+            userId,
+            addressId: req.query.addressId,
+            appliedCouponCode: req.session.appliedCoupon?.code
+        });
         if (!data) return res.redirect('/cart');
+        if (req.session.appliedCoupon && !data.appliedCoupon) delete req.session.appliedCoupon;
 
         // For rendering checkout page
         res.render('user/checkout', {
@@ -63,8 +68,13 @@ const placeOrder = async (req, res) => {
         if (!userId) {
             return res.status(401).json({ success: false, message: 'Please log in first.' });
         }
-        const result = await checkoutService.placeOrder({ ...req.body, userId });
+        const result = await checkoutService.placeOrder({
+            ...req.body,
+            userId,
+            couponCode: req.session.appliedCoupon?.code
+        });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        delete req.session.appliedCoupon;
         return res.status(201).json(result);
     } catch (error) {
         console.error('Error in place order:', error);

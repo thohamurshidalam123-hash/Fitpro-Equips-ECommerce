@@ -12,7 +12,11 @@ const getAvailableCoupons = async () => {
 
 // For validating and calculate discount for a coupon
 const applyCoupon = async (userId, couponCode) => {
-    const coupon = await Coupon.findOne({ couponCode: couponCode.toUpperCase() });
+    if (typeof couponCode !== 'string' || !couponCode.trim()) {
+        return { success: false, message: 'Please enter a coupon code.' };
+    }
+
+    const coupon = await Coupon.findOne({ couponCode: couponCode.trim().toUpperCase() });
 
     if(!coupon) {
         return { success: false, message: 'Invalid coupon code. '};
@@ -23,7 +27,7 @@ const applyCoupon = async (userId, couponCode) => {
     }
 
     // For checking user haven't used the limit
-    const userUsage = coupon.usedBy.find(u => u.userId.tiString() === userId.toString());
+    const userUsage = coupon.usedBy.find(u => u.userId.toString() === userId.toString());
     if(userUsage && userUsage.usedCount >= coupon.usageLimitPerUser) {
         return { success: false, message: 'You have already reached the usage limit for this coupon.'};
     }
@@ -44,7 +48,10 @@ const applyCoupon = async (userId, couponCode) => {
     }
 
     if (subtotal < coupon.minPurchaseAmount) {
-        return { success: false, message: 'Minimum purchase of ₹{coupon.minPurchaseAmount} required for this coupon. '};
+        return {
+            success: false,
+            message: `A minimum purchase of ₹${Number(coupon.minPurchaseAmount).toLocaleString('en-IN')} is required to use this coupon.`
+        };
     }
 
     // For calculating discount
@@ -65,6 +72,7 @@ const applyCoupon = async (userId, couponCode) => {
         success: true,
         couponId: coupon._id,
         couponCode: coupon.couponCode,
+        couponName: coupon.couponName,
         discountAmount: Number(discountAmount.toFixed(2)),
         message: 'Coupon applied successfully!'
     };

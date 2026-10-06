@@ -249,6 +249,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 6. Place Order Button (AJAX) - UPDATED FOR RAZORPAY
     const btnPlaceOrder = document.querySelector('.btn-place-order');
+    const btnRemoveCoupon = document.querySelector('.btn-remove-coupon');
+    if (btnRemoveCoupon) {
+        btnRemoveCoupon.addEventListener('click', async () => {
+            btnRemoveCoupon.disabled = true;
+            try {
+                const response = await fetch('/remove-coupon', { method: 'POST' });
+                const data = await response.json();
+                if (!response.ok || !data.success) {
+                    window.showAppModal(data.message || 'Unable to remove the coupon.', 'error');
+                    btnRemoveCoupon.disabled = false;
+                    return;
+                }
+                window.showAppModal(data.message || 'Coupon removed successfully.', 'success', {
+                    onClose: () => window.location.reload()
+                });
+            } catch (error) {
+                console.error('Error removing coupon:', error);
+                window.showAppModal('Unable to remove the coupon. Please try again.', 'error');
+                btnRemoveCoupon.disabled = false;
+            }
+        });
+    }
+
     if (btnPlaceOrder) {
         btnPlaceOrder.addEventListener('click', async () => {
             const addressContainer = document.querySelector('.address-details');
