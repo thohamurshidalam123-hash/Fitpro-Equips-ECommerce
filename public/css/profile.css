@@ -61,7 +61,19 @@
 .wallet-balance > strong { margin: 4px 0 15px; font-size: 29px; line-height: 1.2; }
 .wallet-add-button { width: 100%; min-height: 34px; border: 0; border-radius: 5px; color: #1559da; background: #fff; font-size: 11px; font-weight: 700; cursor: pointer; }
 .wallet-add-button:hover { background: #edf4ff; }
-.wallet-notice { margin: 10px 0 0; font-size: 11px; text-align: center; }
+.wallet-add-button[hidden] { display: none; }
+.wallet-topup-form { display: grid; gap: 7px; width: 100%; margin-top: 13px; text-align: left; }
+.wallet-topup-form[hidden] { display: none; }
+.wallet-topup-form > label { font-size: 11px; font-weight: 600; }
+.wallet-amount-field { display: flex; align-items: center; gap: 8px; min-height: 38px; padding: 0 11px; border: 1px solid #d7e3fb; border-radius: 5px; background: #fff; color: #475569; }
+.wallet-amount-field input { width: 100%; min-width: 0; border: 0; outline: 0; color: #1d2a3a; font: inherit; }
+.wallet-topup-form > small { font-size: 9px; opacity: .85; }
+.wallet-topup-actions { display: grid; grid-template-columns: auto 1fr; gap: 8px; margin-top: 3px; }
+.wallet-topup-actions button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 5px; font: inherit; font-size: 10px; font-weight: 700; cursor: pointer; }
+.wallet-topup-cancel { color: #fff; background: rgba(255, 255, 255, .2); }
+.wallet-topup-pay { color: #1559da; background: #fff; }
+.wallet-topup-pay:hover { background: #edf4ff; }
+.wallet-topup-actions button:disabled { cursor: wait; opacity: .7; }
 .wallet-history { padding: 14px; border: 1px solid #e2e8f0; border-radius: 7px; }
 .wallet-history h3 { margin: 0; color: #1d2a3a; font-size: 13px; }
 .wallet-history-caption { margin: 4px 0 10px; color: #788498; font-size: 10px; }

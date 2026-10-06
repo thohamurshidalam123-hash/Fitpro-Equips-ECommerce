@@ -1,5 +1,5 @@
 const userService = require('../services/userService');
-
+const walletService = require('../services/walletService');
 
 // Rendering login page
 const loadLogin = async (req, res) => {
@@ -34,6 +34,7 @@ const loadProfile = async (req, res) => {
             req.session.destroy(() => res.redirect('/login'));
             return;
         }
+        const wallet = await walletService.getWalletData(req.session.userId);
 
         const showOtpVerification = req.query.emailOtp === 'true';
         const pendingEmail = req.session.pendingProfileUpdate ? req.session.pendingProfileUpdate.email : null;
@@ -42,6 +43,7 @@ const loadProfile = async (req, res) => {
 
         res.render('user/userProfile', {
             user,
+            wallet,
             currentPage: 'profile',
             showOtpVerification,
             pendingEmail,

@@ -803,7 +803,7 @@
                                                 <button type="button" onclick="updateQty('<%= item._id %>', 'increase')" <%= (!item.isAvailable || item.outOfStock) ? 'disabled' : '' %> aria-label="Increase quantity">+</button>
                                             </div>
                                             <button class="mini-link remove" type="button" onclick="removeItem('<%= item._id %>')">Remove</button>
-                                            <button class="mini-link wishlist" type="button" onclick="moveToWishlist('<%= item._id %>', '<%= item.productId._id %>', '<%= item.variantId || '' %>')">Add to Wishlist</button>
+                                            <button class="mini-link wishlist" type="button" data-item-id="<%= item._id %>" data-product-id="<%= item.productId._id %>" data-variant-id="<%= item.variantId || '' %>">Add to Wishlist</button>
                                         </div>
                                     </div>
                                     <div class="price-block">
@@ -962,7 +962,7 @@
         }
     }
 
-    // Task D.iv: Move to Wishlist
+    // For moving item into Wishlist
     async function moveToWishlist(itemId, productId, variantId) {
         try {
             const response = await fetch('/cart/moveToWishlist', {
@@ -990,6 +990,12 @@
             }
         }
     }
+
+    document.querySelectorAll('.mini-link.wishlist').forEach(button => {
+        button.addEventListener('click', () => {
+            moveToWishlist(button.dataset.itemId, button.dataset.productId, button.dataset.variantId);
+        });
+    });
 
     const couponModal = document.getElementById('cartCouponModal');
     const openCouponListButton = document.getElementById('btnOpenCouponList');

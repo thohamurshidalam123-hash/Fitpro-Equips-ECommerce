@@ -6,6 +6,7 @@ const couponService = require('./couponService');
 const { validateAddress } = require('../validators/addressValidators');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
+const walletService = require('./walletService');
 
 // For initializing razorpay
 const razorpayInstance = new Razorpay({
@@ -161,6 +162,15 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
     const randomId = Math.floor(10000 + Math.random() * 90000);
     const orderId = `FP-${year}-${randomId}`;
 
+    // For checking wallet balance
+    if ( paymentMethod === 'wallet') {
+        const wallet = await walletService.getWalletData(userId);
+        if (!wallet || wallet.balance < grandTotal ) {
+            return { statusCode: 400, message: 'Insuffiecient balance in your wallet, Please select another payment method'}
+        }
+    }
+
+
     let formattedPaymentMethod = 'Cash on Delivery';
     if(paymentMethod === 'razorpay') formattedPaymentMethod = 'Razorpay';
     if(paymentMethod === 'wallet') formattedPaymentMethod = 'wallet';
@@ -176,7 +186,8 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
             type: selectedAddress.addressType
         },
         paymentMethod: formattedPaymentMethod,
-        paymentStatus: 'Pending',
+        paymentStatus: paymentMethod === 'wallet' ? 'Completed' : 'Pending',
+        orderStatus: paymentMethod === 'wallet' ? 'Proccessing' : 'Pending',
         subtotal,
         tax,
         shippingCost,
@@ -201,6 +212,24 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
     }
 
     await newOrder.save();
+
+    // For deducting wallet balance
+    if (paymentMethod === 'wallet') {
+        try{
+            await walletService.debitWallet(
+                userId,
+                grandTotal,
+                `Payment for order ${orderId}`,
+                newOrder._id
+            );
+        }catch(error) {
+            console.error("Error in updating wallet after order creation:",error);
+            newOrder.paymentStatus = 'Failed';
+            newOrder.orderStatus = 'Pending';
+            await newOrder.save();
+            return { statusCode: 500, message: 'Failed to update wallet balance'}
+        }
+    }
 
     for (const item of cart.items) {
         if (item.variantId) {
@@ -232,7 +261,12 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
             key: process.env.RAZORPAY_KEY_ID
         };
     }
-    return { success: true, orderId: newOrder._id, paymentMethod: 'cod' };
+    return {
+        success: true,
+        orderId: newOrder._id,
+        paymentMethod,
+        amount: paymentMethod === 'wallet' ? grandTotal : undefined
+    };
 };
 
 // For verifying razorpay payment signature

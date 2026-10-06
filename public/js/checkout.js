@@ -349,8 +349,16 @@ document.addEventListener('DOMContentLoaded', () => {
                             window.location.href = `/order-failed/${data.orderId}`;
                         });
                         rzp.open();
+                    } else if (data.paymentMethod === 'wallet') {
+                        const deductedAmount = Number(data.amount || 0).toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        });
+                        window.showAppModal(`₹${deductedAmount} has been deducted from your wallet. Your order was placed successfully.`, 'success', {
+                            onClose: () => window.location.href = `/order-success/${data.orderId}`
+                        });
                     } else {
-                        // COD or Wallet successful redirect
+                        // COD successful redirect
                         window.location.href = `/order-success/${data.orderId}`;
                     }
                 } else {

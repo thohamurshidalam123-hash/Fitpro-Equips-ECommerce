@@ -14,6 +14,7 @@ const checkoutController = require('../controllers/checkoutController');
 const orderController = require('../controllers/orderController');
 const invoiceController = require('../controllers/invoiceController');
 const couponController = require('../controllers/couponController');
+const walletController = require('../controllers/walletController');
 require('../configuration/passport');
 
 
@@ -175,6 +176,8 @@ router.post('/account/orders/:id/retry-payment', requireUserSession, orderContro
 router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);
 router.post('/checkout/payment-failed',requireUserSession, checkoutController.paymentFailure);
 router.get('/order-failed/:id',requireUserSession, checkoutController.loadPaymentFailed);
+router.post('/wallet/top-ups/order', requireUserSession, walletController.createTopUpOrder);
+router.post('/wallet/top-ups/verify', requireUserSession, walletController.verifyTopUpPayment);
 
 // Coupon routes
 router.post('/apply-coupon', couponController.applyCoupon);

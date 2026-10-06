@@ -58,6 +58,7 @@
         </main>
         <%- include('../partials/user-footer') %>
     </div>
+
     <div class="profile-details-modal" id="profileImageModal" aria-hidden="true">
         <div class="profile-update-backdrop" data-close-profile-image-modal></div>
         <div class="profile-update-dialog profile-image-dialog" role="dialog" aria-modal="true" aria-labelledby="profileImageTitle">
@@ -91,29 +92,15 @@
                         <% } %>
                     </div>
                 </div>
-                <div class="profile-detail-row">
-                    <span class="detail-label">Name</span>
-                    <span class="detail-value"><%= user.name || 'Not available' %></span>
-                </div>
-                <div class="profile-detail-row">
-                    <span class="detail-label">Email</span>
-                    <span class="detail-value"><%= user.email || 'Not available' %></span>
-                </div>
-                <div class="profile-detail-row">
-                    <span class="detail-label">Date of Birth</span>
-                    <span class="detail-value"><%= user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('en-GB') : 'Not available' %></span>
-                </div>
-                <div class="profile-detail-row">
-                    <span class="detail-label">Phone Number</span>
-                    <span class="detail-value"><%= user.phone || 'Not available' %></span>
-                </div>
-                <div class="profile-detail-row">
-                    <span class="detail-label">Gender</span>
-                    <span class="detail-value"><%= user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available' %></span>
-                </div>
+                <div class="profile-detail-row"><span class="detail-label">Name</span><span class="detail-value"><%= user.name || 'Not available' %></span></div>
+                <div class="profile-detail-row"><span class="detail-label">Email</span><span class="detail-value"><%= user.email || 'Not available' %></span></div>
+                <div class="profile-detail-row"><span class="detail-label">Date of Birth</span><span class="detail-value"><%= user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('en-GB') : 'Not available' %></span></div>
+                <div class="profile-detail-row"><span class="detail-label">Phone Number</span><span class="detail-value"><%= user.phone || 'Not available' %></span></div>
+                <div class="profile-detail-row"><span class="detail-label">Gender</span><span class="detail-value"><%= user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available' %></span></div>
             </div>
         </div>
     </div>
+
     <div class="profile-details-modal" id="walletModal" aria-hidden="true">
         <div class="profile-update-backdrop" data-close-wallet-modal></div>
         <section class="profile-update-dialog wallet-dialog" role="dialog" aria-modal="true" aria-labelledby="walletTitle">
@@ -124,36 +111,48 @@
             <div class="wallet-content">
                 <section class="wallet-balance" aria-label="Current wallet balance">
                     <span class="wallet-overline">Current Balance</span>
-                    <strong>₹2,450.00</strong>
-                    <button type="button" class="wallet-add-button" data-wallet-add-balance>Add Balance</button>
-                    <p class="wallet-notice" id="walletNotice" aria-live="polite" hidden>Wallet balance actions are not connected yet.</p>
+                    <strong>₹<%= Number(wallet?.balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
+                    <button type="button" class="wallet-add-button" id="walletAddBalanceButton">Add Balance</button>
+                    <form class="wallet-topup-form" id="walletTopUpForm" hidden>
+                        <label for="walletTopUpAmount">Amount to add</label>
+                        <div class="wallet-amount-field"><span aria-hidden="true">₹</span><input id="walletTopUpAmount" name="amount" type="number" min="1" max="100000" step="0.01" placeholder="Enter amount" required></div>
+                        <small>Minimum ₹1, maximum ₹1,00,000</small>
+                        <div class="wallet-topup-actions">
+                            <button type="button" class="wallet-topup-cancel" id="walletTopUpCancel">Cancel</button>
+                            <button type="submit" class="wallet-topup-pay" id="walletTopUpPay">Continue to Payment</button>
+                        </div>
+                    </form>
                 </section>
                 <section class="wallet-history" aria-labelledby="walletHistoryTitle">
                     <h3 id="walletHistoryTitle">Transaction History</h3>
                     <p class="wallet-history-caption">Recent wallet activity</p>
                     <ul class="wallet-transaction-list">
-                        <li class="wallet-transaction">
-                            <span class="wallet-transaction-icon credit" aria-hidden="true">↙</span>
-                            <span class="wallet-transaction-copy"><strong>Refund for order FP-2026-10564</strong><small>Credit</small></span>
-                            <strong class="wallet-transaction-amount credit">+₹500</strong>
-                        </li>
-                        <li class="wallet-transaction">
-                            <span class="wallet-transaction-icon credit" aria-hidden="true">＋</span>
-                            <span class="wallet-transaction-copy"><strong>Balance added by user</strong><small>Top-up</small></span>
-                            <strong class="wallet-transaction-amount credit">+₹600</strong>
-                        </li>
-                        <li class="wallet-transaction">
-                            <span class="wallet-transaction-icon debit" aria-hidden="true">↗</span>
-                            <span class="wallet-transaction-copy"><strong>Payment for order FP-2026-10564</strong><small>Debit</small></span>
-                            <strong class="wallet-transaction-amount">-₹1,599</strong>
-                        </li>
+                        <% if (wallet?.transactions?.length) { %>
+                            <% wallet.transactions.forEach(transaction => { %>
+                                <li class="wallet-transaction">
+                                    <% if (transaction.type === 'credit') { %>
+                                        <span class="wallet-transaction-icon credit" aria-hidden="true">↙</span>
+                                        <span class="wallet-transaction-copy"><strong><%= transaction.description %></strong><small>Credit</small></span>
+                                        <strong class="wallet-transaction-amount credit">+₹<%= Number(transaction.amount).toLocaleString('en-IN') %></strong>
+                                    <% } else { %>
+                                        <span class="wallet-transaction-icon debit" aria-hidden="true">↗</span>
+                                        <span class="wallet-transaction-copy"><strong><%= transaction.description %></strong><small>Debit</small></span>
+                                        <strong class="wallet-transaction-amount">-₹<%= Number(transaction.amount).toLocaleString('en-IN') %></strong>
+                                    <% } %>
+                                </li>
+                            <% }); %>
+                        <% } else { %>
+                            <li class="wallet-empty">No transactions yet.</li>
+                        <% } %>
                     </ul>
                 </section>
             </div>
         </section>
     </div>
+
     <div id="otp-state" data-show-otp-verification="<%= showOtpVerification ? 'true' : 'false' %>" hidden></div>
     <%- include('userProfileUpdate') %>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="/js/image-editor.js"></script>
     <script>
         const profileModal = document.getElementById('profileUpdateModal');
@@ -183,139 +182,169 @@
             }
         };
 
-        openProfileButtons.forEach((button) => {
-            button.addEventListener('click', () => openModal(profileModal));
-        });
+        openProfileButtons.forEach(button => button.addEventListener('click', () => openModal(profileModal)));
+        closeProfileButtons.forEach(button => button.addEventListener('click', () => closeModal(profileModal)));
+        closeOtpButtons.forEach(button => button.addEventListener('click', () => closeModal(otpModal)));
+        openUserDetailsButtons.forEach(button => button.addEventListener('click', () => openModal(userDetailsModal)));
+        closeUserDetailsButtons.forEach(button => button.addEventListener('click', () => closeModal(userDetailsModal)));
+        openProfileImageButtons.forEach(button => button.addEventListener('click', () => openModal(profileImageModal)));
+        closeProfileImageButtons.forEach(button => button.addEventListener('click', () => closeModal(profileImageModal)));
 
-        closeProfileButtons.forEach((button) => {
-            button.addEventListener('click', () => closeModal(profileModal));
-        });
-
-        closeOtpButtons.forEach((button) => {
-            button.addEventListener('click', () => closeModal(otpModal));
-        });
-
-        openUserDetailsButtons.forEach((button) => {
-            button.addEventListener('click', () => openModal(userDetailsModal));
-        });
-
-        closeUserDetailsButtons.forEach((button) => {
-            button.addEventListener('click', () => closeModal(userDetailsModal));
-        });
-
-        openProfileImageButtons.forEach((button) => {
-            button.addEventListener('click', () => openModal(profileImageModal));
-        });
-
-        closeProfileImageButtons.forEach((button) => {
-            button.addEventListener('click', () => closeModal(profileImageModal));
-        });
-
-        document.querySelectorAll('[data-open-wallet-modal]').forEach((button) => {
-            button.addEventListener('click', (event) => {
+        document.querySelectorAll('[data-open-wallet-modal]').forEach(button => {
+            button.addEventListener('click', event => {
                 event.preventDefault();
                 openModal(walletModal);
                 walletModal.querySelector('[data-close-wallet-modal]').focus();
             });
         });
+        document.querySelectorAll('[data-close-wallet-modal]').forEach(button => button.addEventListener('click', () => closeModal(walletModal)));
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && walletModal.classList.contains('active')) closeModal(walletModal);
+        });
+        const walletTopUpForm = document.getElementById('walletTopUpForm');
+        const walletTopUpAmount = document.getElementById('walletTopUpAmount');
+        const walletAddBalanceButton = document.getElementById('walletAddBalanceButton');
+        const walletTopUpPayButton = document.getElementById('walletTopUpPay');
+        const resetWalletTopUpButton = () => {
+            walletTopUpPayButton.disabled = false;
+            walletTopUpPayButton.textContent = 'Continue to Payment';
+        };
 
-        document.querySelectorAll('[data-close-wallet-modal]').forEach((button) => {
-            button.addEventListener('click', () => closeModal(walletModal));
+        walletAddBalanceButton.addEventListener('click', () => {
+            walletAddBalanceButton.hidden = true;
+            walletTopUpForm.hidden = false;
+            walletTopUpAmount.focus();
         });
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape' && walletModal.classList.contains('active')) {
-                closeModal(walletModal);
+        document.getElementById('walletTopUpCancel').addEventListener('click', () => {
+            walletTopUpForm.reset();
+            walletTopUpForm.hidden = true;
+            walletAddBalanceButton.hidden = false;
+        });
+
+        walletTopUpForm.addEventListener('submit', async event => {
+            event.preventDefault();
+            if (!walletTopUpForm.reportValidity()) return;
+            if (typeof window.Razorpay !== 'function') {
+                window.showAppModal('Payment checkout could not be loaded. Please refresh and try again.', 'error');
+                return;
             }
-        });
 
-        document.querySelector('[data-wallet-add-balance]').addEventListener('click', () => {
-            document.getElementById('walletNotice').hidden = false;
+            walletTopUpPayButton.disabled = true;
+            walletTopUpPayButton.textContent = 'Preparing Payment...';
+            try {
+                const orderResponse = await fetch('/wallet/top-ups/order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: walletTopUpAmount.value })
+                });
+                const orderData = await orderResponse.json();
+                if (!orderResponse.ok || !orderData.success) {
+                    window.showAppModal(orderData.message || 'Unable to start wallet payment.', 'error');
+                    resetWalletTopUpButton();
+                    return;
+                }
+
+                const paymentWindow = new window.Razorpay({
+                    key: orderData.key,
+                    amount: orderData.amount,
+                    currency: orderData.currency || 'INR',
+                    name: 'Fitpro Equips',
+                    description: 'Wallet balance top-up',
+                    order_id: orderData.razorpayOrderId,
+                    handler: async paymentData => {
+                        try {
+                            const verificationResponse = await fetch('/wallet/top-ups/verify', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ paymentData })
+                            });
+                            const verificationData = await verificationResponse.json();
+                            if (!verificationResponse.ok || !verificationData.success) {
+                                window.showAppModal(verificationData.message || 'Wallet payment could not be verified.', 'error');
+                                resetWalletTopUpButton();
+                                return;
+                            }
+                            window.showAppModal(verificationData.message || 'Wallet balance added successfully.', 'success', {
+                                onClose: () => window.location.reload()
+                            });
+                        } catch (error) {
+                            console.error('Wallet payment verification error:', error);
+                            window.showAppModal('Unable to verify wallet payment. Please contact support.', 'error');
+                            resetWalletTopUpButton();
+                        }
+                    },
+                    modal: {
+                        ondismiss: resetWalletTopUpButton
+                    }
+                });
+                paymentWindow.on('payment.failed', response => {
+                    console.error('Wallet payment failed:', response.error);
+                    window.showAppModal(response.error?.description || 'Wallet payment failed. Please try again.', 'error');
+                    resetWalletTopUpButton();
+                });
+                paymentWindow.open();
+            } catch (error) {
+                console.error('Wallet payment initialization error:', error);
+                window.showAppModal('Unable to start wallet payment. Please try again.', 'error');
+                resetWalletTopUpButton();
+            }
         });
 
         const otpState = document.getElementById('otp-state');
         const shouldOpenOtpModal = otpState && otpState.dataset.showOtpVerification === 'true';
-        if (shouldOpenOtpModal && otpModal) {
-            openModal(otpModal);
-        }
+        if (shouldOpenOtpModal && otpModal) openModal(otpModal);
 
-        // Fetch AJAX Implementation for Profile Edit
         const profileUpdateForm = document.getElementById('profileUpdateForm');
-        
         if (profileUpdateForm) {
-            profileUpdateForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); // Stop normal form submission
+            profileUpdateForm.addEventListener('submit', async event => {
+                event.preventDefault();
                 window.clearInlineFieldErrors(profileUpdateForm);
-
                 const formData = new FormData(profileUpdateForm);
                 const submitBtn = profileUpdateForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
-                
-                // Show loading state
                 submitBtn.innerHTML = 'Saving...';
                 submitBtn.disabled = true;
 
                 try {
-                    // CHANGED: URL updated to match your router exactly
-                    const response = await fetch('/userProfile', {
-                        method: 'POST',
-                        body: formData // Sends text fields and the image file
-                    });
-
+                    const response = await fetch('/userProfile', { method: 'POST', body: formData });
                     const result = await response.json();
-
                     if (result.blocked) {
                         const notificationCloseButton = document.querySelector('.app-notification-close');
-                        if (notificationCloseButton) {
-                            notificationCloseButton.addEventListener('click', () => {
-                                window.location.href = '/login';
-                            }, { once: true });
-                        }
+                        notificationCloseButton?.addEventListener('click', () => { window.location.href = '/login'; }, { once: true });
                         window.showAppModal('Account is blocked', 'error');
                     } else if (result.errors) {
                         window.showInlineFieldErrors(profileUpdateForm, result.errors);
                     } else if (result.requireOtp) {
                         const otpEmail = document.getElementById('profileOtpEmail');
-                        if (otpEmail && result.pendingEmail) {
-                            otpEmail.textContent = result.pendingEmail;
-                        }
-                        // Email changed: Close edit modal, open OTP modal
+                        if (otpEmail && result.pendingEmail) otpEmail.textContent = result.pendingEmail;
                         closeModal(profileModal);
                         openModal(otpModal);
                     } else if (result.success) {
-                        // No email change: Reload page to show new details/image
                         window.location.reload();
                     } else {
-                        // Show error message
                         window.showAppModal(result.message || 'An error occurred.', 'error');
                     }
                 } catch (error) {
                     console.error('Fetch error:', error);
                     window.showAppModal('Something went wrong. Please try again.', 'error');
                 } finally {
-                    // Reset button state
                     submitBtn.innerHTML = originalBtnText;
                     submitBtn.disabled = false;
                 }
             });
         }
 
-        // --- Fetch AJAX Implementation for Profile OTP ---
         const otpForm = document.getElementById('profileOtpForm');
-        
         if (otpForm) {
-            otpForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+            otpForm.addEventListener('submit', async event => {
+                event.preventDefault();
                 window.clearInlineFieldErrors(otpForm);
-                
                 const submitBtn = otpForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
-                
                 submitBtn.innerHTML = 'Verifying...';
                 submitBtn.disabled = true;
-
-                const formData = new FormData(otpForm);
-                const data = Object.fromEntries(formData.entries());
+                const data = Object.fromEntries(new FormData(otpForm).entries());
 
                 try {
                     const response = await fetch('/verify-profile-otp', {
@@ -323,9 +352,7 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(data)
                     });
-
                     const result = await response.json();
-
                     if (result.success && result.redirectUrl) {
                         window.location.href = result.redirectUrl;
                     } else if (result.errors) {
@@ -345,9 +372,7 @@
 
         const profileHistoryState = { authenticatedProfile: true };
         history.pushState(profileHistoryState, '', window.location.href);
-        window.addEventListener('popstate', () => {
-            history.pushState(profileHistoryState, '', window.location.href);
-        });
+        window.addEventListener('popstate', () => history.pushState(profileHistoryState, '', window.location.href));
     </script>
 </body>
 </html>
