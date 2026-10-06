@@ -796,8 +796,7 @@
                         <h3 class="summary-title">Order Summary</h3>
                         <ul class="summary-list">
                             <li><span>Subtotal (<%= itemCount || 0 %> items)</span><strong>₹<%= (typeof subtotal !== 'undefined' ? subtotal : 0).toLocaleString('en-IN') %></strong></li>
-                            <!-- Coupon logic placeholder for future tasks -->
-                            <li><span>Coupon Savings</span><strong>- ₹0</strong></li>
+                            <li><span>Coupon Savings</span><strong>- ₹<%= (discount || 0).toLocaleString('en-IN') %></strong></li>
                             <li><span>Estimated Shipping</span><strong>₹<%= (typeof shipping !== 'undefined' ? shipping : 0).toLocaleString('en-IN') %></strong></li>
                             <li><span>Tax (GST 0.18%)</span><strong>₹<%= (typeof tax !== 'undefined' ? tax : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></li>
                         </ul>

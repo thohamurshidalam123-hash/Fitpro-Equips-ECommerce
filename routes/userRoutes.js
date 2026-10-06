@@ -13,6 +13,7 @@ const wishlistController = require ('../controllers/wishlistController');
 const checkoutController = require('../controllers/checkoutController');
 const orderController = require('../controllers/orderController');
 const invoiceController = require('../controllers/invoiceController');
+const couponController = require('../controllers/couponController');
 require('../configuration/passport');
 
 
@@ -173,6 +174,10 @@ router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
 router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);
 router.post('/checkout/payment-failed',requireUserSession, checkoutController.paymentFailure);
 router.get('/order-failed/:id',requireUserSession, checkoutController.loadPaymentFailed);
-router.post('/account/orders/:id/retry-payment',requireUserSession,orderController.retryPayment);
+
+// Coupon routes
+router.post('/apply-coupon', couponController.applyCoupon);
+router.post('/remove-coupon',couponController.removeCoupon);
+
 
 module.exports = router;

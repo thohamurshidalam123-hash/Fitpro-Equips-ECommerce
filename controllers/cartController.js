@@ -1,4 +1,5 @@
 const cartService = require('../services/cartService');
+const couponService = require('../services/couponService');
 
 const loadCartPage = async (req, res) => {
     try {
@@ -6,11 +7,31 @@ const loadCartPage = async (req, res) => {
         if (!userId) return res.redirect('/login');
 
         const data = await cartService.getCartPageData({ userId, requestedPage: req.query.page });
+        const { subtotal, tax, shipping } = data;
+
+        const availableCoupons = await couponService.getAvailableCoupons();
+        const appliedCoupon = req.session.appliedCoupon || null;
+        let discount = 0;
+        if (appliedCoupon) {
+            const couponResult = await couponService.applyCoupon(userId, appliedCoupon.code);
+
+            if (couponResult.success) {
+                discount = couponResult.discountAmount;
+                req.session.appliedCoupon.discountAmount = discount;
+            } else {
+                delete req.session.appliedCoupon;
+            }
+        }
+        const finalTotal = subtotal + tax + shipping - discount;
 
         // For rendering cart
         return res.render('user/cart', {
             ...data,
-            currentPage: 'cart'
+            currentPage: 'cart',
+            availableCoupons,
+            appliedCoupon: req.session.appliedCoupon,
+            discount: discount,
+            total: finalTotal
         });
     } catch (error) {
         console.error('Cart load error:', error.message);
