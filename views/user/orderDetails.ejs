@@ -200,7 +200,7 @@
                     </a>
 
                     <!-- Show Cancel if active -->
-                    <% if (order.orderStatus !== 'Delivered' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned') { %>
+                    <% if (order.orderStatus !== 'Delivered' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned' && order.orderStatus !== 'Return requested') { %>
                         <button class="cancel-order-button" id="btnOpenCancel" type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m9 9 6 6m0-6-6 6"></path></svg>
                             Cancel Order
@@ -231,7 +231,7 @@
                 if (order.orderStatus === 'Delivered') { s2 = 'complete'; s3 = 'complete'; s4 = 'complete'; s5 = 'complete'; progressClass = 'delivered'; }
             %>
 
-            <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned') { %>
+            <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned' && order.orderStatus !== 'Return requested') { %>
             <section class="tracking-panel" aria-labelledby="tracking-title">
                 <h2 class="section-title" id="tracking-title">Tracking Timeline</h2>
                 <ol class="tracking-timeline" data-progress="<%= progressClass %>" aria-label="Order tracking progress">
@@ -244,7 +244,10 @@
             </section>
             <% } else { %>
                 <section class="tracking-panel">
-                    <% if (order.orderStatus === 'Returned') { %>
+                    <% if (order.orderStatus === 'Return requested') { %>
+                        <h2 class="section-title">Order Status: <span style="color: #dc2626;">Return requested</span></h2>
+                        <p style="font-size: 13px; color: #475569;">Your return request is being reviewed by the admin team.</p>
+                    <% } else if (order.orderStatus === 'Returned') { %>
                         <h2 class="section-title">Order Status: <span style="color: #dc2626;">Return in process</span></h2>
                         <p style="font-size: 13px; color: #475569;">Order return process initiated</p>
                     <% } else { %>
@@ -407,7 +410,15 @@
                     });
                     const data = await res.json();
                     if (data.success) {
-                        window.location.reload();
+                        const successMessage = 'Order cancelled successfully. The refund has been credited to your wallet.';
+                        if (window.showAppModal) {
+                            window.showAppModal(successMessage, 'success', {
+                                onClose: () => window.location.reload()
+                            });
+                        } else {
+                            alert(successMessage);
+                            window.location.reload();
+                        }
                     } else {
                         window.showAppModal ? window.showAppModal(data.message || 'Unable to cancel this order.', 'error') : alert(data.message || 'Unable to cancel this order.');
                         btn.textContent = 'Confirm Cancellation';
@@ -445,7 +456,15 @@
                     });
                     const data = await res.json();
                     if (data.success) {
-                        window.location.reload();
+                        const successMessage = 'Return request submitted successfully. Our team will review it shortly.';
+                        if (window.showAppModal) {
+                            window.showAppModal(successMessage, 'success', {
+                                onClose: () => window.location.reload()
+                            });
+                        } else {
+                            alert(successMessage);
+                            window.location.reload();
+                        }
                     } else {
                         const reasonError = data.errors && (data.errors.reason || data.errors.returnReason);
                         if (reasonError) {

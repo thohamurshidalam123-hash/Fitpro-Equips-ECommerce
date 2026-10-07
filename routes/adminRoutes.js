@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
 const router = express.Router();
+const Order = require('../models/orderModel');
 const adminController = require('../controllers/adminController');
 const categoryController = require('../controllers/categoryControllers')
 const productController = require('../controllers/productController');
@@ -10,6 +11,16 @@ const brandController = require('../controllers/brandController');
 const adminOrderController = require('../controllers/adminOrderController')
 const invoiceController = require('../controllers/invoiceController');
 const couponController = require('../controllers/couponController');
+
+router.use(async (req, res, next) => {
+    try {
+        res.locals.pendingReturnCount = await Order.countDocuments({ orderStatus: 'Return requested' });
+    } catch (error) {
+        console.error('Admin return count middleware error:', error);
+        res.locals.pendingReturnCount = 0;
+    }
+    next();
+});
 
 const productUploadDir = path.join(__dirname, '..', 'uploads', 'products');
 fs.mkdirSync(productUploadDir, { recursive: true });
@@ -110,8 +121,8 @@ router.get('/orders',adminOrderController.loadAdminOrders);
 router.get('/orders/:id/invoice', invoiceController.downloadAdminInvoice);
 router.get('/orders/:id',adminOrderController.loadAdminOrderDetails);
 router.post('/orders/:id/status',adminOrderController.updateOrderStatus);
-router.post('orders/:id/approve-return',adminOrderController.handleApproveReturn);
-router.post('orders/:id/reject-return',adminOrderController.handleRejectReturn);
+router.post('/orders/:id/approve-return',adminOrderController.handleApproveReturn);
+router.post('/orders/:id/reject-return',adminOrderController.handleRejectReturn);
 
 
 // Coupon management routes

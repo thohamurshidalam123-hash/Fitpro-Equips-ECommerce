@@ -57,7 +57,7 @@
 
         .orders-filterbar { display: grid; grid-template-columns: minmax(175px, 1fr) repeat(2, minmax(82px, auto)) auto; gap: 8px; align-items: center; margin-bottom: 12px; padding: 9px; border: 1px solid #dce3ee; border-radius: 7px; background: #fff; }
         .orders-query { position: relative; min-width: 0; }
-        .orders-query <svg> <position: absolute; top: 50%; left: 9px; width: 13px; height: 13px; color: #6f7e95; transform: translateY(-50%); pointer-events: none;>
+        .orders-query svg { position: absolute; top: 50%; left: 9px; width: 13px; height: 13px; color: #6f7e95; transform: translateY(-50%); pointer-events: none; }
         .orders-query input { width: 100%; height: 29px; padding: 0 30px 0 28px; border: 0; border-radius: 5px; outline: none; color: #34435a; background: #f0f4ff; font: inherit; font-size: 9px; }
         .orders-clear-search { position: absolute; top: 50%; right: 5px; display: grid; width: 22px; height: 22px; place-items: center; padding: 0; border: 0; border-radius: 4px; color: #6f7e95; background: transparent; transform: translateY(-50%); cursor: pointer; }
         .orders-clear-search:hover { color: #26364d; background: #e2eafa; }
@@ -320,6 +320,18 @@
             currentReturnOrderId = null;
         });
 
+        const showReturnStatusModal = (message, type = 'success') => {
+            returnModal.style.display = 'none';
+            currentReturnOrderId = null;
+            if (typeof window.showAppModal === 'function') {
+                window.showAppModal(message, type, {
+                    onClose: () => window.location.reload()
+                });
+            } else {
+                window.location.reload();
+            }
+        };
+
         // Approve Return
         document.getElementById('btnApproveReturn').addEventListener('click', async () => {
             if(!currentReturnOrderId) return;
@@ -327,12 +339,13 @@
                 const res = await fetch(`/admin/orders/${currentReturnOrderId}/approve-return`, { method: 'POST' });
                 const data = await res.json();
                 if(data.success) {
-                    alert(data.message); // Will show: "Order return confirmed, Order amount credited to user wallet"
-                    window.location.reload();
+                    showReturnStatusModal(data.message || 'Return request approved successfully.', 'success');
                 } else {
-                    alert(data.message);
+                    showReturnStatusModal(data.message || 'Unable to approve return request.', 'error');
                 }
-            } catch (err) { alert('Error processing approval'); }
+            } catch (err) {
+                showReturnStatusModal('Error processing approval.', 'error');
+            }
         });
 
         // Reject Return
@@ -342,13 +355,15 @@
                 const res = await fetch(`/admin/orders/${currentReturnOrderId}/reject-return`, { method: 'POST' });
                 const data = await res.json();
                 if(data.success) {
-                    alert('Return request rejected.');
-                    window.location.reload();
+                    showReturnStatusModal(data.message || 'Return request rejected.', 'success');
                 } else {
-                    alert(data.message);
+                    showReturnStatusModal(data.message || 'Unable to reject return request.', 'error');
                 }
-            } catch (err) { alert('Error processing rejection'); }
+            } catch (err) {
+                showReturnStatusModal('Error processing rejection.', 'error');
+            }
         });
     </script>
+    <%- include('../partials/admin-footer.ejs') %>
 </body>
 </html>

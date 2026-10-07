@@ -238,7 +238,7 @@
                             <% } %>
 
                             <!-- Only show tracking bar if order is active -->
-                            <% if (orderStatus !== 'Cancelled' && orderStatus !== 'Returned') { %>
+                            <% if (orderStatus !== 'Cancelled' && orderStatus !== 'Returned' && orderStatus !== 'Return requested') { %>
                                 <ol class="tracking" data-progress="<%= progressClass %>" aria-label="Order tracking">
                                     <li class="tracking-step <%= s1 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Confirmed</span></li>
                                     <li class="tracking-step <%= s2 %>"><span class="tracking-dot"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 4 4L19 6"></path></svg></span><span class="tracking-name">Processing</span></li>

@@ -98,7 +98,7 @@ const cancelOrder = async ({ orderId, userId, reason }) => {
             userId,
             order.grandTotal,
             `Refund for cancelled order ${order.orderId}`,
-            order>_id
+            order._id
         );
         order.paymentStatus = 'Refunded';
     } 
@@ -116,11 +116,11 @@ const returnOrder = async ({ orderId, userId, reason }) => {
     if (order.orderStatus !== 'Delivered') return { statusCode: 400, message: 'Only delivered order can be returned' };
 
     // For changing status to requested.
-    order.orderStatus = 'Returned requested';
+    order.orderStatus = 'Return requested';
     order.returnReason = reason;
     await order.save();
     
-    return { success: true, message: 'Order return initiates successfully' };
+    return { success: true, message: 'Order return initiated successfully' };
 };
 
 // For initiating razorpay
