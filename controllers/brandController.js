@@ -52,6 +52,7 @@ const addBrand = async (req, res) => {
             description,
             categoryId,
             featured: req.body.featured === 'true',
+            offerPercentage: req.body.offerPercentage,
             logo: req.file
         });
         if (!result.success) return res.status(400).json({ success: false, errors: result.errors });
@@ -74,6 +75,7 @@ const editBrand = async (req, res) => {
             description,
             categoryId,
             featured: req.body.featured === 'true',
+            offerPercentage: req.body.offerPercentage,
             logo: req.file
         });
         if (!result.success) return res.status(400).json({ success: false, errors: result.errors });

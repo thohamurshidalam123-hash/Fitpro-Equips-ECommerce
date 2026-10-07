@@ -5,8 +5,8 @@
         { couponCode: 'FLASH50', couponName: 'Flash Sale Friday', discountType: 'percentage', discountValue: 50, minPurchaseAmount: 1000, usageLimitPerUser: 200, expiryDate: '2026-02-10', description: 'Limited-time flash sale discount.', isActive: false, maxDiscountAmount: 1000, usageCount: 200 }
     ];
     const couponRows = typeof coupons !== 'undefined' && coupons ? coupons : demoCoupons;
-    const activeCouponCount = couponRows.filter(coupon => coupon.isActive && new Date(coupon.expiryDate) >= new Date()).length;
-    const expiredCouponCount = couponRows.filter(coupon => new Date(coupon.expiryDate) < new Date()).length;
+    const activeCouponsTotal = typeof activeCouponCount !== 'undefined' ? activeCouponCount : couponRows.filter(coupon => coupon.isActive && new Date(coupon.expiryDate) >= new Date()).length;
+    const expiredCouponsTotal = typeof expiredCouponCount !== 'undefined' ? expiredCouponCount : couponRows.filter(coupon => new Date(coupon.expiryDate) < new Date()).length;
 %>
 <!DOCTYPE html>
 <html lang="en">
@@ -34,30 +34,31 @@
             </section>
 
             <section class="coupon-stats" aria-label="Coupon summary">
-                <article class="coupon-stat"><span class="stat-icon blue" aria-hidden="true">▤</span><small>Total Coupons</small><strong><%= couponRows.length %></strong><div class="stat-progress blue-progress"><span></span></div></article>
-                <article class="coupon-stat"><span class="stat-icon green" aria-hidden="true">✓</span><small>Active Coupons</small><strong><%= activeCouponCount %></strong><div class="stat-progress green-progress"><span></span><span></span><span></span></div></article>
-                <article class="coupon-stat"><span class="stat-icon red" aria-hidden="true">⊘</span><small>Expired Coupons</small><strong><%= expiredCouponCount %></strong><small class="stat-note">Archived automatically</small></article>
+                <article class="coupon-stat"><span class="stat-icon blue" aria-hidden="true">▤</span><small>Total Coupons</small><strong><%= typeof totalCoupons !== 'undefined' ? totalCoupons : couponRows.length %></strong><div class="stat-progress blue-progress"><span></span></div></article>
+                <article class="coupon-stat"><span class="stat-icon green" aria-hidden="true">✓</span><small>Active Coupons</small><strong><%= activeCouponsTotal %></strong><div class="stat-progress green-progress"><span></span><span></span><span></span></div></article>
+                <article class="coupon-stat"><span class="stat-icon red" aria-hidden="true">⊘</span><small>Expired Coupons</small><strong><%= expiredCouponsTotal %></strong><small class="stat-note">Archived automatically</small></article>
             </section>
 
             <section class="coupon-table-card" aria-label="Coupons">
-                <div class="coupon-toolbar">
-                    <label class="coupon-search"><span aria-hidden="true">⌕</span><input type="search" id="couponSearch" placeholder="Search code or campaign..." aria-label="Search coupons"></label>
+                <form class="coupon-toolbar" id="couponFilters" method="GET" action="/admin/coupons">
+                    <label class="coupon-search"><span aria-hidden="true">⌕</span><input type="search" id="couponSearch" name="search" value="<%= searchQuery || '' %>" placeholder="Search code or campaign..." aria-label="Search coupons"></label>
                     <div class="coupon-filters">
                         <label>Type:
-                            <select id="couponTypeFilter" aria-label="Filter by coupon type"><option value="all">All</option><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select>
+                            <select id="couponTypeFilter" name="type" aria-label="Filter by coupon type"><option value="all" <%= typeFilter === 'all' ? 'selected' : '' %>>All</option><option value="percentage" <%= typeFilter === 'percentage' ? 'selected' : '' %>>Percentage</option><option value="fixed" <%= typeFilter === 'fixed' ? 'selected' : '' %>>Fixed amount</option></select>
                         </label>
                         <label>Status:
-                            <select id="couponStatusFilter" aria-label="Filter by coupon status"><option value="all">All</option><option value="active">Active</option><option value="inactive">Inactive</option><option value="expired">Expired</option></select>
+                            <select id="couponStatusFilter" name="status" aria-label="Filter by coupon status"><option value="all" <%= statusFilter === 'all' ? 'selected' : '' %>>All</option><option value="active" <%= statusFilter === 'active' ? 'selected' : '' %>>Active</option><option value="inactive" <%= statusFilter === 'inactive' ? 'selected' : '' %>>Inactive</option><option value="expired" <%= statusFilter === 'expired' ? 'selected' : '' %>>Expired</option></select>
                         </label>
-                        <button class="filter-button" type="button" id="clearCouponFilters" aria-label="Clear filters">☰</button>
+                        <button class="filter-button" type="submit" aria-label="Apply coupon filters">⌕</button>
+                        <button class="filter-button" type="button" id="clearCouponFilters" aria-label="Clear filters">×</button>
                     </div>
-                </div>
+                </form>
 
                 <div class="coupon-table-scroll">
                     <table class="coupon-table">
                         <thead><tr><th>COUPON CODE</th><th>CAMPAIGN</th><th>TYPE/VALUE</th><th>USAGE</th><th>VALIDITY</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
                         <tbody id="couponTableBody">
-                            <% couponRows.forEach(coupon => {
+                            <% if (couponRows.length) { couponRows.forEach(coupon => {
                                 const expired = new Date(coupon.expiryDate) < new Date();
                                 const status = expired ? 'expired' : (coupon.isActive ? 'active' : 'inactive');
                                 const usageCount = coupon.usageCount || (coupon.usedBy || []).reduce((sum, entry) => sum + (entry.usedCount || 0), 0);
@@ -80,12 +81,17 @@
                                         <button class="icon-button delete-coupon" type="button" title="Delete coupon" data-id="<%= coupon._id %>" aria-label="Delete <%= coupon.couponCode %>">🗑</button>
                                     </td>
                                 </tr>
-                            <% }); %>
-                            <tr class="coupon-empty hidden"><td colspan="7">No coupons match your search.</td></tr>
+                            <% }); } else { %>
+                                <tr class="coupon-empty"><td colspan="7">No coupons match your filters.</td></tr>
+                            <% } %>
                         </tbody>
                     </table>
                 </div>
-                <footer class="coupon-table-footer"><span id="couponCount">Showing <%= couponRows.length ? 1 : 0 %> to <%= couponRows.length %> of <%= couponRows.length %> entries</span><nav class="coupon-pagination" aria-label="Coupon pagination"><button type="button" disabled>1</button><button type="button" disabled>2</button><button type="button" disabled>3</button><span>…</span><button type="button" disabled>5</button></nav></footer>
+                <footer class="coupon-table-footer"><span>Showing <%= couponRows.length ? ((page - 1) * limit) + 1 : 0 %> to <%= Math.min(page * limit, totalFilteredCoupons) %> of <%= totalFilteredCoupons %> entries</span><nav class="coupon-pagination" aria-label="Coupon pagination">
+                    <% if (page > 1) { %><a href="/admin/coupons?page=<%= page - 1 %>&amp;search=<%= encodeURIComponent(searchQuery || '') %>&amp;type=<%= encodeURIComponent(typeFilter || 'all') %>&amp;status=<%= encodeURIComponent(statusFilter || 'all') %>" aria-label="Previous page">‹</a><% } %>
+                    <% for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) { %><a href="/admin/coupons?page=<%= pageNumber %>&amp;search=<%= encodeURIComponent(searchQuery || '') %>&amp;type=<%= encodeURIComponent(typeFilter || 'all') %>&amp;status=<%= encodeURIComponent(statusFilter || 'all') %>" class="<%= pageNumber === page ? 'current' : '' %>" <%= pageNumber === page ? 'aria-current="page"' : '' %>><%= pageNumber %></a><% } %>
+                    <% if (page < totalPages) { %><a href="/admin/coupons?page=<%= page + 1 %>&amp;search=<%= encodeURIComponent(searchQuery || '') %>&amp;type=<%= encodeURIComponent(typeFilter || 'all') %>&amp;status=<%= encodeURIComponent(statusFilter || 'all') %>" aria-label="Next page">›</a><% } %>
+                </nav></footer>
             </section>
         </main>
     </div>

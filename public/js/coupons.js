@@ -3,6 +3,7 @@
     const form = document.getElementById('couponForm');
     const title = document.getElementById('couponModalTitle');
     const submitLabel = document.getElementById('couponSubmitLabel');
+    const filterForm = document.getElementById('couponFilters');
     const search = document.getElementById('couponSearch');
     const typeFilter = document.getElementById('couponTypeFilter');
     const statusFilter = document.getElementById('couponStatusFilter');
@@ -181,14 +182,10 @@
         countLabel.textContent = `Showing \({visibleCount ? 1 : 0} to\){visibleCount} of ${rows.length} entries`;
     };
 
-    search.addEventListener('input', filterCoupons);
-    typeFilter.addEventListener('change', filterCoupons);
-    statusFilter.addEventListener('change', filterCoupons);
+    typeFilter.addEventListener('change', () => filterForm.requestSubmit());
+    statusFilter.addEventListener('change', () => filterForm.requestSubmit());
     
     document.getElementById('clearCouponFilters').addEventListener('click', () => {
-        search.value = '';
-        typeFilter.value = 'all';
-        statusFilter.value = 'all';
-        filterCoupons();
+        window.location.href = '/admin/coupons';
     });
 })();

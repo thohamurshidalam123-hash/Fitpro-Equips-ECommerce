@@ -17,14 +17,14 @@
 			<section class="details-heading">
 				<div class="details-product-summary">
 					<div class="details-product-thumb"><% if (product.images && product.images[0]) { %><img src="<%= product.images[0] %>" alt="<%= product.productName %>"><% } else { %><span>▦</span><% } %></div>
-					<div><h1><%= product.productName %> <span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Low Stock' ? 'low' : 'out' %>"><%= (product.status || 'Active').toUpperCase() %></span></h1><p><strong>Brand:</strong> <%= product.brandId && product.brandId.name || 'Unassigned' %> <i>•</i> <strong>Category:</strong> <%= product.categoryId && product.categoryId.name || 'Uncategorized' %></p></div>
+					<div><h1><%= product.productName %> <span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Low Stock' ? 'low' : 'out' %>"><%= (product.status || 'Active').toUpperCase() %></span></h1><p><strong>Brand:</strong> <%= product.brandId && product.brandId.name || 'Unassigned' %> <i>•</i> <strong>Category:</strong> <%= product.categoryId && product.categoryId.name || 'Uncategorized' %><% if (product.bestOfferPercentage > 0) { %> <span class="offer"><%= product.bestOfferPercentage %>% OFF</span><% } %></p></div>
 				</div>
 				<button class="add-product" id="openEditProduct" type="button">✎ Edit Product</button>
 				<button class="edit-product details-edit-source" type="button" aria-hidden="true" tabindex="-1"
 					data-id="<%= product._id %>" data-name="<%= product.productName %>"
 					data-category="<%= product.categoryId && product.categoryId._id || '' %>"
 					data-brand="<%= product.brandId && product.brandId._id || '' %>"
-					data-price="<%= product.regularPrice || 0 %>" data-stock="<%= product.availableStock || 0 %>"
+					data-price="<%= product.regularPrice || 0 %>" data-offer="<%= product.offerPercentage || 0 %>" data-stock="<%= product.availableStock || 0 %>"
 					data-description="<%= product.description || '' %>" data-status="<%= product.status || 'Active' %>"
 					data-highlight-title1="<%= product.highlights && product.highlights[0] ? product.highlights[0].title : '' %>"
 					data-highlight-title2="<%= product.highlights && product.highlights[1] ? product.highlights[1].title : '' %>"

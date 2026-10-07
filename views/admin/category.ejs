@@ -35,16 +35,16 @@
 				</div>
 				<div class="table-scroll">
 					<table class="category-table">
-						<thead><tr><th>IMAGE</th><th>CATEGORY NAME</th><th>PRODUCTS</th><th>STOCK</th><th>BRANDS</th><th>FEATURED</th><th>OFFERS</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
+						<thead><tr><th>IMAGE</th><th>CATEGORY NAME</th><th>PRODUCTS</th><th>STOCK</th><th>BRANDS</th><th>FEATURED</th><th>OFFER</th><th>STATUS</th><th>ACTIONS</th></tr></thead>
 						<tbody>
 						<% if (categories && categories.length) { %>
 							<% categories.forEach(category => { %>
 								<tr>
 									<td><% if (category.image) { %><img class="category-image" src="<%= category.image %>" alt="<%= category.name %>"><% } else { %><div class="category-image"><%= category.name.charAt(0).toUpperCase() %></div><% } %></td>
 									<td><strong><%= category.name %></strong></td>
-									<td class="product-count"><%= category.productCount || 0 %></td><td class="product-count"><%= category.totalStock || 0 %></td><td class="product-count"><%= category.brandCount || 0 %></td><td><span class="muted-pill"><%= category.featured ? 'Featured' : 'No' %></span></td><td><span class="muted-text">No Offer</span></td>
+									<td class="product-count"><%= category.productCount || 0 %></td><td class="product-count"><%= category.totalStock || 0 %></td><td class="product-count"><%= category.brandCount || 0 %></td><td><span class="muted-pill"><%= category.featured ? 'Featured' : 'No' %></span></td><td><span class="muted-pill"><%= Number(category.offerPercentage) > 0 ? Number(category.offerPercentage) + '% OFF' : 'No Offer' %></span></td>
 									<td><span class="status <%= category.status === 'Active' ? 'status-active' : 'status-inactive' %>"><%= category.status === 'Active' ? '● Active' : '● Inactive' %></span></td>
-									<td><div class="row-actions"><button type="button" class="icon-button edit-category" title="Edit category" data-id="<%= category._id %>" data-name="<%= category.name %>" data-description="<%= category.description || '' %>" data-featured="<%= category.featured ? 'true' : 'false' %>" data-image="<%= category.image || '' %>">✎</button><button type="button" class="icon-button toggle-category" title="Toggle category status" data-id="<%= category._id %>">◉</button></div></td>
+									<td><div class="row-actions"><button type="button" class="icon-button edit-category" title="Edit category" data-id="<%= category._id %>" data-name="<%= category.name %>" data-description="<%= category.description || '' %>" data-featured="<%= category.featured ? 'true' : 'false' %>" data-image="<%= category.image || '' %>" data-offer="<%= category.offerPercentage || 0 %>">✎</button><button type="button" class="icon-button toggle-category" title="Toggle category status" data-id="<%= category._id %>">◉</button></div></td>
 								</tr>
 							<% }); %>
 						<% } else { %><tr><td colspan="9" class="empty-state">No categories found.</td></tr><% } %>
@@ -68,6 +68,15 @@
 				<label for="categoryDescription">Description</label>
 				<textarea id="categoryDescription" name="description" rows="3" placeholder="Describe the category..."></textarea>
 				<p class="field-error" data-error-for="description"></p>
+				<label for="categoryOffer">Offer</label>
+				<select id="categoryOffer" name="offerPercentage" class="offer-select" aria-label="Category offer">
+					<option value="">No offer</option>
+					<option value="5">5% off</option>
+					<option value="10">10% off</option>
+					<option value="15">15% off</option>
+					<option value="20">20% off</option>
+					<option value="25">25% off</option>
+				</select>
 				<div class="featured-field"><div><strong>Featured Category</strong><small>Display this category on the homepage gallery</small></div><label class="switch"><input type="checkbox" id="categoryFeatured" name="featured"><span class="slider"></span></label></div>
 				<label for="categoryImage">Category Image</label>
 				<label class="image-upload" for="categoryImage"><span class="upload-icon">♧</span><span>Click to upload or drag and drop</span><small>JPEG or PNG only. Crop to 2:1, resized to 800×400px</small><input type="file" id="categoryImage" name="image" accept="image/png,image/jpeg" data-image-editor data-aspect-ratio="2" data-max-width="800"></label>

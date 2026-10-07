@@ -23,7 +23,7 @@ const getProducts = async ({ page, limit, searchQuery, categoryFilter, statusFil
     }
 
     const [products, totalProducts, activeCount, lowStockCount, outOfStock, inventoryValueResult, categories, brands] = await Promise.all([
-        Product.find(query).populate('categoryId', 'name').populate('brandId', 'name').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
+        Product.find(query).populate('categoryId', 'name offerPercentage').populate('brandId', 'name offerPercentage').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
         Product.countDocuments(query),
         Product.countDocuments({ status: 'Active' }),
         Product.countDocuments({ status: 'Low Stock' }),
@@ -32,6 +32,14 @@ const getProducts = async ({ page, limit, searchQuery, categoryFilter, statusFil
         Category.find({ status: 'Active' }).lean(),
         Brand.find({ status: 'Active' }).select('name categoryId').sort({ name: 1 }).lean()
     ]);
+
+    products.forEach(product => {
+        product.bestOfferPercentage = Math.max(
+            Number(product.offerPercentage) || 0,
+            Number(product.categoryId?.offerPercentage) || 0,
+            Number(product.brandId?.offerPercentage) || 0
+        );
+    });
 
     return {
         products,
@@ -49,7 +57,9 @@ const getProducts = async ({ page, limit, searchQuery, categoryFilter, statusFil
 // For adding a new product
 const createProduct = async ({ data, files }) => {
     const { productName, description, categoryId, brandId, regularPrice, availableStock, status } = data;
+    const offerPercentage = Number(data.offerPercentage ?? 0);
     const errors = validateProduct({ ...data, availableStock: availableStock ?? 0 });
+    if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!brandId) errors.brandId = 'Brand is required';
     if (!files || files.length < 3) errors.images = 'Please upload at least 3 images';
     if (Object.keys(errors).length) return { success: false, errors };
@@ -64,6 +74,7 @@ const createProduct = async ({ data, files }) => {
         categoryId,
         brandId,
         regularPrice: Number(regularPrice),
+        offerPercentage,
         availableStock: Number(availableStock ?? 0),
         images: imagePaths,
         highlights: getHighlights(data),
@@ -76,10 +87,12 @@ const createProduct = async ({ data, files }) => {
 // For editing product details
 const updateProduct = async ({ productId, data, files }) => {
     const { productName, categoryId, brandId, regularPrice, availableStock, description, status } = data;
+    const offerPercentage = Number(data.offerPercentage ?? 0);
     const product = await Product.findById(productId);
     if (!product) return { statusCode: 404, message: 'Product not found' };
 
     const errors = validateProduct({ ...data, availableStock: availableStock ?? product.availableStock });
+    if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!brandId) errors.brandId = 'Brand is required';
     if (Object.keys(errors).length) return { statusCode: 400, errors };
     if (!await Brand.exists({ _id: brandId, status: 'Active' })) {
@@ -91,6 +104,7 @@ const updateProduct = async ({ productId, data, files }) => {
         categoryId,
         brandId,
         regularPrice: Number(regularPrice),
+        offerPercentage,
         description: description.trim(),
         highlights: getHighlights(data),
         status
@@ -103,10 +117,17 @@ const updateProduct = async ({ productId, data, files }) => {
 // For loading product details and active options
 const getProductDetails = async (productId) => {
     const [product, categories, brands] = await Promise.all([
-        Product.findById(productId).populate('categoryId', 'name').populate('brandId', 'name').lean(),
+        Product.findById(productId).populate('categoryId', 'name offerPercentage').populate('brandId', 'name offerPercentage').lean(),
         Category.find({ status: 'Active' }).select('name').sort({ name: 1 }).lean(),
         Brand.find({ status: 'Active' }).select('name').sort({ name: 1 }).lean()
     ]);
+    if (product) {
+        product.bestOfferPercentage = Math.max(
+            Number(product.offerPercentage) || 0,
+            Number(product.categoryId?.offerPercentage) || 0,
+            Number(product.brandId?.offerPercentage) || 0
+        );
+    }
     return { product, categories, brands };
 };
 

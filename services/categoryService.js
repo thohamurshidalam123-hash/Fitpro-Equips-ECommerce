@@ -47,8 +47,10 @@ const getCategories = async ({ page, limit, searchQuery }) => {
 };
 
 // For adding a new category
-const createCategory = async ({ name, description, featured, image }) => {
+const createCategory = async ({ name, description, featured, image, offerPercentage = 0 }) => {
     const errors = validateCategory({ name, description, image }, { requireImage: true });
+    offerPercentage = Number(offerPercentage);
+    if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     const imageError = validateCategoryImage(image);
     if (imageError) errors.image = imageError;
     if (Object.keys(errors).length) return { success: false, errors };
@@ -62,14 +64,17 @@ const createCategory = async ({ name, description, featured, image }) => {
         name: name.trim(),
         description: description.trim(),
         featured: featured === 'true',
+        offerPercentage,
         image: image ? `/uploads/categories/${image.filename}` : ''
     });
     return { success: true };
 };
 
 // For editing a category
-const updateCategory = async ({ id, name, description, featured, image }) => {
+const updateCategory = async ({ id, name, description, featured, image, offerPercentage = 0 }) => {
     const errors = validateCategory({ name, description });
+    offerPercentage = Number(offerPercentage);
+    if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     const imageError = validateCategoryImage(image);
     if (imageError) errors.image = imageError;
     if (!id) errors.form = 'Category ID is missing';
@@ -84,7 +89,8 @@ const updateCategory = async ({ id, name, description, featured, image }) => {
     const updates = {
         name: name.trim(),
         description: description.trim(),
-        featured: featured === 'true'
+        featured: featured === 'true',
+        offerPercentage
     };
     if (image) updates.image = `/uploads/categories/${image.filename}`;
     await Category.findByIdAndUpdate(id, updates);

@@ -1,14 +1,15 @@
 const Cart = require('../models/cartModel');
 const Product = require('../models/productModel');
 const Wishlist = require('../models/wishlistModel');
+const { getEffectivePrice } = require('../utils/offerPricing');
 
 // For loading a cart with stock and price details
 const getCartPageData = async ({ userId, requestedPage }) => {
     const cart = await Cart.findOne({ userId }).populate({
         path: 'items.productId',
         populate: [
-            { path: 'categoryId', select: 'name' },
-            { path: 'brandId', select: 'name' }
+            { path: 'categoryId', select: 'name offerPercentage' },
+            { path: 'brandId', select: 'name offerPercentage' }
         ]
     }).lean();
 
@@ -32,7 +33,7 @@ const getCartPageData = async ({ userId, requestedPage }) => {
         const variant = item.variantId ? product.variants.find(productVariant => String(productVariant._id) === String(item.variantId)) : null;
         item.variant = variant;
         const availableStock = item.variantId && !variant ? 0 : (variant ? variant.stock : product.availableStock);
-        item.price = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+        item.price = getEffectivePrice(product, variant);
         item.totalPrice = item.quantity * item.price;
         item.isAvailable = product.status === 'Active' && (!variant || variant.status !== 'Out of Stock') && availableStock >= item.quantity;
         item.hasStock = availableStock >= item.quantity;
@@ -53,7 +54,7 @@ const getCartPageData = async ({ userId, requestedPage }) => {
 const addToCart = async ({ userId, productId, variantId, quantity }) => {
     const requestQuantity = Number(quantity) || 1;
     const maxLimitPerUser = 5;
-    const product = await Product.findById(productId);
+    const product = await Product.findById(productId).populate('categoryId', 'offerPercentage').populate('brandId', 'offerPercentage');
     if (!product || product.status !== 'Active') return { statusCode: 400, message: 'This product is currently unavailable.' };
 
     const variant = variantId ? product.variants.id(variantId) : null;
@@ -62,7 +63,7 @@ const addToCart = async ({ userId, productId, variantId, quantity }) => {
         return { statusCode: 400, message: 'This product variant is out of stock.' };
     }
 
-    const activePrice = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+    const activePrice = getEffectivePrice(product, variant);
     const availableStock = variant ? variant.stock : product.availableStock;
     let cart = await Cart.findOne({ userId });
     if (!cart) cart = new Cart({ userId, items: [], cartTotal: 0 });
@@ -95,10 +96,11 @@ const updateQuantity = async ({ userId, itemId, action }) => {
     if (itemIndex === -1) return { statusCode: 404, message: 'Item not found in cart' };
 
     const item = cart.items[itemIndex];
-    const product = await Product.findById(item.productId);
+    const product = await Product.findById(item.productId).populate('categoryId', 'offerPercentage').populate('brandId', 'offerPercentage');
     if (!product || product.status !== 'Active') return { statusCode: 400, message: 'This product is currently unavailable.' };
     const variant = item.variantId ? product.variants.find(productVariant => String(productVariant._id) === String(item.variantId)) : null;
     const availableStock = variant ? variant.stock : product.availableStock;
+    item.price = getEffectivePrice(product, variant);
 
     if (action === 'increase') {
         if (item.quantity >= maxLimitPerUser) return { statusCode: 400, message: `You can only add ${maxLimitPerUser} units of product` };

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const nameInput = document.getElementById('brandName');
     const descriptionInput = document.getElementById('brandDescription');
     const categoryInput = document.getElementById('brandCategory');
+    const offerInput = document.getElementById('brandOffer');
     const featuredInput = document.getElementById('brandFeatured');
     const logoInput = document.getElementById('brandLogo');
     const title = document.getElementById('brandModalTitle');
@@ -67,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!file) return null;
         return ['image/png', 'image/jpeg'].includes(file.type) ? null : 'File not supported';
     };
-    const openModal = brand => { title.textContent = brand ? 'Edit Brand' : 'Add New Brand'; idInput.value = brand?.id || ''; nameInput.value = brand?.name || ''; descriptionInput.value = brand?.description || ''; categoryInput.value = brand?.category || ''; featuredInput.checked = brand?.featured === 'true'; form.action = brand ? '/admin/brands/edit' : '/admin/brands/add'; logoInput.required = !brand; logoInput.value = ''; logoProcessed = false; selectedLogoFile = null; originalLogoFile = null; logoProcessing = Promise.resolve(); clearErrors(); modal.classList.remove('hidden'); nameInput.focus(); };
+    const openModal = brand => { title.textContent = brand ? 'Edit Brand' : 'Add New Brand'; idInput.value = brand?.id || ''; nameInput.value = brand?.name || ''; descriptionInput.value = brand?.description || ''; categoryInput.value = brand?.category || ''; offerInput.value = brand?.offerPercentage || ''; featuredInput.checked = brand?.featured === 'true'; form.action = brand ? '/admin/brands/edit' : '/admin/brands/add'; logoInput.required = !brand; logoInput.value = ''; logoProcessed = false; selectedLogoFile = null; originalLogoFile = null; logoProcessing = Promise.resolve(); clearErrors(); modal.classList.remove('hidden'); nameInput.focus(); };
     document.getElementById('openAddBrand').addEventListener('click', () => openModal());
     document.getElementById('closeBrandModal').addEventListener('click', () => modal.classList.add('hidden'));
     document.getElementById('cancelBrand').addEventListener('click', () => modal.classList.add('hidden'));
@@ -88,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     logoInput.addEventListener('imageprocessed', () => { logoProcessed = true; });
-    document.querySelectorAll('.brand-edit').forEach(button => button.addEventListener('click', () => openModal({ id: button.dataset.id, name: button.dataset.name, description: button.dataset.description, category: button.dataset.category, featured: button.dataset.featured })));
+    document.querySelectorAll('.brand-edit').forEach(button => button.addEventListener('click', () => openModal({ id: button.dataset.id, name: button.dataset.name, description: button.dataset.description, category: button.dataset.category, featured: button.dataset.featured, offerPercentage: button.dataset.offer })));
     document.querySelectorAll('.brand-toggle').forEach(button => button.addEventListener('click', async () => { const response = await fetch(`/admin/brands/status/${button.dataset.id}`, { method: 'PATCH' }); if (response.ok) window.location.reload(); }));
     const successMessage = new URLSearchParams(window.location.search).get('success') || window.sessionStorage.getItem('brandSuccessMessage');
     if (successMessage) {
@@ -106,6 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const formData = new FormData(form);
         formData.set('featured', String(featuredInput.checked));
+        formData.set('offerPercentage', offerInput.value || '0');
         const selectedLogo = getSelectedLogoFile();
         if (selectedLogo) {
             formData.set('logo', selectedLogo, selectedLogo.name);

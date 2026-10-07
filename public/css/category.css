@@ -16,6 +16,8 @@
 .category-modal-panel { width: min(100%, 405px); max-height: calc(100vh - 2rem); overflow-y: auto; }
 .category-modal-panel h2 { font-size: 1.35rem; margin-bottom: 1.65rem; }
 .category-modal-panel input:not([type="checkbox"]):not([type="file"]), .category-modal-panel textarea { padding: .75rem; border-radius: 7px; }
+.category-modal-panel select { width: 100%; padding: .75rem; border: 1px solid #d7deea; border-radius: 7px; outline: 0; background: #fff; color: #253047; font: inherit; font-size: .78rem; }
+.category-modal-panel select:focus { border-color: #2166d5; }
 .category-modal-panel textarea { resize: vertical; }
 .featured-field { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-top: 1rem; padding: .8rem .85rem; border-radius: 6px; background: #edf3ff; }
 .featured-field strong, .featured-field small { display: block; }.featured-field strong { color: #1f2d45; font-size: .7rem; }.featured-field small { margin-top: .2rem; color: #687791; font-size: .55rem; }

@@ -7,6 +7,7 @@ const { validateAddress } = require('../validators/addressValidators');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const walletService = require('./walletService');
+const { getEffectivePrice } = require('../utils/offerPricing');
 
 // For initializing razorpay
 const razorpayInstance = new Razorpay({
@@ -16,7 +17,7 @@ const razorpayInstance = new Razorpay({
 
 // For loading checkout data and calculating totals
 const getCheckoutData = async ({ userId, addressId, appliedCouponCode }) => {
-    const cart = await Cart.findOne({ userId }).populate('items.productId');
+    const cart = await Cart.findOne({ userId }).populate({ path: 'items.productId', populate: [{ path: 'categoryId', select: 'offerPercentage' }, { path: 'brandId', select: 'offerPercentage' }] });
     if (!cart || !cart.items || cart.items.length === 0) return null;
 
     const addresses = await Address.find({ userId });
@@ -30,7 +31,7 @@ const getCheckoutData = async ({ userId, addressId, appliedCouponCode }) => {
         const product = item.productId;
         if (!product) return null;
         const variant = item.variantId ? product.variants.id(item.variantId) : null;
-        const price = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+        const price = getEffectivePrice(product, variant);
         const itemTotal = price * item.quantity;
         subtotal += itemTotal;
         return {
@@ -104,7 +105,7 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
         return { statusCode: 400, message: 'Invalid payment method selected'}
     }
 
-    const cart = await Cart.findOne({ userId }).populate('items.productId');
+    const cart = await Cart.findOne({ userId }).populate({ path: 'items.productId', populate: [{ path: 'categoryId', select: 'offerPercentage' }, { path: 'brandId', select: 'offerPercentage' }] });
     if (!cart || cart.items.length === 0) return { statusCode: 400, message: 'Your cart is empty.' };
 
     const selectedAddress = await Address.findOne({ _id: addressId, userId });
@@ -124,7 +125,7 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
         const availableStock = variant ? variant.stock : product.availableStock;
         if (item.quantity > availableStock) return { statusCode: 400, message: `Insufficient stock for ${product.productName}.` };
 
-        const price = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+        const price = getEffectivePrice(product, variant);
         const itemTotal = price * item.quantity;
         subtotal += itemTotal;
         orderItems.push({

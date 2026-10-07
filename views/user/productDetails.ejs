@@ -14,7 +14,7 @@
         <%- include('../partials/user-header', { currentPage: 'shop' }) %>
 
         <main>
-            <div class="product-details-main">
+            <div class="product-details-main" data-variants="<%= JSON.stringify(product.variants || []) %>" data-product-images="<%= JSON.stringify(product.images || []) %>" data-best-offer-percentage="<%= product.bestOfferPercentage || 0 %>">
                 <!-- Dynamic Breadcrumbs -->
                 <nav class="product-breadcrumb" aria-label="Breadcrumb">
                     <a href="/">Home</a><span>›</span>
@@ -60,8 +60,11 @@
 
                         <!-- Dynamic Price & Discounts -->
                         <div class="product-price-row">
-                            <strong>₹<%= product.salePrice > 0 ? product.salePrice : product.regularPrice %></strong>
-                            <% if (product.salePrice > 0 && product.salePrice < product.regularPrice) { %>
+                            <strong>₹<%= Number(product.bestOfferPercentage > 0 ? product.displayPrice : (product.salePrice > 0 && product.salePrice < product.regularPrice ? product.salePrice : product.displayPrice ?? product.regularPrice)).toFixed(2) %></strong>
+                            <% if (product.bestOfferPercentage > 0) { %>
+                                <del>₹<%= product.regularPrice %></del>
+                                <span class="offer-price-badge"><%= product.bestOfferPercentage %>% OFF</span>
+                            <% } else if (product.salePrice > 0 && product.salePrice < product.regularPrice) { %>
                                 <del>₹<%= product.regularPrice %></del>
                                 <span><%= Math.round(((product.regularPrice - product.salePrice) / product.regularPrice) * 100) %>% OFF</span>
                             <% } else if (product.offerPercentage > 0) { %>
@@ -127,14 +130,14 @@
                         <div class="related-products-grid">
                             <% relatedProducts.forEach(rel => { %>
                                 <article class="related-product-card">
-                                    <% if (rel.offerPercentage > 0) { %><span class="related-sale-tag"><%= rel.offerPercentage %>% OFF</span><% } %>
+                                    <% if (rel.bestOfferPercentage > 0) { %><span class="related-sale-tag"><%= rel.bestOfferPercentage %>% OFF</span><% } %>
                                     <button class="related-wishlist" type="button" aria-label="Add <%= rel.productName %> to wishlist">♡</button>
                                     <a class="related-product-link" href="/products/<%= rel._id %>">
                                         <div class="related-product-image"><% if (rel.images && rel.images[0]) { %><img src="<%= rel.images[0] %>" alt="<%= rel.productName %>"><% } else { %><span>FITPRO</span><% } %></div>
                                         <small><%= rel.brandId && rel.brandId.name ? rel.brandId.name : (rel.categoryId && rel.categoryId.name ? rel.categoryId.name : 'Equipment') %></small>
                                         <h3><%= rel.productName %></h3>
                                     </a>
-                                    <strong class="related-product-price">₹<%= Number(rel.salePrice > 0 ? rel.salePrice : rel.regularPrice).toFixed(2) %></strong>
+                                    <strong class="related-product-price">₹<%= Number(rel.bestOfferPercentage > 0 ? rel.displayPrice : (rel.salePrice > 0 && rel.salePrice < rel.regularPrice ? rel.salePrice : rel.displayPrice ?? rel.regularPrice)).toFixed(2) %></strong>
                                     <span class="related-stock-pill"><%= rel.availableStock %> in stock</span>
                                     <button class="related-cart-button" type="button" data-product-id="<%= rel._id %>" <%= rel.availableStock < 1 ? 'disabled' : '' %>>▣ Add to Cart</button>
                                 </article>
@@ -251,13 +254,17 @@
             });
         });
 
-        const variants = <%- JSON.stringify(product.variants || []).replace(/</g, '\\u003c') %>;
+        const productDetailsData = document.querySelector('.product-details-main').dataset;
+        const variants = JSON.parse(productDetailsData.variants || '[]');
         let selectedVariant = variants.find(variant => Number(variant.stock) > 0) || variants[0] || null;
         const wishlistButton = document.querySelector('.wishlist-button[data-wishlist-toggle]');
         const priceRow = document.querySelector('.product-price-row strong');
+        const priceOriginal = document.querySelector('.product-price-row del');
+        const offerBadge = document.querySelector('.product-price-row span');
+        const bestOfferPercentage = Number(productDetailsData.bestOfferPercentage) || 0;
         const stockLabel = document.querySelector('.stock-label');
         const variantImages = document.getElementById('product-gallery');
-        const productImages = <%- JSON.stringify(product.images || []).replace(/</g, '\\u003c') %>;
+        const productImages = JSON.parse(productDetailsData.productImages || '[]');
 
         const renderGallery = (images) => {
             const galleryImages = images.length ? images : productImages;
@@ -281,7 +288,16 @@
                 else delete wishlistButton.dataset.variantId;
             }
             if (!variant) return;
-            priceRow.textContent = `₹${Number(variant.price || 0).toFixed(2)}`;
+            const variantBasePrice = Number(variant.price || 0);
+            const variantDisplayPrice = variantBasePrice * (1 - bestOfferPercentage / 100);
+            priceRow.textContent = `₹${variantDisplayPrice.toFixed(2)}`;
+            if (bestOfferPercentage > 0) {
+                if (priceOriginal) priceOriginal.textContent = `₹${variantBasePrice.toFixed(2)}`;
+                if (offerBadge) offerBadge.textContent = `${bestOfferPercentage}% OFF`;
+            } else {
+                priceOriginal?.remove();
+                offerBadge?.remove();
+            }
             const inStock = Number(variant.stock) > 0;
             stockLabel.innerHTML = `<i></i> ${inStock ? `In Stock (${variant.stock} available)` : 'Out of Stock'}`;
             stockLabel.style.color = inStock ? '#28a745' : '#dc3545';

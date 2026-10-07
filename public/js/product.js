@@ -195,6 +195,7 @@ document.querySelectorAll('.edit-product').forEach(button => {
 		document.getElementById('editProductName').value = button.dataset.name;
 		document.getElementById('editCategory').value = button.dataset.category;
 		document.getElementById('editBrand').value = button.dataset.brand || '';
+		document.getElementById('editProductOffer').value = button.dataset.offer || '';
 		document.getElementById('editPrice').value = button.dataset.price;
 		document.getElementById('editDescription').value = button.dataset.description;
 		for (let index = 1; index <= 4; index++) {

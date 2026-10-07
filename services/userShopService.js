@@ -1,6 +1,7 @@
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const Brand = require('../models/brandModel');
+const { getBestOfferPercentage, getEffectivePrice } = require('../utils/offerPricing');
 
 // For loading active categories on the landing page
 const getLandingCategories = async () => Category.find({ status: 'Active' }).sort({ createdAt: -1 }).lean();
@@ -35,18 +36,34 @@ const getShopPageData = async ({ page, limit, search, categoryFilter, brandFilte
         z_a: { productName: -1 }
     };
     const sortQuery = sortQueries[sortOption] || { createdAt: -1 };
-    const products = await Product.find(query)
-        .populate('categoryId', 'name')
-        .populate('brandId', 'name')
+    let products = await Product.find(query)
+        .populate('categoryId', 'name offerPercentage')
+        .populate('brandId', 'name offerPercentage')
         .sort(sortQuery)
         .skip((page - 1) * limit)
         .limit(limit)
         .lean();
-    products.forEach(product => {
+    
+    //For dynamic offer logic
+    products = products.map(product => {
+        // Calculating stock
+        let availableStock = Number(product.availableStock) || 0;
         if (product.variants && product.variants.length) {
-            product.availableStock = product.variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
+            availableStock = product.variants.reduce((total, variant) => total + (Number(variant.stock) || 0), 0);
         }
-    });
+
+        // For finding best offer
+        const bestOfferPercentage = getBestOfferPercentage(product);
+        const finalPrice = getEffectivePrice(product);
+
+        return {
+            ...product,
+            availableStock,
+            bestOfferPercentage,
+            displayPrice : finalPrice
+        }
+
+    })
     const totalProducts = await Product.countDocuments(query);
     return {
         products,
@@ -60,19 +77,35 @@ const getShopPageData = async ({ page, limit, search, categoryFilter, brandFilte
 // For loading product details and related products
 const getProductDetails = async productId => {
     const product = await Product.findById(productId)
-        .populate('categoryId', 'name status')
-        .populate('brandId', 'name status')
+        .populate('categoryId', 'name status offerPercentage')
+        .populate('brandId', 'name status offerPercentage')
         .lean();
     if (!product || product.status !== 'Active' || product.availableStock <= 0 || !product.categoryId || product.categoryId.status !== 'Active') {
         return { unavailable: true };
     }
 
-    const relatedProducts = await Product.find({
+    // For dynamic offer logic for single product
+    const bestOfferPercentage = getBestOfferPercentage(product);
+    const finalPrice = getEffectivePrice(product);
+
+    // For attaching to product
+    product.bestOfferPercentage = bestOfferPercentage;
+    product.displayPrice = finalPrice; 
+
+    let relatedProducts = await Product.find({
         categoryId: product.categoryId._id,
         _id: { $ne: product._id },
         status: 'Active',
         availableStock: { $gt: 0 }
-    }).populate('brandId', 'name').limit(4).lean();
+    }).populate('brandId', 'name offerPercentage').populate('categoryId', 'offerPercentage').limit(4).lean();
+    
+    relatedProducts = relatedProducts.map(rp => {
+        const best = getBestOfferPercentage(rp);
+        const rpFinalPrice = getEffectivePrice(rp);
+        
+        return { ...rp, bestOfferPercentage: best, displayPrice: rpFinalPrice };
+    });
+
     return { product, relatedProducts };
 };
 

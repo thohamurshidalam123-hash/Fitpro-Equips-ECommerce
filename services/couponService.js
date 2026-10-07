@@ -1,5 +1,6 @@
 const Coupon = require('../models/couponModel');
 const Cart = require('../models/cartModel');
+const { getEffectivePrice } = require('../utils/offerPricing');
 
 // For fetching active coupon (Not expired)
 const getAvailableCoupons = async () => {
@@ -33,7 +34,7 @@ const applyCoupon = async (userId, couponCode) => {
     }
 
     // Get the user cart to check the total
-    const cart = await Cart.findOne({ userId }).populate('items.productId');
+    const cart = await Cart.findOne({ userId }).populate({ path: 'items.productId', populate: [{ path: 'categoryId', select: 'offerPercentage' }, { path: 'brandId', select: 'offerPercentage' }] });
     if (!cart || cart.items.length === 0) {
         return { success: false, message: 'Your cart is empty.'};
     }
@@ -43,7 +44,7 @@ const applyCoupon = async (userId, couponCode) => {
     for (const item of cart.items) {
         const product = item.productId;
         const variant = item.variantId ? product.variants.id(item.variantId) : null;
-        const price = variant ? variant.price : (product.salePrice > 0 ? product.salePrice : product.regularPrice);
+        const price = getEffectivePrice(product, variant);
         subtotal += price * item.quantity;
     }
 

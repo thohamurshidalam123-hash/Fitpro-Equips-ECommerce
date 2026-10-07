@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const idInput = document.getElementById('categoryId');
 	const nameInput = document.getElementById('categoryName');
 	const descriptionInput = document.getElementById('categoryDescription');
+	const offerInput = document.getElementById('categoryOffer');
 	const featuredInput = document.getElementById('categoryFeatured');
 	const imageInput = document.getElementById('categoryImage');
 	const selectedImage = document.getElementById('selectedImage');
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		idInput.value = category?.id || '';
 		nameInput.value = category?.name || '';
 		descriptionInput.value = category?.description || '';
+		offerInput.value = category?.offerPercentage || '';
 		featuredInput.checked = category?.featured === 'true';
 		imageInput.value = '';
 		delete imageInput.dataset.invalidFile;
@@ -61,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('closeCategoryModal').addEventListener('click', closeModal);
 	document.getElementById('cancelCategory').addEventListener('click', closeModal);
 	modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
-	document.querySelectorAll('.edit-category').forEach(button => button.addEventListener('click', () => openModal({ id: button.dataset.id, name: button.dataset.name, description: button.dataset.description, featured: button.dataset.featured, image: button.dataset.image })));
+	document.querySelectorAll('.edit-category').forEach(button => button.addEventListener('click', () => openModal({ id: button.dataset.id, name: button.dataset.name, description: button.dataset.description, featured: button.dataset.featured, image: button.dataset.image, offerPercentage: button.dataset.offer })));
 	document.querySelectorAll('.toggle-category').forEach(button => button.addEventListener('click', async () => {
 		const response = await fetch(`/admin/category/status/${button.dataset.id}`, { method: 'PATCH' });
 		if (response.ok) window.location.reload();

@@ -89,8 +89,10 @@ const getBrandDetails = async ({ brandId, page, limit }) => {
 };
 
 // For adding a new brand
-const createBrand = async ({ name, description, categoryId, featured, logo }) => {
+const createBrand = async ({ name, description, categoryId, featured, logo, offerPercentage = 0 }) => {
     const errors = validateBrand(name, description);
+    offerPercentage = Number(offerPercentage);
+    if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!categoryId) errors.categoryId = 'Category is required';
     if (!logo) errors.logo = 'Brand image is required';
     else if (!['image/jpeg', 'image/png'].includes(logo.mimetype)) {
@@ -105,13 +107,15 @@ const createBrand = async ({ name, description, categoryId, featured, logo }) =>
     if (duplicate) return { success: false, errors: { name: 'Brand name already exists' } };
 
     const slug = `${createBrandSlug(name)}-${Date.now()}`;
-    await Brand.create({ name, slug, description, categoryId, featured, logo: `/uploads/brands/${logo.filename}` });
+    await Brand.create({ name, slug, description, categoryId, featured, offerPercentage, logo: `/uploads/brands/${logo.filename}` });
     return { success: true };
 };
 
 // For editing a brand
-const updateBrand = async ({ id, name, description, categoryId, featured, logo }) => {
+const updateBrand = async ({ id, name, description, categoryId, featured, logo, offerPercentage = 0 }) => {
     const errors = validateBrand(name, description);
+    offerPercentage = Number(offerPercentage);
+    if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!categoryId) errors.categoryId = 'Category is required';
     if (!id) errors.form = 'Brand ID is missing';
     if (Object.keys(errors).length) return { success: false, errors };
@@ -121,7 +125,7 @@ const updateBrand = async ({ id, name, description, categoryId, featured, logo }
     const duplicate = await Brand.findOne({ _id: { $ne: id }, name: new RegExp(`^${name}$`, 'i') });
     if (duplicate) return { success: false, errors: { name: 'Brand name already exists' } };
 
-    const updates = { name, description, categoryId, featured };
+    const updates = { name, description, categoryId, featured, offerPercentage };
     if (logo) updates.logo = `/uploads/brands/${logo.filename}`;
     await Brand.findByIdAndUpdate(id, updates);
     return { success: true };

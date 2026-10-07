@@ -55,8 +55,53 @@ const getCoupons = async (req, res) => {
     try{
         if (!req.session.adminId) return res.redirect('/admin/login');
 
-        const coupons = await Coupon.find().sort({ createdAt: - 1 });
-        res.render('admin/coupons', { coupons, currentPage: 'coupons'});
+        const limit = 5;
+        const requestedPage = Math.max(parseInt(req.query.page, 10) || 1, 1);
+        const searchQuery = String(req.query.search || '').trim();
+        const typeFilter = ['percentage', 'fixed'].includes(req.query.type) ? req.query.type : 'all';
+        const statusFilter = ['active', 'inactive', 'expired'].includes(req.query.status) ? req.query.status : 'all';
+        const filter = {};
+        const now = new Date();
+
+        if (searchQuery) {
+            const escapedSearch = searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter.$or = [
+                { couponCode: { $regex: escapedSearch, $options: 'i' } },
+                { couponName: { $regex: escapedSearch, $options: 'i' } }
+            ];
+        }
+        if (typeFilter !== 'all') filter.discountType = typeFilter;
+        if (statusFilter === 'active') Object.assign(filter, { isActive: true, expiryDate: { $gte: now } });
+        if (statusFilter === 'inactive') Object.assign(filter, { isActive: false, expiryDate: { $gte: now } });
+        if (statusFilter === 'expired') filter.expiryDate = { $lt: now };
+
+        const [totalCoupons, activeCouponCount, expiredCouponCount, totalFilteredCoupons] = await Promise.all([
+            Coupon.countDocuments(),
+            Coupon.countDocuments({ isActive: true, expiryDate: { $gte: now } }),
+            Coupon.countDocuments({ expiryDate: { $lt: now } }),
+            Coupon.countDocuments(filter)
+        ]);
+        const totalPages = Math.ceil(totalFilteredCoupons / limit);
+        const page = Math.min(requestedPage, Math.max(totalPages, 1));
+        const coupons = await Coupon.find(filter)
+            .sort({ createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        res.render('admin/coupons', {
+            coupons,
+            page,
+            limit,
+            totalPages,
+            totalCoupons,
+            totalFilteredCoupons,
+            activeCouponCount,
+            expiredCouponCount,
+            searchQuery,
+            typeFilter,
+            statusFilter,
+            currentPage: 'coupons'
+        });
     } catch (error) {
         console.error(error);
         res.status(500).send("Server Error");
