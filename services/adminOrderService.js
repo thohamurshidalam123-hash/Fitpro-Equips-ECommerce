@@ -1,4 +1,6 @@
 const Order = require('../models/orderModel');
+const walletService = require('./walletService');
+const Product = require('../models/productModel');
 
 // For listing orders with search, filter, sort and pagination
 const getAdminOrders = async ({ page = 1, search = '', status = 'all', payment = 'all', limit = 10 }) => {
@@ -42,6 +44,49 @@ const getAdminOrders = async ({ page = 1, search = '', status = 'all', payment =
 // For loading order details page
 const getAdminOrderDetails = async (orderId) => Order.findById(orderId).populate('userId').lean();
 
+const approveReturn = async (orderId) => {
+    const order = await Order.findById(orderId);
+    if (!order || order.orderStatus !== 'Return requested') {
+        return { success: false, message: 'Invalid return request' };
+    }
+
+    order.orderStatus = 'Returned';
+    order.paymentStatus = 'Refunded';
+    await order.save();
+
+    // For refunding to Wallet (Applies to COD, Razorpay, and Wallet payments)
+    await walletService.creditWallet(
+        order.userId, 
+        order.grandTotal, 
+        `Refund for returned order ${order.orderId}`, 
+        order._id
+    );
+
+    //For incrementing Stock Back
+    for (const item of order.items) {
+        if (item.variantId) {
+            await Product.updateOne(
+                { _id: item.productId, 'variants._id': item.variantId },
+                { $inc: { 'variants.$.stock': item.quantity } }
+            );
+        } else {
+            await Product.findByIdAndUpdate(item.productId, { $inc: { availableStock: item.quantity } });
+        }
+    }
+    return { success: true, message: 'Order return confirmed, Order amount credited to user wallet' };
+};
+
+const rejectReturn = async (orderId) => {
+    const order = await Order.findById(orderId);
+    if (!order || order.orderStatus !== 'Return requested') {
+        return { success: false, message: 'Invalid return request' };
+    }
+
+    order.orderStatus = 'Delivered'; // For status updating back to delivered
+    await order.save();
+    return { success: true, message: 'Return request rejected' };
+};
+
 // For updating order status
 const updateOrderStatus = async (orderId, status) => {
     const validStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'];
@@ -66,4 +111,10 @@ const updateOrderStatus = async (orderId, status) => {
     return { success: true };
 };
 
-module.exports = { getAdminOrders, getAdminOrderDetails, updateOrderStatus };
+module.exports = { 
+    getAdminOrders, 
+    getAdminOrderDetails, 
+    updateOrderStatus,
+    approveReturn,
+    rejectReturn
+ };

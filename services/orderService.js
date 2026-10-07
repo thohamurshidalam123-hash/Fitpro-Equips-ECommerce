@@ -2,6 +2,7 @@ const Order = require('../models/orderModel');
 const Product = require('../models/productModel');
 const Razorpay = require('razorpay'); 
 const mongoose = require('mongoose');
+const walletService = require('./walletService');
 
 // For adjusting stock of order items
 const adjustOrderItemStock = async (item, quantityChange) => {
@@ -85,11 +86,23 @@ const getOrderDetails = async ({ orderId, userId }) => {
 const cancelOrder = async ({ orderId, userId, reason }) => {
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return { statusCode: 404, message: 'Order not found' };
-    if (['Delivered', 'Cancelled', 'Returned'].includes(order.orderStatus)) {
+    if (['Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) {
         return { statusCode: 400, message: 'This order cannot be cancelled' };
     }
     order.orderStatus = 'Cancelled';
     if (reason) order.cancellationReason = reason;
+    
+    //For refunding to wallet for paid orders
+    if (order.paymentMethod !== 'Cash on Delivery') {
+        await walletService.creditWallet(
+            userId,
+            order.grandTotal,
+            `Refund for cancelled order ${order.orderId}`,
+            order>_id
+        );
+        order.paymentStatus = 'Refunded';
+    } 
+
     await order.save();
     for (const item of order.items) await adjustOrderItemStock(item, item.quantity);
     return { success: true, message: 'Order cancelled successfully.' };
@@ -101,10 +114,12 @@ const returnOrder = async ({ orderId, userId, reason }) => {
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return { statusCode: 404, message: 'Order not found' };
     if (order.orderStatus !== 'Delivered') return { statusCode: 400, message: 'Only delivered order can be returned' };
-    order.orderStatus = 'Returned';
+
+    // For changing status to requested.
+    order.orderStatus = 'Returned requested';
     order.returnReason = reason;
     await order.save();
-    for (const item of order.items) await adjustOrderItemStock(item, item.quantity);
+    
     return { success: true, message: 'Order return initiates successfully' };
 };
 

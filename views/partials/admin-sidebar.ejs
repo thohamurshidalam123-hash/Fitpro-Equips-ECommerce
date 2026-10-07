@@ -27,10 +27,13 @@
 			<span class="nav-icon">🏷️</span>
 			<span class="nav-label">Brands</span>
 		</a>
-		<a href="/admin/orders" class="nav-item <%= currentPage === 'orders' ? 'active' : '' %>">
-			<span class="nav-icon">📦</span>
-			<span class="nav-label">Orders</span>
-		</a>
+		<a href="/admin/orders" class="nav-item [[%= currentPage === 'orders' ? 'active' : '' %]]">
+            <span class="nav-icon">📦</span>
+            <span class="nav-label">Orders</span>
+            [[% if (typeof pendingReturnCount !== 'undefined' && pendingReturnCount > 0) { %]]
+                <span style="background: #e4474d; color: white; border-radius: 50%; padding: 2px 7px; font-size: 10px; margin-left: auto; font-weight: bold;">[[%= pendingReturnCount %]]</span>
+            [[% } %]]
+        </a>
 		<a href="/admin/customers" class="nav-item <%= currentPage === 'customers' ? 'active' : '' %>">
 			<span class="nav-icon">👥</span>
 			<span class="nav-label">Customers</span>

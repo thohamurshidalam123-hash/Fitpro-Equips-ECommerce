@@ -109,7 +109,10 @@ router.delete('/products/:productId/variants/delete/:variantId',productControlle
 router.get('/orders',adminOrderController.loadAdminOrders);
 router.get('/orders/:id/invoice', invoiceController.downloadAdminInvoice);
 router.get('/orders/:id',adminOrderController.loadAdminOrderDetails);
-router.post('/orders/:id/status',adminOrderController.updateOrderStatus)
+router.post('/orders/:id/status',adminOrderController.updateOrderStatus);
+router.post('orders/:id/approve-return',adminOrderController.handleApproveReturn);
+router.post('orders/:id/reject-return',adminOrderController.handleRejectReturn);
+
 
 // Coupon management routes
 router.get('/coupons', couponController.getCoupons);
