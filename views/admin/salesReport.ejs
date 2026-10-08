@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Reports | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-scale.css">
+    <!-- Include SheetJS for Excel export and html2pdf for PDF export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --report-blue: #075bd6;
+            --report-ink: #1c2738;
+            --report-muted: #758198;
+            --report-line: #e2e7f0;
+            --report-page: #f6f8ff;
+        }
+
+        body:has(.sales-report-page) { background: var(--report-page); color: var(--report-ink); }
+        .sales-report-page { grid-template-columns: clamp(164px, 16.3vw, 198px) minmax(0, 1fr); min-height: 100vh; }
+        .sales-report-page > .sidebar { width: clamp(164px, 16.3vw, 198px); }
+        .sales-report-page > .main-content { min-width: 0; padding: 0 18px 32px; }
+
+        .sales-topbar {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 0 -18px 17px;
+            padding: 0 16px;
+            border-bottom: 1px solid #e1e6ef;
+            background: rgba(255, 255, 255, .76);
+        }
+        .sales-global-search { position: relative; width: min(100%, 240px); }
+        .sales-global-search svg { position: absolute; top: 50%; left: 8px; width: 12px; height: 12px; color: #7c889b; transform: translateY(-50%); pointer-events: none; }
+        .sales-global-search input { width: 100%; height: 22px; padding: 0 9px 0 26px; border: 1px solid #d9e2f1; border-radius: 5px; outline: none; color: #334158; background: #f1f5ff; font: inherit; font-size: 9px; }
+        .sales-global-search input:focus { border-color: #8eb6f7; box-shadow: 0 0 0 2px rgba(9, 101, 232, .1); }
+        .sales-top-actions { display: flex; align-items: center; gap: 12px; }
+        .sales-notification { position: relative; display: grid; width: 20px; height: 23px; place-items: center; border: 0; color: #53627a; background: transparent; }
+        .sales-notification svg { width: 13px; height: 13px; }
+        .sales-notification::after { position: absolute; top: 3px; right: 2px; width: 4px; height: 4px; border-radius: 50%; background: #e4474d; content: ""; }
+        .sales-support { color: var(--report-blue); font-size: 9px; font-weight: 600; text-decoration: none; }
+
+        .sales-intro { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 10px 12px; border: 1px solid var(--report-line); border-radius: 7px; background: #fff; }
+        .sales-intro h1 { margin: 0 0 4px; color: var(--report-ink); font-size: 14px; font-weight: 700; line-height: 1.2; }
+        .sales-intro p { max-width: 520px; margin: 0; color: #79859a; font-size: 8px; line-height: 1.45; }
+        .sales-export-actions { display: flex; flex: 0 0 auto; gap: 6px; }
+        .sales-export-button { min-width: 44px; height: 22px; padding: 0 9px; border: 1px solid #d7deea; border-radius: 5px; color: #303d51; background: #fff; font: inherit; font-size: 8px; cursor: pointer; }
+        .sales-export-button:hover { border-color: #8eb6f7; color: var(--report-blue); background: #f8faff; }
+
+        .sales-filterbar { display: flex; min-height: 38px; align-items: center; gap: 6px; margin-bottom: 12px; padding: 6px 8px; border: 1px solid var(--report-line); border-radius: 7px; background: #fff; }
+        .sales-period-select, .sales-date-range { height: 21px; border: 1px solid #d7dfec; border-radius: 5px; color: #48566d; background: #f4f7ff; font: inherit; font-size: 8px; }
+        .sales-period-select { width: 58px; padding: 0 5px; }
+        .sales-date-range { width: 132px; min-width: 0; padding: 0 7px; }
+        .sales-apply { height: 21px; padding: 0 9px; border: 0; border-radius: 5px; color: #fff; background: var(--report-blue); font: inherit; font-size: 8px; font-weight: 650; cursor: pointer; }
+        .sales-apply:hover { background: #064db5; }
+        .sales-filter-spacer { flex: 1; }
+        .sales-period-tabs { display: flex; align-items: center; gap: 3px; }
+        .sales-period-tab { min-width: 29px; height: 21px; padding: 0 6px; border: 1px solid #d7dfec; border-radius: 5px; color: #58667c; background: #fff; font: inherit; font-size: 8px; cursor: pointer; }
+        .sales-period-tab:hover { border-color: #a7c2ed; }
+        .sales-period-tab[aria-pressed="true"] { border-color: var(--report-blue); color: #fff; background: var(--report-blue); }
+
+        .sales-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-bottom: 13px; }
+        .sales-kpi { display: flex; min-width: 0; min-height: 52px; align-items: center; gap: 7px; padding: 8px 9px; border: 1px solid var(--report-line); border-radius: 7px; background: #fff; }
+        .sales-kpi-icon { display: grid; width: 25px; height: 25px; flex: 0 0 25px; place-items: center; border-radius: 5px; }
+        .sales-kpi-icon svg { width: 13px; height: 13px; }
+        .sales-kpi-icon.orders { color: #5e70d9; background: #dfe5ff; }
+        .sales-kpi-icon.amount { color: #4365d7; background: #dfe5ff; }
+        .sales-kpi-icon.discount { color: #06a45d; background: #79f89b; }
+        .sales-kpi-icon.coupon { color: #dc704b; background: #ffddcf; }
+        .sales-kpi-copy { min-width: 0; flex: 1; text-align: right; }
+        .sales-kpi-label { display: block; overflow: hidden; margin-bottom: 4px; color: #7b8799; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
+        .sales-kpi-value { display: block; color: #233044; font-size: 9px; font-weight: 750; white-space: nowrap; }
+        .sales-kpi.discount .sales-kpi-value { color: #07844f; }
+        .sales-kpi.coupon .sales-kpi-value { color: #303d51; }
+
+        .sales-panel { overflow: hidden; margin-bottom: 12px; border: 1px solid var(--report-line); border-radius: 7px; background: #fff; }
+        .sales-panel-header { display: flex; min-height: 37px; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; border-bottom: 1px solid #e8ecf3; }
+        .sales-panel-header h2 { margin: 0; color: #27354a; font-size: 9px; font-weight: 650; }
+        .sales-view-all { color: var(--report-blue); font-size: 8px; text-decoration: none; }
+        .sales-view-all:hover { text-decoration: underline; }
+        .sales-table-wrap { overflow-x: auto; }
+        .sales-table { width: 100%; border-collapse: collapse; text-align: left; white-space: nowrap; }
+        .sales-table thead { background: #f4f6fc; }
+        .sales-table th { height: 28px; padding: 0 12px; border-bottom: 1px solid #e4e9f1; color: #788499; font-size: 7px; font-weight: 650; }
+        .sales-table td { height: 39px; padding: 5px 12px; border-bottom: 1px solid #eef1f5; color: #303d51; font-size: 8px; }
+        .sales-table tbody tr:last-child td { border-bottom: 0; }
+        .sales-table tbody tr:hover { background: #fbfcff; }
+        .sales-period-name { color: #27354a; font-weight: 600; }
+        .sales-date-cell { color: #7d899b !important; }
+        .sales-green { color: #07844f !important; font-weight: 650; }
+        .sales-orange { color: #a84913 !important; font-weight: 650; }
+        .sales-table-footer { display: flex; min-height: 31px; align-items: center; justify-content: space-between; gap: 10px; padding: 4px 12px; border-top: 1px solid #e5e9f0; color: #78859a; font-size: 7px; }
+        .sales-pagination { display: flex; align-items: center; gap: 4px; }
+        .sales-page-button { display: grid; min-width: 18px; height: 18px; place-items: center; padding: 0 4px; border: 1px solid transparent; border-radius: 4px; color: #45536a; background: transparent; font: inherit; font-size: 8px; cursor: pointer; }
+        .sales-page-button:hover { border-color: #d7dfec; background: #f7f9fd; }
+        .sales-page-button[aria-current="page"] { color: #fff; background: #2863e8; }
+        .sales-status { display: inline-flex; align-items: center; min-height: 13px; padding: 0 6px; border-radius: 8px; color: #087b4e; background: #d9f7eb; font-size: 7px; }
+        .sales-status.pending { color: #6f5b0d; background: #fff2c7; }
+        .sales-status.success { color: #087b4e; background: #d9f7eb; }
+        .sales-action-link { color: var(--report-blue); text-decoration: none; }
+        .sales-action-link:hover { text-decoration: underline; }
+        .sales-empty { display: none; padding: 18px 12px; color: #78859a; font-size: 9px; text-align: center; }
+        .sales-live-region { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+
+        @media (max-width: 800px) {
+            .sales-report-page { grid-template-columns: 1fr; }
+            .sales-report-page > .sidebar { width: 100%; }
+            .sales-report-page > .main-content { grid-column: 1; padding: 0 16px 28px; }
+            .sales-topbar { margin-right: -16px; margin-left: -16px; padding: 0 13px; }
+        }
+        @media (max-width: 560px) {
+            .sales-intro { align-items: flex-start; flex-direction: column; }
+            .sales-export-actions { align-self: flex-end; }
+            .sales-filterbar { flex-wrap: wrap; }
+            .sales-filter-spacer { display: none; }
+            .sales-period-tabs { width: 100%; justify-content: flex-end; margin-top: 2px; }
+            .sales-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .sales-kpi { min-height: 58px; }
+            .sales-table-footer { align-items: flex-start; flex-direction: column; }
+        }
+        @media print {
+            .sales-report-page > .sidebar, .sales-topbar, .sales-export-actions, .sales-filterbar, .sales-pagination { display: none !important; }
+            .sales-report-page { display: block; }
+            .sales-report-page > .main-content { padding: 0; }
+            .sales-panel, .sales-intro, .sales-kpi { break-inside: avoid; box-shadow: none; }
+            body:has(.sales-report-page) { background: #fff; }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-dashboard sales-report-page">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'sales-reports' }) %>
+
+        <main class="main-content sales-report-main" id="reportContentArea">
+            <header class="sales-topbar">
+                <label class="sales-global-search">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
+                    <input id="recentOrderSearch" type="search" placeholder="Search orders, customers, or IDs..." aria-label="Search recent orders">
+                </label>
+                <div class="sales-top-actions">
+                    <button class="sales-notification" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button>
+                    <a class="sales-support" href="mailto:support@fitpro.com">Support</a>
+                </div>
+            </header>
+
+            <section class="sales-intro" aria-labelledby="sales-title">
+                <div>
+                    <h1 id="sales-title">Sales Reports</h1>
+                    <p>Track daily, weekly, yearly, and custom reporting periods with discounts, coupon deductions, order counts, and downloadable exports.</p>
+                </div>
+                <div class="sales-export-actions">
+                    <button class="sales-export-button" id="exportPdf" type="button">PDF</button>
+                    <button class="sales-export-button" id="exportCsv" type="button">Excel</button>
+                </div>
+            </section>
+
+            <section class="sales-filterbar" aria-label="Report filters">
+                <form action="/admin/sales-reports" method="GET" style="display: flex; width: 100%; align-items: center; gap: 6px;">
+                    <label class="sales-live-region" for="reportPeriod">Report period</label>
+                    <select class="sales-period-select" name="period" id="reportPeriod" onchange="this.form.submit()">
+                        <option value="daily" <%= currentFilter === 'daily' ? 'selected' : '' %>>Daily</option>
+                        <option value="weekly" <%= currentFilter === 'weekly' ? 'selected' : '' %>>Weekly</option>
+                        <option value="monthly" <%= currentFilter === 'monthly' ? 'selected' : '' %>>Monthly</option>
+                        <option value="yearly" <%= currentFilter === 'yearly' ? 'selected' : '' %>>Yearly</option>
+                        <option value="custom" <%= currentFilter === 'custom' ? 'selected' : '' %>>Custom</option>
+                    </select>
+
+                    <!-- Custom Date Range Inputs -->
+                    <% if(currentFilter === 'custom') { %>
+                        <input type="date" name="startDate" value="<%= startDate %>" style="height: 21px; border: 1px solid #d7dfec; border-radius: 5px; font-size: 8px; padding: 0 5px;">
+                        <span style="font-size: 8px;">to</span>
+                        <input type="date" name="endDate" value="<%= endDate %>" style="height: 21px; border: 1px solid #d7dfec; border-radius: 5px; font-size: 8px; padding: 0 5px;">
+                        <button type="submit" class="sales-apply" style="margin-left: 5px;">Apply Custom Dates</button>
+                    <% } %>
+
+                    <span class="sales-filter-spacer"></span>
+
+                    <div class="sales-period-tabs" role="group" aria-label="Quick report period">
+                        <button class="sales-period-tab" type="button" data-period="daily" aria-pressed="<%= currentFilter === 'daily' %>">Daily</button>
+                        <button class="sales-period-tab" type="button" data-period="weekly" aria-pressed="<%= currentFilter === 'weekly' %>">Weekly</button>
+                        <button class="sales-period-tab" type="button" data-period="monthly" aria-pressed="<%= currentFilter === 'monthly' %>">Monthly</button>
+                        <button class="sales-period-tab" type="button" data-period="yearly" aria-pressed="<%= currentFilter === 'yearly' %>">Yearly</button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="sales-kpi-grid" aria-label="Sales overview">
+                <article class="sales-kpi">
+                    <span class="sales-kpi-icon orders" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v16H5z"></path><path d="M8 8h8M8 12h8M8 16h5"></path></svg></span>
+                    <div class="sales-kpi-copy"><span class="sales-kpi-label">OVERALL SALES COUNT</span><strong class="sales-kpi-value"><%= kpi.totalOrders %></strong></div>
+                </article>
+                <article class="sales-kpi">
+                    <span class="sales-kpi-icon amount" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M17 7.5c-.8-1-2.2-1.5-4.2-1.5-2.2 0-3.8 1.1-3.8 2.8 0 4.4 8 1.8 8 6.2 0 1.8-1.7 3-4.2 3-2 0-3.6-.7-4.6-1.8"></path></svg></span>
+                    <div class="sales-kpi-copy"><span class="sales-kpi-label">ORDER AMOUNT</span><strong class="sales-kpi-value">₹<%= kpi.totalOrderAmount.toLocaleString('en-IN') %></strong></div>
+                </article>
+                <article class="sales-kpi discount">
+                    <span class="sales-kpi-icon discount" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12 12 20l-9-9V4h7l10 8Z"></path><circle cx="7.5" cy="7.5" r="1"></circle></svg></span>
+                    <div class="sales-kpi-copy"><span class="sales-kpi-label">DISCOUNTS</span><strong class="sales-kpi-value">₹<%= kpi.totalDiscount.toLocaleString('en-IN') %></strong></div>
+                </article>
+                <article class="sales-kpi coupon">
+                    <span class="sales-kpi-icon coupon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7V4h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4Z"></path><path d="M13 7v1M13 11v1M13 15v1"></path></svg></span>
+                    <div class="sales-kpi-copy"><span class="sales-kpi-label">COUPON DEDUCTIONS</span><strong class="sales-kpi-value">₹<%= kpi.totalCouponDeductions.toLocaleString('en-IN') %></strong></div>
+                </article>
+            </section>
+
+            <section class="sales-panel" aria-labelledby="recent-orders-title">
+                <div class="sales-panel-header"><h2 id="recent-orders-title">Sales Orders for Selected Period</h2></div>
+                <div class="sales-table-wrap">
+                    <table class="sales-table" id="salesDataTable">
+                        <thead>
+                            <tr><th>ORDER ID</th><th>CUSTOMER</th><th>AMOUNT</th><th>DISCOUNT</th><th>COUPON</th><th>PAYMENT METHOD</th><th>DATE</th></tr>
+                        </thead>
+                        <tbody id="recentOrdersBody">
+                            <% if(orders && orders.length > 0) { %>
+                                <% orders.forEach(order => { %>
+                                    <tr class="recent-order-row" data-search="<%= order.orderId %> <%= order.customerName %> <%= order.paymentMethod %>">
+                                        <td class="sales-period-name"><%= order.orderId %></td>
+                                        <td><%= order.customerName %></td>
+                                        <td>₹<%= order.grandTotal.toLocaleString('en-IN') %></td>
+                                        <td class="sales-green">₹<%= order.discount.toLocaleString('en-IN') %></td>
+                                        <td class="sales-orange">₹<%= order.couponDiscount ? order.couponDiscount.toLocaleString('en-IN') : 0 %></td>
+                                        <td class="sales-date-cell"><%= order.paymentMethod %></td>
+                                        <td class="sales-date-cell"><%= new Date(order.createdAt).toLocaleDateString('en-IN', {day: '2-digit', month: 'short', year: 'numeric'}) %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr><td colspan="7" style="text-align: center; padding: 20px; color: #78859a; font-size: 9px;">No sales found for the selected period.</td></tr>
+                            <% } %>
+                            <tr class="sales-empty" id="recentOrdersEmpty"><td colspan="7">No orders match your search.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <footer class="sales-table-footer">
+                    <span id="recentOrderCount">Showing <%= orders.length %> entries</span>
+                </footer>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.querySelectorAll('.sales-period-tab').forEach(button => {
+            button.addEventListener('click', () => {
+                const periodSelect = document.getElementById('reportPeriod');
+                periodSelect.value = button.dataset.period;
+                periodSelect.form.requestSubmit();
+            });
+        });
+
+        // Client-side search for the data table
+        document.getElementById('recentOrderSearch').addEventListener('input', event => {
+            const query = event.target.value.trim().toLowerCase();
+            const rows = [...document.querySelectorAll('.recent-order-row')];
+            let visibleCount = 0;
+            rows.forEach(row => {
+                const matches = row.dataset.search.toLowerCase().includes(query);
+                row.hidden = !matches;
+                if (matches) visibleCount += 1;
+            });
+            document.getElementById('recentOrdersEmpty').style.display = (visibleCount || query === '') ? 'none' : 'table-row';
+            document.getElementById('recentOrderCount').textContent = query
+                ? `Showing ${visibleCount} matching ${visibleCount === 1 ? 'entry' : 'entries'}`
+                : `Showing ${rows.length} entries`;
+        });
+
+        // Export to Excel using SheetJS
+        document.getElementById('exportCsv').addEventListener('click', () => {
+            // Get the table
+            const table = document.getElementById('salesDataTable');
+            
+            // Convert to a workbook
+            const wb = XLSX.utils.table_to_book(table, {sheet: "Sales Report"});
+            
+            // Save file
+            XLSX.writeFile(wb, `Sales_Report_<%= currentFilter %>.xlsx`);
+        });
+
+        // Export to PDF using html2pdf
+        document.getElementById('exportPdf').addEventListener('click', () => {
+            // Target the main content area so it includes KPIs and the Table
+            const element = document.getElementById('reportContentArea');
+            
+            // Setup options
+            const opt = {
+                margin:       0.5,
+                filename:     `Sales_Report_<%= currentFilter %>.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            // Hide action buttons during print rendering
+            document.querySelector('.sales-topbar').style.display = 'none';
+            document.querySelector('.sales-filterbar').style.display = 'none';
+            document.querySelector('.sales-export-actions').style.display = 'none';
+
+            // Generate PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Restore hidden elements after save
+                document.querySelector('.sales-topbar').style.display = 'flex';
+                document.querySelector('.sales-filterbar').style.display = 'flex';
+                document.querySelector('.sales-export-actions').style.display = 'flex';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -12,6 +12,7 @@ const adminOrderController = require('../controllers/adminOrderController')
 const invoiceController = require('../controllers/invoiceController');
 const couponController = require('../controllers/couponController');
 const adminDashboardController = require('../controllers/adminDashboardController');
+const salesReportController = require('../controllers/salesReportController');
 
 router.use(async (req, res, next) => {
     try {
@@ -84,7 +85,7 @@ router.get('/login',adminController.loadLogin);
 router.post('/login',adminController.adminLogin);
 router.get('/logout',adminController.adminLogout);
 router.get('/dashboard', adminDashboardController.loadDashboard);
-
+router.get('/sales-reports', salesReportController.loadSalesReport);
 
 router.post('/forgot-password',adminController.forgotPassword);
 router.post('/verify-forgot-otp',adminController.verifyForgotOtp);
