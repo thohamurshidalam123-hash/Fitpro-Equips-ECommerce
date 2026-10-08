@@ -13,3 +13,4 @@
 .coupon-pagination a { display: grid; min-width: 19px; height: 19px; place-items: center; padding: 0 4px; border: 1px solid #dfe4ee; border-radius: 3px; color: #58667c; background: #fff; font-size: 9px; text-decoration: none; }
 .coupon-pagination a.current { border-color: #0758d8; color: #fff; background: #0758d8; }
 .coupon-pagination a:hover:not(.current) { border-color: #0758d8; color: #0758d8; }
+.usage-track span { width: 0; }

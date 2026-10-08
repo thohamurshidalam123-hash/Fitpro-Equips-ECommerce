@@ -10,6 +10,11 @@
     const tableBody = document.getElementById('couponTableBody');
     const countLabel = document.getElementById('couponCount');
     const emptyRow = tableBody.querySelector('.coupon-empty');
+
+    document.querySelectorAll('[data-usage-percent]').forEach(fill => {
+        const usagePercent = Math.max(0, Math.min(100, Number(fill.dataset.usagePercent) || 0));
+        fill.style.width = `${usagePercent}%`;
+    });
     
     const fields = {
         id: document.getElementById('couponId'),
