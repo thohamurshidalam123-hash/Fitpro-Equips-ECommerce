@@ -97,6 +97,14 @@
                 <div class="profile-detail-row"><span class="detail-label">Date of Birth</span><span class="detail-value"><%= user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString('en-GB') : 'Not available' %></span></div>
                 <div class="profile-detail-row"><span class="detail-label">Phone Number</span><span class="detail-value"><%= user.phone || 'Not available' %></span></div>
                 <div class="profile-detail-row"><span class="detail-label">Gender</span><span class="detail-value"><%= user.gender ? user.gender.charAt(0).toUpperCase() + user.gender.slice(1) : 'Not available' %></span></div>
+                <% if (user.referralCode) { %>
+                 <div class="profile-detail-row" style="background: #f8fafc; padding: 10px; border-radius: 6px; margin-top: 15px; border: 1px dashed #cbd5e1;">
+                    <span class="detail-label" style="color: #075bd6; font-weight: 600;">Your Referral Code</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="detail-value" id="userReferralCode" style="font-family: monospace; font-size: 14px; font-weight: bold; letter-spacing: 2px;"><%= user.referralCode %></span>
+                        <button type="button" onclick="copyReferralCode()" style="background: #075bd6; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 10px; cursor: pointer;">Copy</button>
+                    </div>   
+                <% } %>
             </div>
         </div>
     </div>
@@ -163,6 +171,28 @@
         const openProfileButtons = document.querySelectorAll('[data-open-profile-modal]');
         const closeProfileButtons = document.querySelectorAll('[data-close-profile-modal]');
         const closeOtpButtons = document.querySelectorAll('[data-close-profile-otp-modal]');
+        const profileOtpResendRow = document.querySelector('.profile-otp-resend');
+        const profileOtpResendButton = document.getElementById('profileResendOtpButton');
+        const profileOtpCountdown = document.getElementById('profileOtpCountdown');
+        const profileOtpResendMessage = document.getElementById('profileOtpResendMessage');
+        let profileOtpResendInterval = null;
+        let profileOtpResendDeadline = 0;
+
+        const startProfileOtpResendTimer = (seconds) => {
+            window.clearInterval(profileOtpResendInterval);
+            profileOtpResendDeadline = Date.now() + Math.max(0, Number(seconds) || 0) * 1000;
+            const updateTimer = () => {
+                const remaining = Math.max(0, Math.ceil((profileOtpResendDeadline - Date.now()) / 1000));
+                profileOtpResendButton.disabled = remaining > 0;
+                profileOtpResendButton.hidden = remaining > 0;
+                profileOtpCountdown.textContent = remaining > 0 ? `Resend available in ${remaining}s` : 'You can request another OTP.';
+                if (remaining === 0) window.clearInterval(profileOtpResendInterval);
+            };
+            updateTimer();
+            profileOtpResendInterval = window.setInterval(updateTimer, 250);
+        };
+
+        if (profileOtpResendRow) startProfileOtpResendTimer(profileOtpResendRow.dataset.resendSeconds);
         const openUserDetailsButtons = document.querySelectorAll('[data-open-user-details-modal]');
         const closeUserDetailsButtons = document.querySelectorAll('[data-close-user-details-modal]');
         const openProfileImageButtons = document.querySelectorAll('[data-open-profile-image-modal]');
@@ -318,6 +348,8 @@
                     } else if (result.requireOtp) {
                         const otpEmail = document.getElementById('profileOtpEmail');
                         if (otpEmail && result.pendingEmail) otpEmail.textContent = result.pendingEmail;
+                        startProfileOtpResendTimer(result.resendSeconds || 60);
+                        profileOtpResendMessage.textContent = '';
                         closeModal(profileModal);
                         openModal(otpModal);
                     } else if (result.success) {
@@ -336,6 +368,28 @@
         }
 
         const otpForm = document.getElementById('profileOtpForm');
+        profileOtpResendButton.addEventListener('click', async () => {
+            if (profileOtpResendButton.disabled) return;
+            profileOtpResendButton.disabled = true;
+            profileOtpResendMessage.textContent = 'Sending OTP...';
+
+            try {
+                const response = await fetch('/resend-profile-otp', { method: 'POST' });
+                const result = await response.json();
+                if (result.success) {
+                    startProfileOtpResendTimer(result.resendSeconds || 60);
+                    profileOtpResendMessage.textContent = result.message;
+                } else {
+                    if (result.resendSeconds > 0) startProfileOtpResendTimer(result.resendSeconds);
+                    else profileOtpResendButton.disabled = false;
+                    profileOtpResendMessage.textContent = result.message || 'Unable to resend OTP. Please try again.';
+                }
+            } catch (error) {
+                profileOtpResendButton.disabled = false;
+                profileOtpResendMessage.textContent = 'Unable to resend OTP. Please try again.';
+            }
+        });
+
         if (otpForm) {
             otpForm.addEventListener('submit', async event => {
                 event.preventDefault();
@@ -373,6 +427,16 @@
         const profileHistoryState = { authenticatedProfile: true };
         history.pushState(profileHistoryState, '', window.location.href);
         window.addEventListener('popstate', () => history.pushState(profileHistoryState, '', window.location.href));
+    
+        function copyReferralCode() {
+            const code = document.getElementById('userReferralCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                window.showAppModal('Referral code copied to clipboard!', 'success');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                window.showAppModal('Failed to copy code.', 'error');
+            });
+        }
     </script>
 </body>
 </html>

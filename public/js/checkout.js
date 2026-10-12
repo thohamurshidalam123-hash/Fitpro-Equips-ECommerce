@@ -1,11 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Ensure cart badge in header reflects items
-    const cartCountBadge = document.querySelector('[data-cart-count]');
-    if (cartCountBadge && (!cartCountBadge.textContent || cartCountBadge.textContent.trim() === '0')) {
-        cartCountBadge.textContent = '3'; 
-    }
-
-    // 2. Payment Method Selection
+    // Payment Method Selection
     let selectedPayment = 'razorpay'; // Default active method
     const paymentOptions = document.querySelectorAll('.payment-method-item');
     
@@ -104,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const selectedOption = document.querySelector('.saved-address-option.selected');
             
             if (selectedOption) {
-                const addressId = selectedOption.querySelector('input[type="radio"]').value;
+                const addressRadio = selectedOption.querySelector('input[type="radio"]');
+                if (!addressRadio) return;
+                const addressId = addressRadio.value;
 
                 const elName = document.querySelector('.address-recipient-name');
                 const elPhone = document.querySelector('.address-recipient-phone');
@@ -113,12 +109,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 const elPill = document.querySelector('.address-type-pill');
                 const addressContainer = document.querySelector('.address-details');
 
-                if (elName) elName.textContent = selectedOption.dataset.name;
-                if (elPhone) elPhone.textContent = selectedOption.dataset.phone;
-                if (elLine1) elLine1.textContent = selectedOption.dataset.line1;
-                if (elLine2) elLine2.textContent = selectedOption.dataset.line2;
-                if (elPill) elPill.textContent = selectedOption.dataset.type;
-                if (addressContainer) addressContainer.dataset.activeAddressId = addressId;
+                if (elName) elName.textContent = selectedOption.dataset.name || '';
+                if (elPhone) elPhone.textContent = selectedOption.dataset.phone || '';
+                if (elLine1) elLine1.textContent = selectedOption.dataset.line1 || '';
+                if (elLine2) elLine2.textContent = selectedOption.dataset.line2 || '';
+                if (elPill) elPill.textContent = selectedOption.dataset.type || 'Home';
+                if (addressContainer) {
+                    addressContainer.dataset.activeAddressId = addressId;
+                    const selectedAddressUrl = new URL(window.location.href);
+                    selectedAddressUrl.searchParams.set('addressId', addressId);
+                    window.history.replaceState({}, '', selectedAddressUrl);
+                }
             }
 
             if (changeAddressModal) {

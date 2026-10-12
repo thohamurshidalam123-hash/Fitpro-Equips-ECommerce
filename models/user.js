@@ -45,6 +45,16 @@ const userSchema = new mongoose.Schema({
     googleId: { 
         type: String,
         sparse: true 
+    },
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
+    referredBy : {
+        type: mongoose.Schema.ObjectId,
+        ref: 'User',
+        default: null
     }
 }, { 
     timestamps: true

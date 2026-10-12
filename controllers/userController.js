@@ -1,5 +1,6 @@
 const userService = require('../services/userService');
 const walletService = require('../services/walletService');
+const { getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
 
 // Rendering login page
 const loadLogin = async (req, res) => {
@@ -36,7 +37,7 @@ const loadProfile = async (req, res) => {
         }
         const wallet = await walletService.getWalletData(req.session.userId);
 
-        const showOtpVerification = req.query.emailOtp === 'true';
+        const showOtpVerification = Boolean(req.session.pendingProfileUpdate && req.session.profileOtp);
         const pendingEmail = req.session.pendingProfileUpdate ? req.session.pendingProfileUpdate.email : null;
         const message = req.session.message || null;
         delete req.session.message;
@@ -47,6 +48,7 @@ const loadProfile = async (req, res) => {
             currentPage: 'profile',
             showOtpVerification,
             pendingEmail,
+            otpResendSeconds: getOtpResendSeconds(req.session.profileOtpResendAt),
             message
         });
     } catch (error) {
@@ -67,6 +69,7 @@ const registerUser = async (req, res) => {
         req.session.userData = result.userData;
         req.session.otp = result.otp;
         req.session.otpExpiry = Date.now() + 180000; // OTP valid for 3 minutes
+        setOtpResendAvailableAt(req.session, 'otpResendAt');
 
         // Return success response
         return res.json({
@@ -87,7 +90,10 @@ const registerUser = async (req, res) => {
 // controller to render the OTP page
 const loadOtpPage = async (req, res) => {
     try {
-        res.render('user/otpVerification', { currentPage: 'otp' }); // Render your OTP input form
+        res.render('user/otpVerification', {
+            currentPage: 'otp',
+            otpResendSeconds: getOtpResendSeconds(req.session.otpResendAt)
+        });
     } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
@@ -106,12 +112,17 @@ const verifyOtp = async (req, res) => {
         });
         if (!result.success) {
             if (wantsJson) return res.json({ success: false, message: result.message });
-            return res.render('user/otpVerification', { message: result.message, currentPage: 'otp' });
+            return res.render('user/otpVerification', {
+                message: result.message,
+                currentPage: 'otp',
+                otpResendSeconds: getOtpResendSeconds(req.session.otpResendAt)
+            });
         }
 
         // Clear temporary OTP data from the session
         delete req.session.otp;
         delete req.session.otpExpiry;
+        delete req.session.otpResendAt;
         delete req.session.userData;
 
         // Automatically log the user in using express-session
@@ -128,7 +139,7 @@ const verifyOtp = async (req, res) => {
         }
 
         // Show confirmation before opening the user's profile
-        return res.render('user/otpVerification', { registrationSuccess: true, currentPage: 'otp' });
+        return res.render('user/otpVerification', { registrationSuccess: true, currentPage: 'otp', otpResendSeconds: 0 });
 
     } catch (error) {
         console.error('Error verifying OTP:', error.message);
@@ -145,13 +156,33 @@ const resendOtp = async (req, res) => {
             return res.redirect('/register'); // Session lost, start over
         }
 
+        const resendSeconds = getOtpResendSeconds(req.session.otpResendAt);
+        if (resendSeconds > 0) {
+            return res.status(429).render('user/otpVerification', {
+                message: 'Please wait before requesting another OTP.',
+                currentPage: 'otp',
+                otpResendSeconds: resendSeconds
+            });
+        }
+
         const result = await userService.resendRegistrationOtp(userData.email);
-        req.session.otp = result.otp;
-        req.session.otpExpiry = Date.now() + 180000; // Reset the 3-minute timer
         if (result.emailSent) {
-            return res.render('user/otpVerification', { message: 'A new OTP has been sent to your email.', currentPage: 'otp' });
+            req.session.otp = result.otp;
+            req.session.otpExpiry = Date.now() + 180000;
+            setOtpResendAvailableAt(req.session, 'otpResendAt');
+            return res.render('user/otpVerification', {
+                message: 'A new OTP has been sent to your email.',
+                messageType: 'success',
+                currentPage: 'otp',
+                otpResendSeconds: getOtpResendSeconds(req.session.otpResendAt)
+            });
         } else {
-            return res.render('user/otpVerification', { message: 'Failed to send OTP. Please try again.', currentPage: 'otp' });
+            return res.render('user/otpVerification', {
+                message: 'Failed to send OTP. Please try again.',
+                messageType: 'error',
+                currentPage: 'otp',
+                otpResendSeconds: 0
+            });
         }
     } catch (error) {
         console.error('Error resending OTP:', error.message);
@@ -201,7 +232,8 @@ const loadResetPassword = async (req, res) => {
 
         res.render('user/resetPassword', {
             currentPage: 'reset-password',
-            message: req.session.resetMessage || ''
+            message: req.session.resetMessage || '',
+            otpResendSeconds: getOtpResendSeconds(req.session.resetOtpResendAt)
         });
         delete req.session.resetMessage;
     } catch (error) {
@@ -215,16 +247,24 @@ const resendResetOtp = async (req, res) => {
         const email = req.session.resetEmail;
         if (!email) return res.redirect('/forgot-password');
 
+        const resendSeconds = getOtpResendSeconds(req.session.resetOtpResendAt);
+        if (resendSeconds > 0) {
+            req.session.resetMessage = 'Please wait before requesting another OTP.';
+            return res.redirect('/reset-password');
+        }
+
         const result = await userService.resendPasswordResetOtp(email);
         if (!result.emailSent) {
             return res.status(500).render('user/resetPassword', {
                 currentPage: 'reset-password',
-                message: 'Failed to send OTP. Please try again later.'
+                message: 'Failed to send OTP. Please try again later.',
+                otpResendSeconds: 0
             });
         }
 
         req.session.resetOtp = result.otp;
         req.session.resetOtpExpiry = Date.now() + 180000;
+        setOtpResendAvailableAt(req.session, 'resetOtpResendAt');
         req.session.resetMessage = 'A new OTP has been sent to your email.';
         return res.redirect('/reset-password');
     } catch (error) {
@@ -257,6 +297,7 @@ const processForgotPassword = async (req, res) => {
             req.session.resetEmail = result.email;
             req.session.resetOtp = result.otp;
             req.session.resetOtpExpiry = Date.now() + 180000;
+            setOtpResendAvailableAt(req.session, 'resetOtpResendAt');
             req.session.resetMessage = 'OTP sent successfully. Please check your email.';
 
             return res.redirect('/reset-password');
@@ -289,7 +330,8 @@ const updatePassword = async (req, res) => {
         if (!result.success) {
             return res.render('user/resetPassword', {
                 currentPage: 'reset-password',
-                fieldErrors: result.errors
+                fieldErrors: result.errors,
+                otpResendSeconds: getOtpResendSeconds(req.session.resetOtpResendAt)
             });
         }
 
@@ -297,6 +339,7 @@ const updatePassword = async (req, res) => {
         delete req.session.resetEmail;
         delete req.session.resetOtp;
         delete req.session.resetOtpExpiry;
+        delete req.session.resetOtpResendAt;
 
         // log the user them out before sending them back to login
         if (req.session.userId) {
@@ -338,8 +381,9 @@ const updateProfile = async (req, res) => {
             req.session.pendingProfileUpdate = result.pendingProfileUpdate;
             req.session.profileOtp = result.otp;
             req.session.profileOtpExpiry = Date.now() + 180000;
+            setOtpResendAvailableAt(req.session, 'profileOtpResendAt');
             // Send JSON telling frontend to open OTP modal
-            return res.json({ success: true, requireOtp: true, pendingEmail: result.pendingEmail });
+            return res.json({ success: true, requireOtp: true, pendingEmail: result.pendingEmail, resendSeconds: 60 });
         }
 
         // Send JSON telling frontend it was completely successful
@@ -374,6 +418,7 @@ const verifyProfileOtp = async (req, res) => {
             delete req.session.pendingProfileUpdate;
             delete req.session.profileOtp;
             delete req.session.profileOtpExpiry;
+            delete req.session.profileOtpResendAt;
 
             delete req.session.userId;
             req.session.message = 'Your email was updated. Please log in with your new email.';
@@ -382,6 +427,33 @@ const verifyProfileOtp = async (req, res) => {
     } catch (error) {
         console.error('Profile OTP verification error:', error.message);
         res.status(500).json({ success: false, message: 'Server Error' });
+    }
+};
+
+const resendProfileOtp = async (req, res) => {
+    try {
+        const pendingUpdate = req.session.pendingProfileUpdate;
+        if (!pendingUpdate || !req.session.profileOtp) {
+            return res.status(400).json({ success: false, message: 'Email verification session expired. Please update your profile again.' });
+        }
+
+        const resendSeconds = getOtpResendSeconds(req.session.profileOtpResendAt);
+        if (resendSeconds > 0) {
+            return res.status(429).json({ success: false, message: 'Please wait before requesting another OTP.', resendSeconds });
+        }
+
+        const result = await userService.resendProfileEmailOtp(pendingUpdate.email);
+        if (!result.emailSent) {
+            return res.status(500).json({ success: false, message: 'Failed to send OTP. Please try again.' });
+        }
+
+        req.session.profileOtp = result.otp;
+        req.session.profileOtpExpiry = Date.now() + 180000;
+        setOtpResendAvailableAt(req.session, 'profileOtpResendAt');
+        return res.json({ success: true, message: 'A new OTP has been sent to your email.', resendSeconds: 60 });
+    } catch (error) {
+        console.error('Profile OTP resend error:', error.message);
+        return res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
@@ -480,6 +552,7 @@ module.exports = {
     updateProfile,
     loadProfileOtpModal,
     verifyProfileOtp,
+    resendProfileOtp,
     loadProfileResetPassword,
     updateProfilePassword,
     loadAddressPage,

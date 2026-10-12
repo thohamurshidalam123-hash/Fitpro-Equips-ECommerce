@@ -4,6 +4,10 @@ const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 const { sendOtpEmail } = require('./emailServices');
 const { validateName, validateEmail, validatePhone, validatePassword, validateDateOfBirth } = require('../validators/userValidators');
+const walletService = require('./walletService');
+const crypto = require('crypto');
+
+const generateReferralCode = () => crypto.randomBytes(4).toString('hex').toUpperCase();
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
@@ -13,11 +17,12 @@ const getUserProfile = async userId => User.findById(userId).lean();
 
 // For registering a user and sending verification OTP
 const registerUser = async data => {
-    const { name, email, password, confirmPassword, phone, gender, dateOfBirth, consent } = data;
+    const { name, email, password, confirmPassword, phone, gender, dateOfBirth, consent, referralCode } = data;
     const trimmedName = name ? name.trim() : '';
     const trimmedEmail = email ? email.trim().toLowerCase() : '';
     const trimmedPassword = password ? password.trim() : '';
     const trimmedConfirmPassword = confirmPassword ? confirmPassword.trim() : '';
+    const trimmedReferralCode = referralCode ? referralCode.trim().toUpperCase() : '';
     const rawPhone = phone ? phone.trim() : '';
     const normalizedPhone = '+91 ' + rawPhone.replace(/\s+/g, '').replace(/^\+91/, '');
     const formData = { name: trimmedName, email: trimmedEmail, phone: rawPhone, gender, dateOfBirth };
@@ -43,6 +48,15 @@ const registerUser = async data => {
         return { success: false, errors: { phone: 'This phone number is already registered' }, formData };
     }
 
+    let referringUserId = null;
+    if(trimmedReferralCode) {
+        const referrer = await User.findOne({ referralCode : trimmedReferralCode });
+        if (!referrer) {
+            return { success: false, errors: { referralCode: 'Invalid referral code.'}, formData}
+        }
+        referringUserId = referrer._id;
+    }
+
     const securePassword = await bcrypt.hash(trimmedPassword, 10);
     const otp = generateOtp();
     const emailSent = await sendOtpEmail(trimmedEmail, otp);
@@ -51,12 +65,18 @@ const registerUser = async data => {
     return {
         success: true,
         otp,
-        userData: { name: trimmedName, email: trimmedEmail, phone: normalizedPhone, password: securePassword, gender, dateOfBirth }
+        userData: { name: trimmedName, email: trimmedEmail, phone: normalizedPhone, password: securePassword, gender, dateOfBirth, referredBy: referringUserId }
     };
 };
 
 // For creating user after OTP verification
 const createRegisteredUser = async userData => {
+    
+    let newReferralCode = generateReferralCode();
+    while (await User.exists({ referralCode: newReferralCode })){
+        newReferralCode = generateReferralCode();
+    }
+
     const newUser = new User({
         name: userData.name,
         email: userData.email,
@@ -65,9 +85,25 @@ const createRegisteredUser = async userData => {
         gender: userData.gender,
         dateOfBirth: userData.dateOfBirth,
         role: 'user',
-        isBlocked: false
+        isBlocked: false,
+        referralCode: newReferralCode,
+        referredBy: userData.referredBy
     });
     await newUser.save();
+
+    if(userData.referredBy) {
+        try {
+             await walletService.creditWallet(
+                userData.referredBy,
+                100,
+                `Referral earning credited for inviting ${newUser.name}`,
+                null
+             );
+        } catch (error) {
+            console.error('Failed to credit referral bonus', error);
+        }
+    }
+
     return newUser;
 };
 
@@ -109,6 +145,11 @@ const requestPasswordReset = async email => {
 
 // For resending a password reset OTP
 const resendPasswordResetOtp = async email => {
+    const otp = generateOtp();
+    return { otp, emailSent: await sendOtpEmail(email, otp) };
+};
+
+const resendProfileEmailOtp = async email => {
     const otp = generateOtp();
     return { otp, emailSent: await sendOtpEmail(email, otp) };
 };
@@ -249,6 +290,7 @@ module.exports = {
     authenticateUser,
     requestPasswordReset,
     resendPasswordResetOtp,
+    resendProfileEmailOtp,
     resetUserPassword,
     updateUserProfile,
     verifyProfileEmailOtp,

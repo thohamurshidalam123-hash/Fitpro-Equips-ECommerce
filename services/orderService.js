@@ -89,11 +89,12 @@ const cancelOrder = async ({ orderId, userId, reason }) => {
     if (['Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) {
         return { statusCode: 400, message: 'This order cannot be cancelled' };
     }
+    const paymentWasCompleted = ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
     order.orderStatus = 'Cancelled';
     if (reason) order.cancellationReason = reason;
     
     //For refunding to wallet for paid orders
-    if (order.paymentMethod !== 'Cash on Delivery') {
+    if (paymentWasCompleted) {
         await walletService.creditWallet(
             userId,
             order.grandTotal,
@@ -105,7 +106,12 @@ const cancelOrder = async ({ orderId, userId, reason }) => {
 
     await order.save();
     for (const item of order.items) await adjustOrderItemStock(item, item.quantity);
-    return { success: true, message: 'Order cancelled successfully.' };
+    return {
+        success: true,
+        message: paymentWasCompleted
+            ? 'Order cancelled successfully. The refund has been credited to your wallet.'
+            : 'Order cancelled successfully'
+    };
 };
 
 // For returning an order and restoring stock

@@ -226,7 +226,7 @@
                                         <p class="order-product-variant">Qty: <%= item.quantity %> | ₹<%= item.price.toLocaleString('en-IN') %></p>
                                     </div>
                                     <% if (order.orderStatus === 'Delivered') { %>
-                                        <a class="download-button" href="/account/orders/<%= order._id %>/invoice" aria-label="Download invoice for order <%= order.orderId %>" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></a>
+                                        <a class="download-button" href="/account/orders/<%= order._id %>/invoice" data-invoice-payment-status="<%= order.paymentStatus || '' %>" aria-label="Download invoice for order <%= order.orderId %>" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></a>
                                     <% } %>
                                 </div>
                             <% }); %>

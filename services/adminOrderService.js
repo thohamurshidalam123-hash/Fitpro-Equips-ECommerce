@@ -1,6 +1,8 @@
 const Order = require('../models/orderModel');
 const walletService = require('./walletService');
 const Product = require('../models/productModel');
+const unpaidStatusMessage = 'Only paid orders can be updated to corresspondant status';
+const isOrderPaid = order => ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
 
 // For listing orders with search, filter, sort and pagination
 const getAdminOrders = async ({ page = 1, search = '', status = 'all', payment = 'all', limit = 10 }) => {
@@ -49,6 +51,9 @@ const approveReturn = async (orderId) => {
     if (!order || order.orderStatus !== 'Return requested') {
         return { success: false, message: 'Invalid return request' };
     }
+    if (!isOrderPaid(order)) {
+        return { success: false, statusCode: 403, message: 'Only return requests for paid orders can be approved.' };
+    }
 
     order.orderStatus = 'Returned';
     order.paymentStatus = 'Refunded';
@@ -94,6 +99,9 @@ const updateOrderStatus = async (orderId, status) => {
 
     const order = await Order.findById(orderId);
     if (!order) return { statusCode: 404, message: 'Order not found' };
+    if (['Delivered', 'Returned'].includes(status) && !isOrderPaid(order)) {
+        return { statusCode: 403, message: unpaidStatusMessage };
+    }
 
     const statusFlow = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Returned'];
     const currentStatusIndex = statusFlow.indexOf(order.orderStatus);

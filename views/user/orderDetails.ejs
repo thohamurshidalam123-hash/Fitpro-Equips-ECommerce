@@ -194,7 +194,7 @@
                         </button>
                     <% } %>
 
-                    <a class="invoice-button" href="/account/orders/<%= order._id %>/invoice">
+                    <a class="invoice-button" href="/account/orders/<%= order._id %>/invoice" data-invoice-payment-status="<%= order.paymentStatus || '' %>">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg>
                         Download Invoice
                     </a>
@@ -410,7 +410,7 @@
                     });
                     const data = await res.json();
                     if (data.success) {
-                        const successMessage = 'Order cancelled successfully. The refund has been credited to your wallet.';
+                        const successMessage = data.message || 'Order cancelled successfully';
                         if (window.showAppModal) {
                             window.showAppModal(successMessage, 'success', {
                                 onClose: () => window.location.reload()

@@ -53,6 +53,11 @@
 						<div class="field date-field"><label for="dateOfBirthDisplay">Date of Birth</label><input id="dateOfBirthDisplay" name="dateOfBirthDisplay" type="text" placeholder="DD/MM/YYYY" inputmode="numeric" pattern="(0[1-9]|[12][0-9]|3[01])/(0[1-9]|1[0-2])/[0-9]{4}" maxlength="10" required><button class="calendar-button" type="button" aria-label="Choose date"><span class="calendar-icon" aria-hidden="true"></span></button><div class="date-picker-panel" id="datePickerPanel"><div class="date-picker-selects"><select id="pickerDay" aria-label="Day"><option value="">Day</option><% for (let day = 1; day <= 31; day++) { %><option value="<%= String(day).padStart(2, '0') %>"><%= day %></option><% } %></select><select id="pickerMonth" aria-label="Month"><option value="">Month</option><% for (let month = 1; month <= 12; month++) { %><option value="<%= String(month).padStart(2, '0') %>"><%= month %></option><% } %></select><select id="pickerYear" aria-label="Year"><option value="">Year</option><% for (let year = new Date().getFullYear(); year >= 1900; year--) { %><option value="<%= year %>"><%= year %></option><% } %></select></div><div class="date-picker-actions"><button type="button" class="cancel-date">Cancel</button><button type="button" class="apply-date">Apply</button></div></div><input id="dateOfBirth" name="dateOfBirth" type="hidden"><p class="field-error" data-error-for="dateOfBirth"></p></div>
 						<div class="field"><label for="gender">Gender</label><select id="gender" name="gender" required><option value="" disabled selected>Gender</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option></select><p class="field-error" data-error-for="gender"></p></div>
 						<div class="password-row"><div class="field password-field"><label for="password">Password</label><input id="password" name="password" type="password" placeholder="Password" required><button class="password-toggle" type="button" data-password="password" aria-label="Show password"><span class="eye"></span></button><p class="field-error" data-error-for="password"></p></div><div class="field password-field"><label for="confirmPassword">Confirm Password</label><input id="confirmPassword" name="confirmPassword" type="password" placeholder="Confirm Password" required><button class="password-toggle" type="button" data-password="confirmPassword" aria-label="Show confirm password"><span class="eye"></span></button><p class="field-error" data-error-for="confirmPassword"></p></div></div>
+						<div class ="field">
+							<label for="referralCode">Rferral Code (Optional)</label>
+							<input id="referralCode" name="referralCode" type="text" placeHolder="referral Code (Optional)" style="text-transform: uppercase;">
+							<p class="field-error" data-error-for="referralCode"></p>
+						</div>
 						<p class="security-label">Security Level: <span>None</span></p>
 						<label class="terms"><input type="checkbox" name="consent" required><span>I agree to the <a href="#">Privacy Policy</a> and <a href="#">Terms of Service</a>.</span><span class="field-error" data-error-for="consent"></span></label>
 						<button class="submit-button" type="submit">Register</button>
@@ -162,6 +167,7 @@
 			formData.append('dateOfBirth', dateOfBirth);
 			formData.append('password', document.getElementById('password').value);
 			formData.append('confirmPassword', document.getElementById('confirmPassword').value);
+			formData.append('referralCode', document.getElementById('referralCode').value);
 			formData.append('consent', consentCheckbox.checked ? 'on' : '');
 
 			fetch('/register', {

@@ -42,6 +42,17 @@ const loadCartPage = async (req, res) => {
     }
 };
 
+const getCartCount = async (req, res) => {
+    try {
+        if (!req.session.userId) return res.json({ success: true, count: 0 });
+        const count = await cartService.getCartBadgeCount(req.session.userId);
+        return res.json({ success: true, count });
+    } catch (error) {
+        console.error('Cart count error:', error.message);
+        return res.status(500).json({ success: false, message: 'Unable to load cart count.' });
+    }
+};
+
 const addToCart = async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -51,7 +62,8 @@ const addToCart = async (req, res) => {
 
         const result = await cartService.addToCart({ ...req.body, userId });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
-        return res.json(result);
+        const count = await cartService.getCartBadgeCount(userId);
+        return res.json({ ...result, count });
     } catch (error) {
         console.error('Add to cart error:', error.message);
         return res.status(500).json({ success: false, message: 'Server error' });
@@ -98,6 +110,7 @@ const moveToWishlist = async (req, res) => {
 
 module.exports = {
     loadCartPage,
+    getCartCount,
     addToCart,
     updateQuantity,
     removeFromCart,

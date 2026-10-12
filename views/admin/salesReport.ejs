@@ -6,9 +6,10 @@
     <title>Sales Reports | Fitpro Equips</title>
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <link rel="stylesheet" href="/css/admin-scale.css">
-    <!-- Include SheetJS for Excel export and html2pdf for PDF export -->
+    
+    <!-- ONLY SheetJS remains. html2pdf is REMOVED -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
     <style>
         :root {
             --report-blue: #075bd6;
@@ -76,6 +77,11 @@
         .sales-kpi-value { display: block; color: #233044; font-size: 9px; font-weight: 750; white-space: nowrap; }
         .sales-kpi.discount .sales-kpi-value { color: #07844f; }
         .sales-kpi.coupon .sales-kpi-value { color: #303d51; }
+        .sales-overview.stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 0 0 12px; }
+        .sales-overview .stat-card { min-width: 0; padding: 12px; border-radius: 7px; }
+        .sales-overview .stat-icon { width: 32px; height: 32px; font-size: 17px; }
+        .sales-overview .stat-label { margin-bottom: 4px; font-size: 9px; }
+        .sales-overview .stat-value { overflow: hidden; font-size: 16px; text-overflow: ellipsis; }
 
         .sales-panel { overflow: hidden; margin-bottom: 12px; border: 1px solid var(--report-line); border-radius: 7px; background: #fff; }
         .sales-panel-header { display: flex; min-height: 37px; align-items: center; justify-content: space-between; gap: 10px; padding: 0 12px; border-bottom: 1px solid #e8ecf3; }
@@ -111,6 +117,7 @@
             .sales-report-page > .sidebar { width: 100%; }
             .sales-report-page > .main-content { grid-column: 1; padding: 0 16px 28px; }
             .sales-topbar { margin-right: -16px; margin-left: -16px; padding: 0 13px; }
+            .sales-overview.stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }
         @media (max-width: 560px) {
             .sales-intro { align-items: flex-start; flex-direction: column; }
@@ -121,13 +128,6 @@
             .sales-kpi-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
             .sales-kpi { min-height: 58px; }
             .sales-table-footer { align-items: flex-start; flex-direction: column; }
-        }
-        @media print {
-            .sales-report-page > .sidebar, .sales-topbar, .sales-export-actions, .sales-filterbar, .sales-pagination { display: none !important; }
-            .sales-report-page { display: block; }
-            .sales-report-page > .main-content { padding: 0; }
-            .sales-panel, .sales-intro, .sales-kpi { break-inside: avoid; box-shadow: none; }
-            body:has(.sales-report-page) { background: #fff; }
         }
     </style>
 </head>
@@ -158,6 +158,29 @@
                 </div>
             </section>
 
+            <section class="stats-grid sales-overview" aria-label="Business overview">
+                <div class="stat-card">
+                    <div class="stat-header"><span class="stat-icon revenue">₹</span></div>
+                    <p class="stat-label">Total Revenue</p>
+                    <p class="stat-value">₹<%= totalRevenue.toLocaleString('en-IN') %></p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header"><span class="stat-icon orders">📦</span></div>
+                    <p class="stat-label">Total Orders</p>
+                    <p class="stat-value"><%= totalOrders %></p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header"><span class="stat-icon pending">⏳</span></div>
+                    <p class="stat-label">Pending Orders</p>
+                    <p class="stat-value"><%= pendingOrders %></p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-header"><span class="stat-icon orders">✅</span></div>
+                    <p class="stat-label">Completed Orders</p>
+                    <p class="stat-value"><%= completedOrders %></p>
+                </div>
+            </section>
+
             <section class="sales-filterbar" aria-label="Report filters">
                 <form action="/admin/sales-reports" method="GET" style="display: flex; width: 100%; align-items: center; gap: 6px;">
                     <label class="sales-live-region" for="reportPeriod">Report period</label>
@@ -179,12 +202,12 @@
 
                     <span class="sales-filter-spacer"></span>
 
-                    <div class="sales-period-tabs" role="group" aria-label="Quick report period">
-                        <button class="sales-period-tab" type="button" data-period="daily" aria-pressed="<%= currentFilter === 'daily' %>">Daily</button>
-                        <button class="sales-period-tab" type="button" data-period="weekly" aria-pressed="<%= currentFilter === 'weekly' %>">Weekly</button>
-                        <button class="sales-period-tab" type="button" data-period="monthly" aria-pressed="<%= currentFilter === 'monthly' %>">Monthly</button>
-                        <button class="sales-period-tab" type="button" data-period="yearly" aria-pressed="<%= currentFilter === 'yearly' %>">Yearly</button>
-                    </div>
+                    <!-- <div class="sales-period-tabs" role="group" aria-label="Quick report period">
+                        <button class="sales-period-tab" type="submit" name="period" value="daily" aria-pressed="<%= currentFilter === 'daily' %>">Daily</button>
+                        <button class="sales-period-tab" type="submit" name="period" value="weekly" aria-pressed="<%= currentFilter === 'weekly' %>">Weekly</button>
+                        <button class="sales-period-tab" type="submit" name="period" value="monthly" aria-pressed="<%= currentFilter === 'monthly' %>">Monthly</button>
+                        <button class="sales-period-tab" type="submit" name="period" value="yearly" aria-pressed="<%= currentFilter === 'yearly' %>">Yearly</button>
+                    </div> -->
                 </form>
             </section>
 
@@ -242,11 +265,12 @@
     </div>
 
     <script>
+        // Filter Form Tabs Logic
         document.querySelectorAll('.sales-period-tab').forEach(button => {
             button.addEventListener('click', () => {
                 const periodSelect = document.getElementById('reportPeriod');
-                periodSelect.value = button.dataset.period;
-                periodSelect.form.requestSubmit();
+                periodSelect.value = button.value;
+                periodSelect.form.submit();
             });
         });
 
@@ -278,32 +302,20 @@
             XLSX.writeFile(wb, `Sales_Report_<%= currentFilter %>.xlsx`);
         });
 
-        // Export to PDF using html2pdf
+        // NEW: Export to PDF by triggering the Backend Route
         document.getElementById('exportPdf').addEventListener('click', () => {
-            // Target the main content area so it includes KPIs and the Table
-            const element = document.getElementById('reportContentArea');
+            const periodSelect = document.getElementById('reportPeriod');
+            const period = periodSelect.value;
+            let url = `/admin/sales-reports/pdf?period=${period}`;
             
-            // Setup options
-            const opt = {
-                margin:       0.5,
-                filename:     `Sales_Report_<%= currentFilter %>.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2 },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
-            };
-
-            // Hide action buttons during print rendering
-            document.querySelector('.sales-topbar').style.display = 'none';
-            document.querySelector('.sales-filterbar').style.display = 'none';
-            document.querySelector('.sales-export-actions').style.display = 'none';
-
-            // Generate PDF
-            html2pdf().set(opt).from(element).save().then(() => {
-                // Restore hidden elements after save
-                document.querySelector('.sales-topbar').style.display = 'flex';
-                document.querySelector('.sales-filterbar').style.display = 'flex';
-                document.querySelector('.sales-export-actions').style.display = 'flex';
-            });
+            if (period === 'custom') {
+                const startDate = document.querySelector('input[name="startDate"]').value;
+                const endDate = document.querySelector('input[name="endDate"]').value;
+                url += `&startDate=${startDate}&endDate=${endDate}`;
+            }
+            
+            // Redirect to backend to start the file download
+            window.location.href = url;
         });
     </script>
 </body>

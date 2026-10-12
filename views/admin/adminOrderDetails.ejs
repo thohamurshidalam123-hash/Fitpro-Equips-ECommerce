@@ -129,8 +129,8 @@
                     </select>
                 </div>
                 <div class="heading-actions">
-                    <a href="/admin/orders/<%= order._id %>/invoice?preview=1" class="print-button" target="_blank" rel="noopener">Print Invoice</a>
-                    <a href="/admin/orders/<%= order._id %>/invoice" class="download-button" aria-label="Download invoice" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></a>
+                    <a href="/admin/orders/<%= order._id %>/invoice?preview=1" class="print-button" data-invoice-payment-status="<%= order.paymentStatus || '' %>" target="_blank" rel="noopener">Print Invoice</a>
+                    <a href="/admin/orders/<%= order._id %>/invoice" class="download-button" data-invoice-payment-status="<%= order.paymentStatus || '' %>" aria-label="Download invoice" title="Download invoice"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v11m0 0 4-4m-4 4-4-4"></path><path d="M5 16v4h14v-4"></path></svg></a>
                 </div>
             </section>
 
@@ -230,6 +230,7 @@
         </div>
     </div>
     <script src="/js/notification-modal.js"></script>
+    <script src="/js/invoice-download.js"></script>
     <script>
         // Live Status Update Handler (Task A.iii)
         const orderStatusSelect = document.getElementById('orderStatusSelect');

@@ -187,6 +187,111 @@
             </div>
         </main>
 
+        <div id="changeAddressModal" class="checkout-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="changeAddressTitle">
+            <div class="checkout-modal-window">
+                <div class="checkout-modal-header">
+                    <h2 class="checkout-modal-title" id="changeAddressTitle">Choose a delivery address</h2>
+                    <button type="button" class="checkout-modal-close" data-close-modal aria-label="Close">&times;</button>
+                </div>
+                <div class="saved-addresses-list">
+                    <% addresses.forEach(address => { %>
+                        <% const addressLine1 = [address.houseName, address.street, address.landmark].filter(Boolean).join(', '); %>
+                        <% const addressLine2 = [address.city, address.district, address.state].filter(Boolean).join(', ') + ' - ' + address.pincode; %>
+                        <div class="saved-address-option <%= activeAddress && activeAddress._id.toString() === address._id.toString() ? 'selected' : '' %>"
+                            data-name="<%= address.fullName %>"
+                            data-phone="<%= address.phone %>"
+                            data-line1="<%= addressLine1 %>"
+                            data-line2="<%= addressLine2 %>"
+                            data-type="<%= address.addressType || 'Home' %>">
+                            <input class="saved-address-radio" type="radio" name="checkoutAddress" value="<%= address._id %>" <%= activeAddress && activeAddress._id.toString() === address._id.toString() ? 'checked' : '' %>>
+                            <div class="saved-address-body">
+                                <div class="saved-address-header">
+                                    <span class="saved-address-name"><%= address.fullName %></span>
+                                    <% if (address.isDefault) { %><span class="saved-address-badge">Default</span><% } %>
+                                </div>
+                                <p class="saved-address-text"><%= address.phone %><br><%= addressLine1 %><br><%= addressLine2 %></p>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                    <button type="button" class="btn-primary" id="btnApplySelectedAddress">Use this address</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="addAddressModal" class="checkout-modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="addAddressTitle">
+            <div class="checkout-modal-window">
+                <div class="checkout-modal-header">
+                    <h2 class="checkout-modal-title" id="addAddressTitle">Add a delivery address</h2>
+                    <button type="button" class="checkout-modal-close" data-close-modal aria-label="Close">&times;</button>
+                </div>
+                <form id="addAddressForm" novalidate>
+                    <div class="modal-form-grid">
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newFullName">Full name</label>
+                            <input class="modal-form-input" id="newFullName" name="fullName" autocomplete="name" required>
+                            <span class="field-error" data-field-error="fullName" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newPhone">Phone</label>
+                            <input class="modal-form-input" id="newPhone" name="phone" type="tel" autocomplete="tel" required>
+                            <span class="field-error" data-field-error="phone" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newHouseName">House / flat</label>
+                            <input class="modal-form-input" id="newHouseName" name="houseName" autocomplete="address-line1" required>
+                            <span class="field-error" data-field-error="houseName" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newStreet">Street / area</label>
+                            <input class="modal-form-input" id="newStreet" name="street" autocomplete="address-line2" required>
+                            <span class="field-error" data-field-error="street" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newCity">City</label>
+                            <input class="modal-form-input" id="newCity" name="city" autocomplete="address-level2" required>
+                            <span class="field-error" data-field-error="city" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newDistrict">District</label>
+                            <input class="modal-form-input" id="newDistrict" name="district" required>
+                            <span class="field-error" data-field-error="district" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newState">State</label>
+                            <input class="modal-form-input" id="newState" name="state" autocomplete="address-level1" required>
+                            <span class="field-error" data-field-error="state" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newPincode">Pincode</label>
+                            <input class="modal-form-input" id="newPincode" name="pincode" autocomplete="postal-code" required>
+                            <span class="field-error" data-field-error="pincode" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newLandmark">Landmark (optional)</label>
+                            <input class="modal-form-input" id="newLandmark" name="landmark">
+                            <span class="field-error" data-field-error="landmark" hidden></span>
+                        </div>
+                        <div class="modal-form-group">
+                            <label class="modal-form-label" for="newAddressType">Address type</label>
+                            <select class="modal-form-select" id="newAddressType" name="addressType">
+                                <option value="Home">Home</option>
+                                <option value="Work">Work</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <span class="field-error" data-field-error="addressType" hidden></span>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-secondary" data-close-modal>Cancel</button>
+                        <button type="submit" class="btn-primary">Save address</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <%- include('../partials/user-footer') %>
     </div>
 

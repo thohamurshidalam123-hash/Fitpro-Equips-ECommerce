@@ -44,6 +44,9 @@
 .profile-inline-field input { border: none; background: transparent; box-shadow: none; height: 38px; }
 .phone-prefix { color: #59708a; font-size: 16px; }
 .profile-actions { display: flex; justify-content: flex-end; gap: 14px; margin-top: 14px; padding-top: 8px; }
+.profile-otp-resend { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; color: #596579; font-size: 13px; }
+.profile-otp-resend .btn-link:disabled { color: #8993a2; cursor: not-allowed; }
+.otp-resend-message { min-height: 18px; margin: 4px 0 0; color: #596579; font-size: 12px; }
 .btn-link { border: none; background: transparent; color: #2d3a4d; font-size: 16px; cursor: pointer; }
 .btn-primary { border: none; border-radius: 8px; background: #0d6efd; color: #fff; padding: 10px 16px; font-size: 15px; cursor: pointer; }
 .otp-message { margin: 0 0 14px; color: #47536a; font-size: 14px; line-height: 1.5; }

@@ -50,7 +50,7 @@
 							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" data-validation-name="otp" required>
 						</div>
 						<input type="hidden" name="otp" id="otp-value">
-						<div class="otp-meta"><span>Resend code in <strong id="countdown">00:57</strong></span><button class="resend-button" type="submit" formaction="/resend-otp" formmethod="POST" id="resend-button" disabled>Resend Code</button></div>
+						<div class="otp-meta"><span>Resend code in <strong id="countdown">01:00</strong></span><button class="resend-button" type="submit" formaction="/resend-otp" formmethod="POST" formnovalidate id="resend-button" data-remaining="<%= otpResendSeconds %>" disabled hidden>Resend Code</button></div>
 						<button class="verify-button" type="submit">Verify OTP <span aria-hidden="true">&#10003;</span></button>
 						<p class="wrong-email">Wrong email address? <a href="/register">Change Email</a></p>
 					</form>
@@ -108,8 +108,16 @@
 				input.addEventListener('keydown', function (event) { if (event.key === 'Backspace' && !input.value && inputs[index - 1]) inputs[index - 1].focus(); });
 				input.addEventListener('paste', function (event) { event.preventDefault(); var pasted = (event.clipboardData || window.clipboardData).getData('text').replace(/\D/g, '').slice(0, 6); pasted.split('').forEach(function (digit, digitIndex) { if (inputs[digitIndex]) inputs[digitIndex].value = digit; }); syncOtp(); if (pasted) inputs[Math.min(pasted.length, 6) - 1].focus(); });
 			});
-			var seconds = 57;
-			var timer = window.setInterval(function () { seconds -= 1; countdown.textContent = '00:' + String(seconds).padStart(2, '0'); if (seconds <= 0) { window.clearInterval(timer); resendButton.disabled = false; countdown.textContent = '00:00'; } }, 1000);
+			var resendDeadline = Date.now() + Math.max(0, Number(resendButton.dataset.remaining) || 0) * 1000;
+			function updateResendTimer() {
+				var seconds = Math.max(0, Math.ceil((resendDeadline - Date.now()) / 1000));
+				countdown.textContent = String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0');
+				resendButton.disabled = seconds > 0;
+				resendButton.hidden = seconds > 0;
+				if (seconds === 0) window.clearInterval(timer);
+			}
+			updateResendTimer();
+			var timer = window.setInterval(updateResendTimer, 250);
 		}());
 	</script>
 </body>

@@ -2,6 +2,7 @@ const PDFDocument = require('pdfkit');
 const Order = require('../models/orderModel');
 
 const formatCurrency = amount => `INR ${Number(amount || 0).toLocaleString('en-IN')}`;
+const isInvoicePaid = order => ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
 
 // For generating an invoice PDF
 const createInvoicePdf = order => new Promise((resolve, reject) => {
@@ -76,14 +77,16 @@ const createInvoicePdf = order => new Promise((resolve, reject) => {
 const getUserInvoice = async ({ orderId, userId }) => {
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return null;
-    return { order, pdf: await createInvoicePdf(order) };
+    if (!isInvoicePaid(order)) return { order, paid: false };
+    return { order, paid: true, pdf: await createInvoicePdf(order) };
 };
 
 // For fetching an admin invoice
 const getAdminInvoice = async orderId => {
     const order = await Order.findById(orderId);
     if (!order) return null;
-    return { order, pdf: await createInvoicePdf(order) };
+    if (!isInvoicePaid(order)) return { order, paid: false };
+    return { order, paid: true, pdf: await createInvoicePdf(order) };
 };
 
 module.exports = { getUserInvoice, getAdminInvoice };

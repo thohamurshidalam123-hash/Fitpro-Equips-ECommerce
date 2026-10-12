@@ -359,6 +359,8 @@
                     return;
                 }
 
+                if (typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
+
                 if (window.showAppModal) {
                     window.showAppModal(result.message || 'Product added to cart successfully!', 'success');
                 }

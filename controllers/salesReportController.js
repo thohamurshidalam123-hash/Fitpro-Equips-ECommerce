@@ -9,7 +9,10 @@ const loadSalesReport = async (req, res) => {
         const { period, startDate, endDate } = req.query;
 
         // For feching data
-        const reportData = await salesReportService.getSalesReportData(period, startDate, endDate);
+        const [reportData, overviewStats] = await Promise.all([
+            salesReportService.getSalesReportData(period, startDate, endDate),
+            salesReportService.getSalesOverviewStats()
+        ]);
 
         // For rendering ejs page
         res.render('admin/salesReport', {
@@ -18,7 +21,8 @@ const loadSalesReport = async (req, res) => {
             kpi: reportData.kpi,
             currentFilter: reportData.currentFilter,
             startDate: reportData.startDate,
-            endDate: reportData.endDate
+            endDate: reportData.endDate,
+            ...overviewStats
         });
 
     } catch (error) {
@@ -27,6 +31,31 @@ const loadSalesReport = async (req, res) => {
     }
 };
 
+const downloadPdfReport = async (req, res) => {
+    try {
+        if (!req.session.adminId) {
+            return res.status(401).send('Unauthorized');
+        }
+
+        const { period, startDate, endDate } = req.query;
+
+        // Generate the PDF stream
+        const pdfStream = await salesReportService.generatePdfReport(period, startDate, endDate);
+
+        // For setting headers for download
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename=Sales_Report_${period || 'custom'}.pdf`);
+
+        // For piping the generated PDF stream directly to the response
+        pdfStream.pipe(res);
+
+    } catch (error) {
+        console.error('Error generating PDF report:', error);
+        res.status(500).send('Server Error generating PDF report');
+    }
+};
+
 module.exports = {
-    loadSalesReport
+    loadSalesReport,
+    downloadPdfReport
 };

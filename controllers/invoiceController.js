@@ -1,9 +1,11 @@
 const invoiceService = require('../services/invoiceService');
+const unpaidInvoiceMessage = 'Invoice can be dowloaded only for paid orders';
 
 const downloadInvoice = async (req, res) => {
     try {
       const result = await invoiceService.getUserInvoice({ orderId: req.params.id, userId: req.session.userId });
       if (!result) return res.status(404).send('Order not found');
+      if (!result.paid) return res.status(403).json({ success: false, message: unpaidInvoiceMessage });
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename=Invoice-${result.order.orderId}.pdf`);
       return res.send(result.pdf);
@@ -20,6 +22,7 @@ const downloadAdminInvoice = async (req, res) => {
     try {
       const result = await invoiceService.getAdminInvoice(req.params.id);
       if (!result) return res.status(404).send('Order not found');
+      if (!result.paid) return res.status(403).json({ success: false, message: unpaidInvoiceMessage });
         const disposition = req.query.preview === '1' ? 'inline' : 'attachment';
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `${disposition}; filename=Invoice-${result.order.orderId}.pdf`);

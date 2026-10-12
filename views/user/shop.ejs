@@ -154,6 +154,8 @@
                     return;
                 }
 
+                if (typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
+
                 if (window.showAppModal) {
                     window.showAppModal(result.message || 'Product added to cart successfully!', 'success');
                 }
@@ -256,6 +258,7 @@
                 const result = await response.json();
                 if (window.showAppModal) window.showAppModal(result.message || 'Unable to add product to cart.', result.success ? 'success' : 'error');
                 if (result.success) {
+                    if (!isWishlistAction && typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
                     if (isWishlistAction && pickerSourceButton) {
                         const isAdded = result.action === 'added';
                         pickerSourceButton.textContent = isAdded ? '♥' : '♡';

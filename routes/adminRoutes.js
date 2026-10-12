@@ -86,6 +86,7 @@ router.post('/login',adminController.adminLogin);
 router.get('/logout',adminController.adminLogout);
 router.get('/dashboard', adminDashboardController.loadDashboard);
 router.get('/sales-reports', salesReportController.loadSalesReport);
+router.get('/sales-reports/pdf', salesReportController.downloadPdfReport);
 
 router.post('/forgot-password',adminController.forgotPassword);
 router.post('/verify-forgot-otp',adminController.verifyForgotOtp);

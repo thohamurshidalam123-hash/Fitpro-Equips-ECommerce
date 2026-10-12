@@ -112,6 +112,7 @@ router.get('/userProfile', requireUserSession, userController.loadProfile);
 router.post('/userProfile', requireUserSession, upload.single('profile_image'), userController.updateProfile);
 router.get('/verify-profile-otp', requireUserSession, userController.loadProfileOtpModal);
 router.post('/verify-profile-otp', requireUserSession, userController.verifyProfileOtp);
+router.post('/resend-profile-otp', requireUserSession, userController.resendProfileOtp);
 
 router.get('/auth/google', 
     passport.authenticate('google', { scope: ['profile', 'email'] })
@@ -147,6 +148,7 @@ router.get('/products/:id',userShopController.productDetailsPage)
 
 // Cart page routes
 router.get('/cart',cartController.loadCartPage);
+router.get('/cart/count', cartController.getCartCount);
 router.post('/cart/add',cartController.addToCart);
 router.post('/cart/update',cartController.updateQuantity);
 router.post('/cart/remove',cartController.removeFromCart);

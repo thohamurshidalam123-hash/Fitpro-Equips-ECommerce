@@ -50,6 +50,11 @@ const getCartPageData = async ({ userId, requestedPage }) => {
     return { cartItems, cartPageItems, subtotal, tax, shipping, total, canCheckout, itemCount: cartItems.length, page, totalPages };
 };
 
+const getCartBadgeCount = async userId => {
+    const cart = await Cart.findOne({ userId }).select('items').lean();
+    return cart ? cart.items.length : 0;
+};
+
 // For adding a product to cart
 const addToCart = async ({ userId, productId, variantId, quantity }) => {
     const requestQuantity = Number(quantity) || 1;
@@ -141,4 +146,4 @@ const moveToWishlist = async ({ userId, itemId, productId, variantId }) => {
     return { success: true, message: 'Moved to wishlist !' };
 };
 
-module.exports = { getCartPageData, addToCart, updateQuantity, removeFromCart, moveToWishlist };
+module.exports = { getCartPageData, getCartBadgeCount, addToCart, updateQuantity, removeFromCart, moveToWishlist };

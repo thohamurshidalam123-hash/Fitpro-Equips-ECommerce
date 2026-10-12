@@ -57,6 +57,7 @@
 				showMessage(result.message || 'Unable to add product to cart.', 'error');
 				return false;
 			}
+			if (typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
 			card.classList.add('is-removed');
 			totalItemCount = Math.max(0, totalItemCount - 1);
 			updateWishlistState();
