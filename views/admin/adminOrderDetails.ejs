@@ -40,6 +40,10 @@
         
         /* Status Selector Dropdown Styling */
         .status-select { height: 28px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 10px; font-weight: 600; color: #08764a; background: #d9f7e9; cursor: pointer; outline: none; }
+        .status-badge { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 12px; border-radius: 6px; font-size: 10px; font-weight: 650; text-transform: uppercase; }
+        .status-badge.cancelled { color: #bd3940; background: #fde7e8; }
+        .status-badge.delivered { color: #087b4e; background: #d9f7eb; }
+        .status-badge.returned { color: #6b21a8; background: #f3e8ff; }
 
         .heading-actions { display: flex; align-items: center; gap: 5px; }
         .print-button, .download-button { display: inline-flex; min-height: 24px; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border: 1px solid #dbe4f2; border-radius: 5px; color: #334159; background: #eaf0ff; font: inherit; font-size: 7px; cursor: pointer; text-decoration: none; }
@@ -116,17 +120,23 @@
             <section class="order-heading">
                 <div class="order-heading-main">
                     <h1>#<%= order.orderId %></h1>
-                    <!-- Interactive Status Changer (Task A.iii) -->
-                    <select id="orderStatusSelect" class="status-select">
-                        <option value="Pending" <%= order.orderStatus === 'Pending' ? 'selected' : '' %>>Pending</option>
-                        <option value="Processing" <%= order.orderStatus === 'Processing' ? 'selected' : '' %>>Processing</option>
-                        <option value="Packed" <%= order.orderStatus === 'Packed' ? 'selected' : '' %>>Packed</option>
-                        <option value="Shipped" <%= order.orderStatus === 'Shipped' ? 'selected' : '' %>>Shipped</option>
-                        <option value="Out for Delivery" <%= order.orderStatus === 'Out for Delivery' ? 'selected' : '' %>>Out for Delivery</option>
-                        <option value="Delivered" <%= order.orderStatus === 'Delivered' ? 'selected' : '' %>>Delivered</option>
-                        <option value="Returned" <%= order.orderStatus === 'Returned' ? 'selected' : '' %>>Returned</option>
-                        <option value="Cancelled" <%= order.orderStatus === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
-                    </select>
+                    
+                    <% 
+                        const flow = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'];
+                        const currentIndex = flow.indexOf(order.orderStatus);
+                        const isEndState = ['Delivered', 'Returned', 'Cancelled', 'Return requested'].includes(order.orderStatus);
+                    %>
+                    
+                    <% if (isEndState) { %>
+                        <span class="status-badge <%= order.orderStatus.toLowerCase() %>"><%= order.orderStatus %></span>
+                    <% } else { %>
+                        <select id="orderStatusSelect" class="status-select" data-current-status="<%= order.orderStatus %>">
+                            <% flow.forEach((statusStep, index) => { %>
+                                <option value="<%= statusStep %>" <%= order.orderStatus === statusStep ? 'selected' : '' %> <%= index < currentIndex ? 'disabled' : '' %>><%= statusStep %></option>
+                            <% }); %>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+                    <% } %>
                 </div>
                 <div class="heading-actions">
                     <a href="/admin/orders/<%= order._id %>/invoice?preview=1" class="print-button" data-invoice-payment-status="<%= order.paymentStatus || '' %>" target="_blank" rel="noopener">Print Invoice</a>
@@ -232,7 +242,6 @@
     <script src="/js/notification-modal.js"></script>
     <script src="/js/invoice-download.js"></script>
     <script>
-        // Live Status Update Handler (Task A.iii)
         const orderStatusSelect = document.getElementById('orderStatusSelect');
         if (orderStatusSelect) {
             orderStatusSelect.addEventListener('change', async function() {
@@ -247,6 +256,7 @@
                         body: JSON.stringify({ status: newStatus })
                     });
                     const data = await res.json();
+                    
                     if (data.success) {
                         this.dataset.currentStatus = newStatus;
                         window.showAppModal('Order status successfully updated to ' + newStatus, 'success', {

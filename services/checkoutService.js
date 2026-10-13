@@ -159,6 +159,9 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
     const shippingCost = subtotal > 5000 ? 0 : 500;
     const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
     const grandTotal = subtotal + tax + shippingCost - discount;
+    if (paymentMethod === 'cod' && grandTotal > 5000) {
+        return { statusCode: 400, message: "Can't continue with COD for orders above 5000, Select another payment method" };
+    }
     const year = new Date().getFullYear();
     const randomId = Math.floor(10000 + Math.random() * 90000);
     const orderId = `FP-${year}-${randomId}`;

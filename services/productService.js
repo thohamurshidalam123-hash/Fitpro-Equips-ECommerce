@@ -2,6 +2,7 @@ const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const Brand = require('../models/brandModel');
 const { validateProduct } = require('../validators/productValidators');
+const { getHighestVariantPrice } = require('../utils/offerPricing');
 
 const getHighlights = data => Array.from({ length: 4 }, (_, index) => ({
     title: String(data[`highlightTitle${index + 1}`] || '').trim()
@@ -103,7 +104,7 @@ const updateProduct = async ({ productId, data, files }) => {
         productName: productName.trim(),
         categoryId,
         brandId,
-        regularPrice: Number(regularPrice),
+        regularPrice: getHighestVariantPrice(product) ?? Number(regularPrice),
         offerPercentage,
         description: description.trim(),
         highlights: getHighlights(data),
@@ -135,6 +136,7 @@ const getProductDetails = async (productId) => {
 const recalculateTotalStock = product => {
     if (product.variants && product.variants.length > 0) {
         product.availableStock = product.variants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
+        product.regularPrice = getHighestVariantPrice(product);
     }
     if (product.availableStock === 0) {
         product.status = 'Out of Stock';

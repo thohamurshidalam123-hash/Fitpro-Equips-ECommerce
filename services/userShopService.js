@@ -1,7 +1,7 @@
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const Brand = require('../models/brandModel');
-const { getBestOfferPercentage, getEffectivePrice } = require('../utils/offerPricing');
+const { getBestOfferPercentage, getHighestVariantPrice, getEffectivePrice } = require('../utils/offerPricing');
 
 // For loading active categories on the landing page
 const getLandingCategories = async () => Category.find({ status: 'Active' }).sort({ createdAt: -1 }).lean();
@@ -46,6 +46,9 @@ const getShopPageData = async ({ page, limit, search, categoryFilter, brandFilte
     
     //For dynamic offer logic
     products = products.map(product => {
+        const highestVariantPrice = getHighestVariantPrice(product);
+        if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
+
         // Calculating stock
         let availableStock = Number(product.availableStock) || 0;
         if (product.variants && product.variants.length) {
@@ -84,6 +87,9 @@ const getProductDetails = async productId => {
         return { unavailable: true };
     }
 
+    const highestVariantPrice = getHighestVariantPrice(product);
+    if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
+
     // For dynamic offer logic for single product
     const bestOfferPercentage = getBestOfferPercentage(product);
     const finalPrice = getEffectivePrice(product);
@@ -100,6 +106,9 @@ const getProductDetails = async productId => {
     }).populate('brandId', 'name offerPercentage').populate('categoryId', 'offerPercentage').limit(4).lean();
     
     relatedProducts = relatedProducts.map(rp => {
+        const highestVariantPrice = getHighestVariantPrice(rp);
+        if (highestVariantPrice !== null) rp.regularPrice = highestVariantPrice;
+
         const best = getBestOfferPercentage(rp);
         const rpFinalPrice = getEffectivePrice(rp);
         

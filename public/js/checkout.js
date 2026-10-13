@@ -2,9 +2,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Payment Method Selection
     let selectedPayment = 'razorpay'; // Default active method
     const paymentOptions = document.querySelectorAll('.payment-method-item');
+    const checkoutTotal = Number(document.querySelector('.payment-methods-grid')?.dataset.grandTotal);
     
     paymentOptions.forEach(option => {
         option.addEventListener('click', () => {
+            if (option.dataset.paymentMethod === 'cod' && checkoutTotal > 5000) {
+                window.showAppModal("Can't continue with COD for orders above 5000, Select another payment method", 'error');
+                return;
+            }
+
             paymentOptions.forEach(item => {
                 item.classList.remove('active');
                 item.setAttribute('aria-pressed', 'false');

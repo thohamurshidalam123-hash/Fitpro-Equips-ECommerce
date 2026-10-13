@@ -94,24 +94,67 @@ const rejectReturn = async (orderId) => {
 
 // For updating order status
 const updateOrderStatus = async (orderId, status) => {
-    const validStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Returned'];
+    const validStatuses = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled'];
     if (!validStatuses.includes(status)) return { statusCode: 400, message: 'Invalid status value' };
 
     const order = await Order.findById(orderId);
     if (!order) return { statusCode: 404, message: 'Order not found' };
-    if (['Delivered', 'Returned'].includes(status) && !isOrderPaid(order)) {
-        return { statusCode: 403, message: unpaidStatusMessage };
+
+    const currentStatus = order.orderStatus;
+    // lock any status changes if the order is already in an end state
+    if(['Delivered','Returned','Cancelled','Return requested'].includes(currentStatus)) {
+        return{ statusCode: 400, message: 'Changing status is not allowed for this order'}
     }
 
-    const statusFlow = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered', 'Returned'];
-    const currentStatusIndex = statusFlow.indexOf(order.orderStatus);
+    // Admin cancellation logic
+    if(status === 'Cancelled') {
+        order.orderStatus = 'Cancelled';
+
+        // For auto refund if paid via digital methods
+        if(['Razorpay','Wallet'].includes(order.paymentMethod) && isOrderPaid(order)) {
+            await walletService.creditWallet(
+                order.userId,
+                order.grandTotal,
+                `Refund for cancelled order ${order.orderId}`,
+                order._id
+            );
+            order.paymentStatus = 'Refunded';
+        }
+
+        // For restoring stock
+        for (const item of order.items) {
+            if (item.variantId) {
+                await Product.updateOne(
+                    { _id: item.productId, 'variants._id' : item.variantId },
+                    { $inc: { 'variants.$.stock': item.quantity }}
+                );
+            }else {
+                await Product.findByIdAndUpdate(item.productId, { $inc: { availableStock: item.quantity }});
+            }
+        }
+        await order.save();
+        return { success: true };
+    }
+
+    // For Strict forward status movement
+    const statusFlow = ['Pending', 'Processing', 'Packed', 'Shipped', 'Out for Delivery', 'Delivered'];
+    const currentStatusIndex = statusFlow.indexOf(currentStatus);
     const selectedStatusIndex = statusFlow.indexOf(status);
-    const canCancel = status === 'Cancelled' && currentStatusIndex >= 0 && currentStatusIndex < statusFlow.indexOf('Delivered');
-    if (!canCancel && (selectedStatusIndex <= currentStatusIndex || currentStatusIndex < 0)) {
+    
+    if ( selectedStatusIndex <= currentStatusIndex) {
         return {
             statusCode: 400,
-            message: `Can't update status to ${status} from ${order.orderStatus}. Select an upcoming order stage.`
+            message: `Can't update status to ${status} from ${currentStatus}. Select an upcoming order stage.`
         };
+    }
+
+    // For delivered orders in cash on delivery
+    if(status === 'Delivered') {
+        if (order.paymentMethod === 'Cash on Delivery') {
+            order.paymentStatus = 'Completed';
+        }else if (!isOrderPaid(order)) {
+            return { statusCode: 403, message: 'Only paid orders can be marked as Delivered.' };
+        }
     }
 
     order.orderStatus = status;

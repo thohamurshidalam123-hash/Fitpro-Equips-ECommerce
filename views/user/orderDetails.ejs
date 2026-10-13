@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Details | Fitpro Equips</title>
+    <link rel="stylesheet" href="/css/inline-validation.css">
     <link rel="stylesheet" href="/css/landing.css">
     <style>
         .order-detail-page {
@@ -316,6 +317,7 @@
                 <div class="modal-body">
                     <p>Are you sure you want to cancel this order? This action cannot be undone and stock will be returned.</p>
                     <textarea class="modal-textarea" id="cancelReason" placeholder="Reason for cancellation (Optional)"></textarea>
+                    <p class="inline-validation-message" id="cancelReasonError" hidden></p>
                     <div class="modal-actions">
                         <button class="btn btn-cancel" data-close>Keep Order</button>
                         <button class="btn btn-danger" id="btnConfirmCancel">Confirm Cancellation</button>
@@ -369,15 +371,39 @@
             // Modal Logic
             const cancelModal = document.getElementById('cancelModal');
             const returnModal = document.getElementById('returnModal');
+            const cancelReason = document.getElementById('cancelReason');
+            const cancelReasonError = document.getElementById('cancelReasonError');
             const returnReason = document.getElementById('returnReason');
             const returnReasonError = document.getElementById('returnReasonError');
+            const reasonPattern = /^[A-Za-z0-9][A-Za-z0-9 .,!?'-]*$/;
 
-            returnReason?.addEventListener('input', () => {
-                returnReasonError.textContent = '';
-                returnReasonError.hidden = true;
-                returnReason.classList.remove('inline-validation-invalid');
-                returnReason.removeAttribute('aria-invalid');
-            });
+            const validateReason = (reason, required) => {
+                if (required && !reason) return 'Please provide a reason for the return.';
+                if (!reason) return '';
+                if (reason.length > 500) return 'Reason must be 500 characters or fewer.';
+                if (!reasonPattern.test(reason)) {
+                    return 'Reason contains unsupported characters. Use letters, numbers, spaces, and basic punctuation.';
+                }
+                return '';
+            };
+
+            const clearReasonError = (field, error) => {
+                error.textContent = '';
+                error.hidden = true;
+                field.classList.remove('inline-validation-invalid');
+                field.removeAttribute('aria-invalid');
+            };
+
+            const showReasonError = (field, error, message) => {
+                error.textContent = message;
+                error.hidden = false;
+                field.classList.add('inline-validation-invalid');
+                field.setAttribute('aria-invalid', 'true');
+                field.focus();
+            };
+
+            cancelReason?.addEventListener('input', () => clearReasonError(cancelReason, cancelReasonError));
+            returnReason?.addEventListener('input', () => clearReasonError(returnReason, returnReasonError));
             
             document.getElementById('btnOpenCancel')?.addEventListener('click', () => {
                 cancelModal.classList.add('active');
@@ -397,7 +423,12 @@
             // Handle Cancel Request
             document.getElementById('btnConfirmCancel')?.addEventListener('click', async function() {
                 const btn = this;
-                const reason = document.getElementById('cancelReason').value.trim();
+                const reason = cancelReason.value.trim();
+                const reasonError = validateReason(reason, false);
+                if (reasonError) {
+                    showReasonError(cancelReason, cancelReasonError, reasonError);
+                    return;
+                }
                 
                 btn.textContent = 'Cancelling...';
                 btn.disabled = true;
@@ -420,7 +451,12 @@
                             window.location.reload();
                         }
                     } else {
-                        window.showAppModal ? window.showAppModal(data.message || 'Unable to cancel this order.', 'error') : alert(data.message || 'Unable to cancel this order.');
+                        const reasonFieldError = data.errors && (data.errors.reason || data.errors.cancellationReason);
+                        if (reasonFieldError) {
+                            showReasonError(cancelReason, cancelReasonError, reasonFieldError);
+                        } else {
+                            window.showAppModal ? window.showAppModal(data.message || 'Unable to cancel this order.', 'error') : alert(data.message || 'Unable to cancel this order.');
+                        }
                         btn.textContent = 'Confirm Cancellation';
                         btn.disabled = false;
                     }
@@ -434,14 +470,10 @@
             // Handle Return Request
             document.getElementById('btnConfirmReturn')?.addEventListener('click', async function() {
                 const btn = this;
-                const reason = document.getElementById('returnReason').value.trim();
-                
-                if (!reason) {
-                    returnReasonError.textContent = 'Please provide a reason for the return.';
-                    returnReasonError.hidden = false;
-                    returnReason.classList.add('inline-validation-invalid');
-                    returnReason.setAttribute('aria-invalid', 'true');
-                    returnReason.focus();
+                const reason = returnReason.value.trim();
+                const reasonError = validateReason(reason, true);
+                if (reasonError) {
+                    showReasonError(returnReason, returnReasonError, reasonError);
                     return;
                 }
 
@@ -466,12 +498,9 @@
                             window.location.reload();
                         }
                     } else {
-                        const reasonError = data.errors && (data.errors.reason || data.errors.returnReason);
-                        if (reasonError) {
-                            returnReasonError.textContent = reasonError;
-                            returnReasonError.hidden = false;
-                            returnReason.classList.add('inline-validation-invalid');
-                            returnReason.setAttribute('aria-invalid', 'true');
+                        const returnFieldError = data.errors && (data.errors.reason || data.errors.returnReason);
+                        if (returnFieldError) {
+                            showReasonError(returnReason, returnReasonError, returnFieldError);
                         } else {
                             window.showAppModal ? window.showAppModal(data.message || 'Unable to submit the return request.', 'error') : alert(data.message || 'Unable to submit the return request.');
                         }

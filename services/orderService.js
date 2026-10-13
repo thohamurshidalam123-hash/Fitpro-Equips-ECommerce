@@ -3,6 +3,7 @@ const Product = require('../models/productModel');
 const Razorpay = require('razorpay'); 
 const mongoose = require('mongoose');
 const walletService = require('./walletService');
+const { validateOrderReason } = require('../validators/orderValidators');
 
 // For adjusting stock of order items
 const adjustOrderItemStock = async (item, quantityChange) => {
@@ -84,6 +85,10 @@ const getOrderDetails = async ({ orderId, userId }) => {
 
 // For cancelling an order and restoring stock
 const cancelOrder = async ({ orderId, userId, reason }) => {
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    const reasonError = validateOrderReason(normalizedReason);
+    if (reasonError) return { statusCode: 400, message: reasonError, errors: { reason: reasonError } };
+
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return { statusCode: 404, message: 'Order not found' };
     if (['Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) {
@@ -91,7 +96,7 @@ const cancelOrder = async ({ orderId, userId, reason }) => {
     }
     const paymentWasCompleted = ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
     order.orderStatus = 'Cancelled';
-    if (reason) order.cancellationReason = reason;
+    if (normalizedReason) order.cancellationReason = normalizedReason;
     
     //For refunding to wallet for paid orders
     if (paymentWasCompleted) {
@@ -116,14 +121,17 @@ const cancelOrder = async ({ orderId, userId, reason }) => {
 
 // For returning an order and restoring stock
 const returnOrder = async ({ orderId, userId, reason }) => {
-    if (!reason || reason.trim() === '') return { statusCode: 400, message: 'Reason for return is mandatory' };
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    const reasonError = validateOrderReason(normalizedReason, { required: true });
+    if (reasonError) return { statusCode: 400, message: reasonError, errors: { reason: reasonError } };
+
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return { statusCode: 404, message: 'Order not found' };
     if (order.orderStatus !== 'Delivered') return { statusCode: 400, message: 'Only delivered order can be returned' };
 
     // For changing status to requested.
     order.orderStatus = 'Return requested';
-    order.returnReason = reason;
+    order.returnReason = normalizedReason;
     await order.save();
     
     return { success: true, message: 'Order return initiated successfully' };

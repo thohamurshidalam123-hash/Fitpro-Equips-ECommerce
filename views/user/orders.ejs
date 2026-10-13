@@ -59,7 +59,7 @@
         .order-state { display: inline-flex; align-items: center; gap: 4px; justify-self: end; padding: 4px 8px; border-radius: 20px; color: #1264c8; background: #e6f1ff; font-size: 8px; font-weight: 600; white-space: nowrap; }
         .order-state::before { width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
         .order-state.delivered { color: #12804a; background: #e4f7ec; }
-        .order-state.cancelled { color: #d62f3a; background: #fce7e8; }
+        .order-state.cancelled, .order-state.returned { color: #d62f3a; background: #fce7e8; }
         .detail-link { color: var(--orders-blue); font-size: 9px; white-space: nowrap; }
         .detail-link:hover { text-decoration: underline; }
 
@@ -206,6 +206,7 @@
                             let badgeClass = '';
                             if (orderStatus === 'Delivered') badgeClass = 'delivered';
                             if (orderStatus === 'Cancelled') badgeClass = 'cancelled';
+                            if (orderStatus === 'Returned') badgeClass = 'returned';
                         %>
 
                         <article class="order-card" data-order-status="<%= orderStatus.toLowerCase() %>" data-order-search="<%= searchStr %>">

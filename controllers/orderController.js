@@ -48,7 +48,7 @@ const cancelOrder = async (req, res) => {
     try{
         const userId = req.session.userId;
         const result = await orderService.cancelOrder({ userId, orderId: req.params.id, reason: req.body.reason });
-        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message, errors: result.errors });
         res.json(result);
 
         }catch(error){
@@ -62,7 +62,7 @@ const returnOrder = async (req, res) => {
     try{
         const userId = req.session.userId;
         const result = await orderService.returnOrder({ userId, orderId: req.params.id, reason: req.body.reason });
-        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message, errors: result.errors });
         res.json(result);
     }catch(error) {
         console.error('Error in returning order:',error);
