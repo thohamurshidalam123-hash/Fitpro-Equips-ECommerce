@@ -108,7 +108,7 @@
 										</td>
 										<td>#AV-<%= String(index + 1).padStart(5, '0') %></td>
 										<td><%= user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : 'N/A' %></td>
-										<td><%= user.orders ? user.orders.length : 0 %></td>
+										<td><%= user.orderCount || 0 %></td>
 										<td>
 											<span class="status-badge <%= user.isBlocked ? 'blocked' : 'active' %>">
 												<%= user.isBlocked ? 'BLOCKED' : 'ACTIVE' %>

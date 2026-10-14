@@ -7,7 +7,7 @@ const isOrderPaid = order => ['paid', 'completed'].includes(String(order.payment
 // For listing orders with search, filter, sort and pagination
 const getAdminOrders = async ({ page = 1, search = '', status = 'all', payment = 'all', limit = 10 }) => {
     const validStatuses = ['Processing', 'Packed', 'Shipped', 'Delivered', 'Cancelled', 'Returned', 'Return requested'];
-    const validPaymentStatuses = ['Paid', 'Pending'];
+    const validPaymentStatuses = ['Completed', 'Pending', 'Refunded'];
     const normalizedStatus = validStatuses.includes(status) ? status : 'all';
     const normalizedPayment = validPaymentStatuses.includes(payment) ? payment : 'all';
     const query = {};
