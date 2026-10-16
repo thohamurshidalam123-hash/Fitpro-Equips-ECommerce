@@ -29,12 +29,12 @@
 			</div>
 
 			<section class="wishlist-grid" aria-label="Saved products">
-				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const oldPrice = product.salePrice > 0 ? product.regularPrice : null; const savedVariant = (product.variants || []).find(productVariant => String(productVariant._id) === String(item.variantId)); const variant = savedVariant && Number(savedVariant.stock) > 0 && savedVariant.status !== 'Out of Stock' ? savedVariant : (product.variants || []).find(productVariant => Number(productVariant.stock) > 0 && productVariant.status !== 'Out of Stock'); %>
+				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.images && product.images[0]; const price = product.salePrice > 0 ? product.salePrice : product.regularPrice; const oldPrice = product.salePrice > 0 ? product.regularPrice : null; const variants = product.variants || []; const hasAvailableVariant = variants.some(productVariant => Number(productVariant.stock) > 0 && productVariant.status !== 'Out of Stock'); %>
 					<article class="wishlist-card" data-wishlist-card data-product-id="<%= product._id %>">
 						<div class="wishlist-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>>
 							<button class="remove-wishlist" type="button" aria-label="Remove <%= product.productName %> from wishlist" data-remove-wishlist data-product-id="<%= product._id %>" data-variant-id="<%= item.variantId || '' %>">×</button>
 						</div>
-						<div class="wishlist-card-content"><small><%= product.brandId ? product.brandId.name : (product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT') %></small><h2><%= product.productName %></h2><% if (savedVariant) { %><small>Selected: <%= savedVariant.name || `${savedVariant.weight} ${savedVariant.weightUnit || 'kg'}` %></small><% } %><div class="wishlist-price">₹<%= Number(price).toLocaleString('en-IN') %><% if (oldPrice) { %> <del>₹<%= Number(oldPrice).toLocaleString('en-IN') %></del><% } %></div><button class="card-cart-button" type="button" data-add-cart data-product-id="<%= product._id %>"<% if (!variant && product.variants && product.variants.length || product.status !== 'Active' || product.availableStock < 1) { %> disabled<% } %><% if (variant) { %> data-variant-id="<%= variant._id %>"<% } %>>Add to Cart</button></div>
+						<div class="wishlist-card-content"><small><%= product.brandId ? product.brandId.name : (product.categoryId ? product.categoryId.name : 'FITPRO EQUIPMENT') %></small><h2><%= product.productName %></h2><div class="wishlist-price">₹<%= Number(price).toLocaleString('en-IN') %><% if (oldPrice) { %> <del>₹<%= Number(oldPrice).toLocaleString('en-IN') %></del><% } %></div><button class="card-cart-button" type="button" data-add-cart data-product-id="<%= product._id %>" data-variants="<%= encodeURIComponent(JSON.stringify(variants)) %>"<% if (product.status !== 'Active' || (variants.length ? !hasAvailableVariant : product.availableStock < 1)) { %> disabled<% } %>>Add to Cart</button></div>
 					</article>
 				<% }) %>
 			</section>
@@ -47,6 +47,14 @@
 			<% } %>
 			<p class="wishlist-empty" hidden>Your wishlist is empty. <a href="/shop">Continue shopping</a></p>
 		</main>
+		<div class="wishlist-variant-backdrop" data-variant-picker hidden>
+			<section class="wishlist-variant-dialog" role="dialog" aria-modal="true" aria-labelledby="wishlistVariantTitle">
+				<button class="wishlist-variant-close" type="button" data-close-variant-picker aria-label="Close variant selection">×</button>
+				<h2 id="wishlistVariantTitle">Choose a variant</h2>
+				<div class="wishlist-variant-options" data-variant-options></div>
+				<button class="wishlist-variant-add" type="button" data-confirm-variant-add disabled>Add to Cart</button>
+			</section>
+		</div>
 
 		<%- include('../partials/user-footer') %>
 	</div>

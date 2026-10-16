@@ -35,6 +35,8 @@ const getProducts = async ({ page, limit, searchQuery, categoryFilter, statusFil
     ]);
 
     products.forEach(product => {
+        const highestVariantPrice = getHighestVariantPrice(product);
+        if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
         product.bestOfferPercentage = Math.max(
             Number(product.offerPercentage) || 0,
             Number(product.categoryId?.offerPercentage) || 0,
@@ -123,6 +125,8 @@ const getProductDetails = async (productId) => {
         Brand.find({ status: 'Active' }).select('name').sort({ name: 1 }).lean()
     ]);
     if (product) {
+        const highestVariantPrice = getHighestVariantPrice(product);
+        if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
         product.bestOfferPercentage = Math.max(
             Number(product.offerPercentage) || 0,
             Number(product.categoryId?.offerPercentage) || 0,
@@ -136,7 +140,8 @@ const getProductDetails = async (productId) => {
 const recalculateTotalStock = product => {
     if (product.variants && product.variants.length > 0) {
         product.availableStock = product.variants.reduce((sum, variant) => sum + (Number(variant.stock) || 0), 0);
-        product.regularPrice = getHighestVariantPrice(product);
+        const highestVariantPrice = getHighestVariantPrice(product);
+        if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
     }
     if (product.availableStock === 0) {
         product.status = 'Out of Stock';

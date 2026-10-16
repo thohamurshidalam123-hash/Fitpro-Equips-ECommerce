@@ -1,4 +1,5 @@
 const userShopService = require('../services/userShopService');
+const wishlistService = require('../services/wishlistService');
 
 const loadLandingPage = async (req, res) => {
     try {
@@ -27,10 +28,14 @@ const loadShopPage = async (req, res) => {
         const maxPrice = req.query.maxPrice || '';
         const sortOption = req.query.sort || 'newest';
         const data = await userShopService.getShopPageData({ page, limit, search, categoryFilter, brandFilter, minPrice, maxPrice, sortOption });
+        const wishlistProductIds = req.session?.userId
+            ? await wishlistService.getWishlistProductIds(req.session.userId)
+            : [];
 
         // For rendering view
         res.render('user/shop',{
             products: data.products,
+            wishlistProductIds,
             categories: data.categories,
             brands: data.brands,
             message,
@@ -64,8 +69,13 @@ const productDetailsPage = async (req,res) => {
             return req.session.save(() => res.redirect('/shop'));
         }
 
+        const wishlistProductIds = req.session?.userId
+            ? await wishlistService.getWishlistProductIds(req.session.userId)
+            : [];
+
         res.render('user/productDetails', {
             ...data,
+            wishlistProductIds,
             currentPage: 'shop'
         });
     }catch(error){

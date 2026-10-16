@@ -8,7 +8,9 @@
     </nav>
     <div class="header-actions" aria-label="Quick actions">
         <span class="icon search-icon" aria-hidden="true"></span>
-        <a class="icon heart-icon" href="/wishlist" aria-label="Open wishlist" title="Wishlist"></a>
+        <a class="icon heart-icon wishlist-wrap" href="/wishlist" aria-label="Open wishlist" title="Wishlist">
+            <span class="wishlist-count" data-wishlist-badge>0</span>
+        </a>
         <a class="cart-wrap" href="/cart" aria-label="Open cart" title="Cart">
             <span class="icon cart-icon" aria-hidden="true"></span>
             <span class="cart-count" data-cart-count>0</span>
@@ -17,4 +19,5 @@
     </div>
 </header>
 <script src="/js/cart-badge.js"></script>
+<script src="/js/wishlist-badge.js"></script>
 <script src="/js/invoice-download.js"></script>

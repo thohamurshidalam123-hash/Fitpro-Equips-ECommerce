@@ -61,3 +61,8 @@
     object-fit: contain;
     object-position: center;
 }
+
+.wishlist-button.is-wishlisted [data-wishlist-heart],
+.related-wishlist.is-wishlisted {
+    color: #000;
+}

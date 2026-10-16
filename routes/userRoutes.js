@@ -156,6 +156,7 @@ router.post('/cart/moveToWishlist',cartController.moveToWishlist);
 
 //Wishlist routes
 router.get('/wishlist', requireUserSession, wishlistController.loadWishlist);
+router.get('/wishlist/count', wishlistController.getWishlistCount);
 router.post('/wishlist/toggle', requireWishlistSession, wishlistController.toggleWishlist);
 router.post('/wishlist/remove', requireUserSession, wishlistController.removeWishlistItem);
 router.post('/wishlist/clear', requireUserSession, wishlistController.clearWishlist);

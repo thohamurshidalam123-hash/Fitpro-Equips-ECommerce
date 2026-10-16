@@ -47,7 +47,8 @@
                                 <span class="sale-tag"><%= product.bestOfferPercentage %>% OFF</span>
                             <% } %>
                             
-                            <button class="wishlist" data-wishlist-toggle data-product-id="<%= product._id %>" data-variants="<%= serializedVariants %>" type="button" aria-label="Add <%= product.productName %> to wishlist">♡</button>
+                            <% const isWishlisted = wishlistProductIds.includes(String(product._id)); %>
+                            <button class="wishlist<%= isWishlisted ? ' is-wishlisted' : '' %>" data-wishlist-toggle data-product-id="<%= product._id %>" type="button" aria-label="<%= isWishlisted ? 'Remove' : 'Add' %> <%= product.productName %> <%= isWishlisted ? 'from' : 'to' %> wishlist" aria-pressed="<%= isWishlisted %>"><span data-wishlist-heart aria-hidden="true"><%= isWishlisted ? '♥' : '♡' %></span></button>
                             <a class="product-details-link" href="/products/<%= product._id %>" aria-label="View details for <%= product.productName %>">
                                 <div class="shop-product-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>></div>
                                 <small><%= product.brandId ? product.brandId.name : 'FITPRO EQUIPMENT' %></small>
@@ -155,6 +156,7 @@
                 }
 
                 if (typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
+                if (typeof window.updateWishlistBadgeCount === 'function') window.updateWishlistBadgeCount(result.wishlistCount);
 
                 if (window.showAppModal) {
                     window.showAppModal(result.message || 'Product added to cart successfully!', 'success');
@@ -217,15 +219,6 @@
             variantAdd.textContent = action === 'wishlist' ? 'Add to Wishlist' : 'Add to Cart';
             variantPicker.hidden = false;
         }
-        document.addEventListener('click', event => {
-            const button = event.target.closest('[data-wishlist-toggle]');
-            if (!button) return;
-            const variants = JSON.parse(decodeURIComponent(button.dataset.variants || '%5B%5D'));
-            if (!variants.length) return;
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            openShopVariantPicker(button, variants, 'wishlist');
-        });
         variantOptions.addEventListener('click', event => {
             const option = event.target.closest('.shop-variant-option');
             if (!option || option.disabled) return;
@@ -259,6 +252,8 @@
                 if (window.showAppModal) window.showAppModal(result.message || 'Unable to add product to cart.', result.success ? 'success' : 'error');
                 if (result.success) {
                     if (!isWishlistAction && typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
+                    if (isWishlistAction && typeof window.updateWishlistBadgeCount === 'function') window.updateWishlistBadgeCount(result.count);
+                    if (!isWishlistAction && typeof window.updateWishlistBadgeCount === 'function') window.updateWishlistBadgeCount(result.wishlistCount);
                     if (isWishlistAction && pickerSourceButton) {
                         const isAdded = result.action === 'added';
                         pickerSourceButton.textContent = isAdded ? '♥' : '♡';

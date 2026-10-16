@@ -32,6 +32,8 @@ button { font: inherit; }
 .user-icon::after { content: ""; position: absolute; left: 3px; right: 3px; bottom: 1px; height: 5px; border: 1px solid currentColor; border-radius: 8px 8px 4px 4px; }
 .cart-wrap { position: relative; height: 13px; }
 .cart-count { position: absolute; top: -9px; right: -8px; display: grid; width: 11px; height: 11px; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); font-size: 7px; }
+.wishlist-wrap { height: 13px; }
+.wishlist-count { position: absolute; top: -9px; right: -8px; display: grid; width: 11px; height: 11px; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); font-size: 7px; }
 .hero { display: grid; grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr); min-height: 320px; align-items: center; gap: clamp(24px, 4vw, 64px); padding: clamp(34px, 4vw, 58px) clamp(18px, 7vw, 120px); background: #f1f5fd; }
 .hero-copy h1 { max-width: 350px; margin: 0 0 14px; font-size: clamp(30px, 3.3vw, 43px); line-height: .98; letter-spacing: -.7px; }
 .hero-copy h1 strong { color: var(--blue); }

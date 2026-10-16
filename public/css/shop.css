@@ -49,6 +49,7 @@ legend { font-size: 10px; }
 .pagination a:hover:not(.current), .pagination-control:hover:not(.disabled) { color: #2468e8; border-color: #2468e8; }
 .pagination a.current { color: #fff; border-color: #2468e8; background: #2468e8; }
 .pagination-control.disabled { color: #b5bfce; background: #f5f7fb; cursor: not-allowed; }
+.wishlist.is-wishlisted { color: #000; }
 
 @media (max-width: 800px) {
 	.shop-search-box { max-width: none; }

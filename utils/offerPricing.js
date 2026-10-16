@@ -6,6 +6,7 @@ const getBestOfferPercentage = product => Math.max(
 
 const getHighestVariantPrice = product => {
     const prices = (Array.isArray(product?.variants) ? product.variants : [])
+        .filter(variant => Number(variant.stock) > 0)
         .map(variant => Number(variant.price))
         .filter(Number.isFinite);
     return prices.length ? Math.max(...prices) : null;

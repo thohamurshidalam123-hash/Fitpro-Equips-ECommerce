@@ -17,7 +17,7 @@
             const response = await fetch('/wishlist/toggle', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-                body: JSON.stringify({ productId, variantId: button.dataset.variantId })
+                body: JSON.stringify({ productId })
             });
             const result = await response.json();
 
@@ -31,11 +31,13 @@
             }
 
             const isAdded = result.action === 'added';
-            if (button.classList.contains('wishlist')) {
-                button.textContent = isAdded ? '♥' : '♡';
-            } else {
-                button.textContent = isAdded ? '♥ Added to Wishlist' : '♡ Add to Wishlist';
-            }
+            if (typeof window.updateWishlistBadgeCount === 'function') window.updateWishlistBadgeCount(result.count);
+            button.classList.toggle('is-wishlisted', isAdded);
+            const heart = button.querySelector('[data-wishlist-heart]');
+            if (heart) heart.textContent = isAdded ? '♥' : '♡';
+            const label = button.querySelector('[data-wishlist-label]');
+            if (label) label.textContent = isAdded ? ' Added to Wishlist' : ' Add to Wishlist';
+            button.setAttribute('aria-pressed', String(isAdded));
             button.setAttribute('aria-label', `${isAdded ? 'Remove' : 'Add'} product ${isAdded ? 'from' : 'to'} wishlist`);
             showMessage(result.message, 'success');
         } catch (error) {

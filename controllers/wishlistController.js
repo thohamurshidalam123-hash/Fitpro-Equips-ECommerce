@@ -1,5 +1,16 @@
 const wishlistService = require('../services/wishlistService');
 
+const getWishlistCount = async (req, res) => {
+    try {
+        if (!req.session.userId) return res.json({ success: true, count: 0 });
+        const count = await wishlistService.getWishlistBadgeCount(req.session.userId);
+        return res.json({ success: true, count });
+    } catch (error) {
+        console.error('Wishlist count error:', error.message);
+        return res.status(500).json({ success: false, message: 'Unable to load wishlist count.' });
+    }
+};
+
 // For loading wishlist page
 const loadWishlist = async (req, res) => {
     try{
@@ -33,7 +44,8 @@ const toggleWishlist = async (req, res) => {
 
         const result = await wishlistService.addWishlistItem({ ...req.body, userId });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
-        return res.json(result);
+        const count = await wishlistService.getWishlistBadgeCount(userId);
+        return res.json({ ...result, count });
     }catch(error){
         console.error('Error in toggle wishlist:',error.message);
         res.status(500).json({ success: false, message:'Server Error'});
@@ -45,7 +57,8 @@ const removeWishlistItem = async (req, res) => {
     try{
         const userId = req.session.userId;
         await wishlistService.removeWishlistItem({ ...req.body, userId });
-        res.json({ success: true, message: 'Product removed from wishlist' });
+        const count = await wishlistService.getWishlistBadgeCount(userId);
+        res.json({ success: true, message: 'Product removed from wishlist', count });
     }catch(error){
         console.error('Remove wishlist item error:', error.message);
         res.status(500).json({ success: false, message: 'Server Error'});
@@ -57,7 +70,7 @@ const clearWishlist = async (req, res) => {
     try{
         const userId = req.session.userId;
         await wishlistService.clearWishlist(userId);
-        res.json({ success: true, message: 'Wishlist cleared successfully'});
+        res.json({ success: true, message: 'Wishlist cleared successfully', count: 0 });
     }catch(error){
         console.error('Clear wishlist error:',error.message);
         res.status(500).json({ success: false, message: 'Server Error'});
@@ -65,6 +78,7 @@ const clearWishlist = async (req, res) => {
 };
 
 module.exports = {
+    getWishlistCount,
     loadWishlist,
     toggleWishlist,
     removeWishlistItem,

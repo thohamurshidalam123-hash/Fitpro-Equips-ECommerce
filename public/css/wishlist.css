@@ -39,6 +39,17 @@
 .wishlist-pagination .disabled { color: #a5afbd; background: #f5f7fa; }
 .wishlist-empty { margin: 40px 0; color: #647086; text-align: center; font-size: 12px; }.wishlist-empty a { color: #1263df; }
 .wishlist-card.is-removed { display: none; }
+.wishlist-variant-backdrop { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; padding: 20px; background: rgba(18, 32, 54, .45); }
+.wishlist-variant-backdrop[hidden] { display: none; }
+.wishlist-variant-dialog { position: relative; width: min(100%, 420px); padding: 24px; border-radius: 8px; background: #fff; box-shadow: 0 18px 50px rgba(20, 41, 76, .25); }
+.wishlist-variant-dialog h2 { margin: 0 0 16px; color: #182235; font-size: 20px; }
+.wishlist-variant-close { position: absolute; top: 10px; right: 12px; border: 0; color: #718096; background: transparent; font-size: 24px; cursor: pointer; }
+.wishlist-variant-option { display: flex; justify-content: space-between; gap: 12px; width: 100%; margin: 7px 0; padding: 10px; border: 1px solid #dfe7f3; border-radius: 5px; color: #344157; background: #fff; text-align: left; cursor: pointer; }
+.wishlist-variant-option span { color: #718096; font-size: 11px; }
+.wishlist-variant-option.selected { border-color: #2468e8; background: #eef5ff; }
+.wishlist-variant-option:disabled { opacity: .5; cursor: not-allowed; }
+.wishlist-variant-add { width: 100%; height: 38px; margin-top: 14px; border: 0; border-radius: 5px; color: #fff; background: #075bd0; cursor: pointer; }
+.wishlist-variant-add:disabled { opacity: .55; cursor: not-allowed; }
 @media (max-width: 900px) { .wishlist-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .wishlist-main { min-height: 520px; padding: 24px 18px 42px; }.wishlist-heading { align-items: flex-start; margin-bottom: 28px; }.wishlist-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .wishlist-heading { flex-direction: column; }.wishlist-heading h1 { font-size: 24px; }.wishlist-summary { align-self: stretch; }.wishlist-actions { flex-wrap: wrap; }.clear-wishlist { width: 100%; justify-content: flex-end; }.wishlist-grid { grid-template-columns: 1fr; }.wishlist-image { height: 180px; } }

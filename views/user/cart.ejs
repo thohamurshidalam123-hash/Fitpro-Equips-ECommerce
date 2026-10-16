@@ -122,6 +122,7 @@
         margin-top: 5px; 
         display: block; 
     }
+    .error-msg[hidden] { display: none; }
 
     .product-thumb {
         width: 150px;
@@ -762,7 +763,7 @@
                     </div>
                     <div class="cart-counts">
                         <!-- Dynamic Item Count -->
-                        <span><strong><%= itemCount || 0 %> items</strong></span>
+                        <span><strong data-cart-item-count><%= itemCount || 0 %> items</strong></span>
                         <span>Estimated Delivery: 3-5 Business Days</span>
                     </div>
                 </div>
@@ -773,7 +774,7 @@
                         <% if (typeof cartItems !== 'undefined' && cartItems.length > 0) { %>
                             <% cartPageItems.forEach(item => { %>
                                 <!-- Task D.vii: Add class if item is disabled or out of stock -->
-                                <article class="cart-item <%= (!item.isAvailable || item.outOfStock) ? 'disabled-item' : '' %>">
+                                <article class="cart-item <%= (!item.isAvailable || item.outOfStock) ? 'disabled-item' : '' %>" data-cart-item-id="<%= item._id %>">
                                     <div class="product-thumb">
                                         <a href="/products/<%= item.productId._id %>">
                                             <img src="<%= item.variant && item.variant.images && item.variant.images[0] ? item.variant.images[0] : item.productId.images[0] %>" alt="<%= item.productId.productName %>">
@@ -788,27 +789,21 @@
                                         <p class="product-meta"><strong>Brand:</strong> <%= item.productId.brandId ? item.productId.brandId.name : 'Fitpro Equipment' %><% if (item.variant) { %> <span>·</span> <strong>Variant:</strong> <%= item.variant.name || `${item.variant.weight} ${item.variant.weightUnit || 'kg'}` %><% if (item.variant.color) { %> (<%= item.variant.color %>)<% } %><% } %></p>
 
                                         <!-- Task D.vii: Error Warnings for blocked/OOS items -->
-                                        <% if (!item.isAvailable) { %>
-                                            <span class="error-msg">⚠️ This item is currently unlisted and cannot be purchased.</span>
-                                        <% } else if (item.outOfStock) { %>
-                                            <span class="error-msg">🚫 Out of Stock</span>
-                                        <% } else if (!item.hasStock) { %>
-                                            <span class="error-msg">⚠️ Only <%= item.variant ? item.variant.stock : item.productId.availableStock %> units left. Reduce quantity.</span>
-                                        <% } %>
+                                        <span class="error-msg" data-cart-item-warning <%= item.isAvailable && !item.outOfStock && item.hasStock ? 'hidden' : '' %>><%= !item.isAvailable ? '⚠️ This item is currently unlisted and cannot be purchased.' : item.outOfStock ? '🚫 Out of Stock' : !item.hasStock ? `⚠️ Only ${item.variant ? item.variant.stock : item.productId.availableStock} units left. Reduce quantity.` : '' %></span>
 
                                         <div class="product-controls">
                                             <div class="qty-box" aria-label="Quantity selector">
-                                                <button type="button" onclick="updateQty('<%= item._id %>', 'decrease')" <%= (!item.isAvailable || item.outOfStock) ? 'disabled' : '' %> aria-label="Decrease quantity">−</button>
-                                                <span class="qty-value"><%= item.quantity %></span>
-                                                <button type="button" onclick="updateQty('<%= item._id %>', 'increase')" <%= (!item.isAvailable || item.outOfStock) ? 'disabled' : '' %> aria-label="Increase quantity">+</button>
+                                                <button type="button" data-quantity-action="decrease" onclick="updateQty('<%= item._id %>', 'decrease')" <%= (!item.isAvailable || item.outOfStock || item.quantity <= 1) ? 'disabled' : '' %> aria-label="Decrease quantity">−</button>
+                                                <span class="qty-value" data-cart-quantity><%= item.quantity %></span>
+                                                <button type="button" data-quantity-action="increase" onclick="updateQty('<%= item._id %>', 'increase')" <%= (!item.isAvailable || item.outOfStock) ? 'disabled' : '' %> aria-label="Increase quantity">+</button>
                                             </div>
                                             <button class="mini-link remove" type="button" onclick="removeItem('<%= item._id %>')">Remove</button>
                                             <button class="mini-link wishlist" type="button" data-item-id="<%= item._id %>" data-product-id="<%= item.productId._id %>" data-variant-id="<%= item.variantId || '' %>">Add to Wishlist</button>
                                         </div>
                                     </div>
                                     <div class="price-block">
-                                        <p class="price">₹<%= item.price.toLocaleString('en-IN') %></p>
-                                        <span class="subtotal">Subtotal <strong>₹<%= item.totalPrice.toLocaleString('en-IN') %></strong></span>
+                                        <p class="price">₹<span data-cart-unit-price><%= item.price.toLocaleString('en-IN') %></span></p>
+                                        <span class="subtotal">Subtotal <strong>₹<span data-cart-line-total><%= item.totalPrice.toLocaleString('en-IN') %></span></strong></span>
                                     </div>
                                 </article>
                             <% }) %>
@@ -831,27 +826,27 @@
                     <aside class="summary-box">
                         <h3 class="summary-title">Order Summary</h3>
                         <ul class="summary-list">
-                            <li><span>Subtotal (<%= itemCount || 0 %> items)</span><strong>₹<%= (typeof subtotal !== 'undefined' ? subtotal : 0).toLocaleString('en-IN') %></strong></li>
+                            <li><span>Subtotal (<span data-cart-summary-count><%= itemCount || 0 %></span> items)</span><strong>₹<span data-cart-subtotal><%= (typeof subtotal !== 'undefined' ? subtotal : 0).toLocaleString('en-IN') %></span></strong></li>
                             <li>
-                                <span>Coupon Savings<% if (appliedCoupon && discount > 0) { %><small class="summary-coupon-name"><%= appliedCoupon.name || appliedCoupon.code %></small><% } %></span>
+                                <span>Coupon Savings<% if (appliedCoupon && discount > 0) { %><small class="summary-coupon-name" data-cart-coupon-name><%= appliedCoupon.name || appliedCoupon.code %></small><% } %></span>
                                 <strong class="summary-coupon-value">
-                                    - ₹<%= (discount || 0).toLocaleString('en-IN') %>
+                                    - ₹<span data-cart-discount-amount><%= (discount || 0).toLocaleString('en-IN') %></span>
                                     <% if (appliedCoupon && discount > 0) { %><button class="summary-coupon-remove" id="btnRemoveCartCoupon" type="button">Remove</button><% } %>
                                 </strong>
                             </li>
-                            <li><span>Estimated Shipping</span><strong>₹<%= (typeof shipping !== 'undefined' ? shipping : 0).toLocaleString('en-IN') %></strong></li>
-                            <li><span>Tax (GST 0.18%)</span><strong>₹<%= (typeof tax !== 'undefined' ? tax : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong></li>
+                            <li><span>Estimated Shipping</span><strong>₹<span data-cart-shipping><%= (typeof shipping !== 'undefined' ? shipping : 0).toLocaleString('en-IN') %></span></strong></li>
+                            <li><span>Tax (GST 0.18%)</span><strong>₹<span data-cart-tax><%= (typeof tax !== 'undefined' ? tax : 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></span></strong></li>
                         </ul>
                         <div class="summary-total">
                             <span>Total</span>
-                            <span>₹<%= (typeof total !== 'undefined' ? total : 0).toLocaleString('en-IN') %></span>
+                            <span>₹<span data-cart-total><%= (typeof total !== 'undefined' ? total : 0).toLocaleString('en-IN') %></span></span>
                         </div>
 
                         <!-- Task D.vii: Restrict Checkout dynamically -->
                         <% if (typeof canCheckout !== 'undefined' && canCheckout && itemCount > 0) { %>
-                            <a href="/checkout" class="checkout-btn">Proceed to Checkout</a>
+                            <a href="/checkout" class="checkout-btn" data-cart-checkout>Proceed to Checkout</a>
                         <% } else { %>
-                            <button class="checkout-btn disabled-btn" type="button" disabled>
+                            <button class="checkout-btn disabled-btn" type="button" disabled data-cart-checkout>
                                 <%= itemCount === 0 ? 'Cart is Empty' : 'Fix Cart Errors to Checkout' %>
                             </button>
                         <% } %>
@@ -910,8 +905,74 @@
     </div>
 
     <script>
-    // Task D.v & D.vi: Increment/Decrement via AJAX
+    function formatCartAmount(value, fractionDigits = 0) {
+        return Number(value || 0).toLocaleString('en-IN', {
+            minimumFractionDigits: fractionDigits,
+            maximumFractionDigits: fractionDigits
+        });
+    }
+
+    function renderCartUpdate(data, itemElement) {
+        if (!data.item || !data.cart || !itemElement) return;
+        const { item, cart } = data;
+        itemElement.querySelector('[data-cart-quantity]').textContent = item.quantity;
+        itemElement.querySelector('[data-cart-unit-price]').textContent = formatCartAmount(item.price);
+        itemElement.querySelector('[data-cart-line-total]').textContent = formatCartAmount(item.totalPrice);
+        itemElement.classList.toggle('disabled-item', !item.isAvailable || item.outOfStock);
+
+        const warning = itemElement.querySelector('[data-cart-item-warning]');
+        if (warning) {
+            warning.textContent = item.warning;
+            warning.hidden = !item.warning;
+        }
+        itemElement.querySelectorAll('.qty-box button').forEach(button => {
+            button.disabled = !item.isAvailable || item.outOfStock;
+        });
+
+        document.querySelector('[data-cart-item-count]').textContent = `${cart.itemCount} item${cart.itemCount === 1 ? '' : 's'}`;
+        document.querySelector('[data-cart-summary-count]').textContent = cart.itemCount;
+        document.querySelector('[data-cart-subtotal]').textContent = formatCartAmount(cart.subtotal);
+        document.querySelector('[data-cart-discount-amount]').textContent = formatCartAmount(cart.discount);
+        document.querySelector('[data-cart-shipping]').textContent = formatCartAmount(cart.shipping);
+        document.querySelector('[data-cart-tax]').textContent = formatCartAmount(cart.tax, 2);
+        document.querySelector('[data-cart-total]').textContent = formatCartAmount(cart.total);
+
+        const couponName = document.querySelector('[data-cart-coupon-name]');
+        if (couponName) {
+            couponName.textContent = cart.couponName || '';
+            couponName.hidden = !cart.couponName;
+        }
+        const removeCouponButton = document.getElementById('btnRemoveCartCoupon');
+        if (removeCouponButton) removeCouponButton.hidden = !cart.couponName || cart.discount <= 0;
+
+        const checkoutButton = document.querySelector('[data-cart-checkout]');
+        const canCheckout = cart.canCheckout && cart.itemCount > 0;
+        if (canCheckout && checkoutButton.tagName !== 'A') {
+            const link = document.createElement('a');
+            link.href = '/checkout';
+            link.className = 'checkout-btn';
+            link.dataset.cartCheckout = '';
+            link.textContent = 'Proceed to Checkout';
+            checkoutButton.replaceWith(link);
+        } else if (!canCheckout && checkoutButton.tagName === 'A') {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'checkout-btn disabled-btn';
+            button.disabled = true;
+            button.dataset.cartCheckout = '';
+            button.textContent = cart.itemCount === 0 ? 'Cart is Empty' : 'Fix Cart Errors to Checkout';
+            checkoutButton.replaceWith(button);
+        }
+    }
+
+    // Task D.v & D.vi: Increment/Decrement via AJAX without reloading.
     async function updateQty(itemId, action) {
+        const itemElement = Array.from(document.querySelectorAll('[data-cart-item-id]'))
+            .find(item => item.dataset.cartItemId === itemId);
+        if (!itemElement) return;
+        const quantityButtons = itemElement.querySelectorAll('.qty-box button');
+        quantityButtons.forEach(button => { button.disabled = true; });
+
         try {
             const response = await fetch('/cart/update', {
                 method: 'POST',
@@ -920,9 +981,8 @@
             });
             const data = await response.json();
             
-            if (data.success) {
-                // Reloads the page to cleanly recalculate the backend totals and tax
-                window.location.reload(); 
+            if (response.ok && data.success) {
+                renderCartUpdate(data, itemElement);
             } else {
                 if (typeof window.showAppModal === 'function') {
                     window.showAppModal(data.message || 'Cart update failed.', 'error');
@@ -932,6 +992,16 @@
             console.error('Error:', error);
             if (typeof window.showAppModal === 'function') {
                 window.showAppModal('Something went wrong while updating the cart.', 'error');
+            }
+        } finally {
+            if (itemElement.isConnected) {
+                const warning = itemElement.querySelector('[data-cart-item-warning]');
+                const isDisabled = itemElement.classList.contains('disabled-item');
+                itemElement.querySelectorAll('.qty-box button').forEach(button => {
+                    button.disabled = isDisabled || (button.dataset.quantityAction === 'decrease')
+                        && Number(itemElement.querySelector('[data-cart-quantity]').textContent) <= 1;
+                });
+                if (warning && !warning.hidden) quantityButtons.forEach(button => { button.disabled = isDisabled; });
             }
         }
     }
@@ -972,6 +1042,7 @@
             });
             const data = await response.json();
             if (data.success) {
+                if (typeof window.updateWishlistBadgeCount === 'function') window.updateWishlistBadgeCount(data.count);
                 if (typeof window.showAppModal === 'function') {
                     window.showAppModal(data.message || 'Item moved to wishlist.', 'success', {
                         showCancel: true,

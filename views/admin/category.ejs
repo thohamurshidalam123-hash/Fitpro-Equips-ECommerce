@@ -68,15 +68,9 @@
 				<label for="categoryDescription">Description</label>
 				<textarea id="categoryDescription" name="description" rows="3" placeholder="Describe the category..."></textarea>
 				<p class="field-error" data-error-for="description"></p>
-				<label for="categoryOffer">Offer</label>
-				<select id="categoryOffer" name="offerPercentage" class="offer-select" aria-label="Category offer">
-					<option value="">No offer</option>
-					<option value="5">5% off</option>
-					<option value="10">10% off</option>
-					<option value="15">15% off</option>
-					<option value="20">20% off</option>
-					<option value="25">25% off</option>
-				</select>
+				<label for="categoryOffer">Offer (%)</label>
+				<input id="categoryOffer" name="offerPercentage" class="offer-select" type="number" min="0" max="100" step="0.01" inputmode="decimal" placeholder="0" aria-label="Category offer">
+				<p class="field-error" data-error-for="offerPercentage"></p>
 				<div class="featured-field"><div><strong>Featured Category</strong><small>Display this category on the homepage gallery</small></div><label class="switch"><input type="checkbox" id="categoryFeatured" name="featured"><span class="slider"></span></label></div>
 				<label for="categoryImage">Category Image</label>
 				<label class="image-upload" for="categoryImage"><span class="upload-icon">♧</span><span>Click to upload or drag and drop</span><small>JPEG or PNG only. Crop to 2:1, resized to 800×400px</small><input type="file" id="categoryImage" name="image" accept="image/png,image/jpeg" data-image-editor data-aspect-ratio="2" data-max-width="800"></label>

@@ -24,11 +24,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const name = nameInput.value.trim();
         const description = descriptionInput.value.trim();
         const categoryId = categoryInput.value.trim();
+        const offerValue = offerInput.value.trim();
         if (!name) errors.name = 'Brand name is required';
         else if (!/^[A-Za-z0-9][A-Za-z0-9 &'().-]*$/.test(name)) errors.name = 'Brand name contains unsupported characters';
         if (!description) errors.description = 'Brand description is required';
         else if (description.length > 250) errors.description = 'Brand description cannot exceed 250 characters';
         if (!categoryId) errors.categoryId = 'Category is required';
+        if (offerValue && (!Number.isFinite(Number(offerValue)) || Number(offerValue) < 0 || Number(offerValue) > 100)) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
         const selectedLogo = getSelectedLogoFile();
         if (!idInput.value && !selectedLogo) errors.logo = 'Brand image is required';
         if (selectedLogo) {

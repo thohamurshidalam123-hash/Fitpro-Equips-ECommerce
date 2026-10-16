@@ -31,6 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		const errors = {};
 		const name = nameInput.value.trim();
 		const description = descriptionInput.value.trim();
+		const offerValue = offerInput.value.trim();
 		const image = imageInput.processedFiles?.[0] || imageInput.files[0];
 		if (!name) errors.name = 'Category name is required';
 		else if (name.length < 2) errors.name = 'Category name must be at least 2 characters long';
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		if (!description) errors.description = 'Description is required';
 		else if (description.length < 2) errors.description = 'Description must be at least 2 characters long';
 		else if (description.length > 250) errors.description = 'Description cannot exceed 250 characters';
+		if (offerValue && (!Number.isFinite(Number(offerValue)) || Number(offerValue) < 0 || Number(offerValue) > 100)) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
 		if (!idInput.value && !image) errors.image = 'Category image is required';
 		if (imageInput.dataset.invalidFile === 'true' || (image && !['image/png', 'image/jpeg'].includes(image.type))) errors.image = 'File not supported';
 		else if (image && image.size > 5 * 1024 * 1024) errors.image = 'Image cannot exceed 5 MB';

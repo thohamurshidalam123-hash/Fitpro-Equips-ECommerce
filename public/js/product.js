@@ -72,6 +72,8 @@ function validateProductSelectionsAndPrice(form) {
 	const errors = {};
 	if (!form.querySelector('[name="categoryId"]').value) errors.categoryId = 'Please select a category';
 	if (!form.querySelector('[name="brandId"]').value) errors.brandId = 'Please select a brand';
+	const offerValue = form.querySelector('[name="offerPercentage"]').value.trim();
+	if (offerValue && (!Number.isFinite(Number(offerValue)) || Number(offerValue) < 0 || Number(offerValue) > 100)) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
 	const priceValue = form.querySelector('[name="regularPrice"]').value.trim();
 	const price = Number(priceValue);
 	if (!priceValue) errors.regularPrice = 'Price is required';

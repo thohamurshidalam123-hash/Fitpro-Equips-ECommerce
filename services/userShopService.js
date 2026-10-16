@@ -12,7 +12,15 @@ const getShopPageData = async ({ page, limit, search, categoryFilter, brandFilte
     const activeCategoryIds = activeCategories.map(category => category._id.toString());
     const activeBrands = await Brand.find({ status: 'Active' }).sort({ name: 1 }).lean();
     const activeBrandIds = activeBrands.map(brand => brand._id.toString());
-    const query = { status: 'Active', categoryId: { $in: activeCategoryIds } };
+    const query = {
+        status: 'Active',
+        categoryId: { $in: activeCategoryIds },
+        $or: [
+            { variants: { $elemMatch: { stock: { $gt: 0 } } } },
+            { availableStock: { $gt: 0 }, variants: { $size: 0 } },
+            { availableStock: { $gt: 0 }, variants: { $exists: false } }
+        ]
+    };
 
     if (search) query.productName = { $regex: search, $options: 'i' };
     if (categoryFilter.length) {

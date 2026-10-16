@@ -106,7 +106,8 @@
                                 <button class="add-to-cart" type="button" disabled style="background-color: #ccc; cursor: not-allowed; width: 100%;">▣ &nbsp; Out of Stock</button>
                             <% } %>
                         </div>
-                        <button class="wishlist-button" data-wishlist-toggle data-product-id="<%= product._id %>" type="button">♡ &nbsp; Add to Wishlist</button>
+                        <% const isProductWishlisted = wishlistProductIds.includes(String(product._id)); %>
+                        <button class="wishlist-button<%= isProductWishlisted ? ' is-wishlisted' : '' %>" data-wishlist-toggle data-product-id="<%= product._id %>" type="button" aria-pressed="<%= isProductWishlisted %>"><span data-wishlist-heart aria-hidden="true"><%= isProductWishlisted ? '♥' : '♡' %></span><span data-wishlist-label><%= isProductWishlisted ? ' Added to Wishlist' : ' Add to Wishlist' %></span></button>
                     </div>
                 </section>
 
@@ -131,7 +132,8 @@
                             <% relatedProducts.forEach(rel => { %>
                                 <article class="related-product-card">
                                     <% if (rel.bestOfferPercentage > 0) { %><span class="related-sale-tag"><%= rel.bestOfferPercentage %>% OFF</span><% } %>
-                                    <button class="related-wishlist" type="button" aria-label="Add <%= rel.productName %> to wishlist">♡</button>
+                                    <% const isRelatedWishlisted = wishlistProductIds.includes(String(rel._id)); %>
+                                    <button class="related-wishlist<%= isRelatedWishlisted ? ' is-wishlisted' : '' %>" data-wishlist-toggle data-product-id="<%= rel._id %>" type="button" aria-label="<%= isRelatedWishlisted ? 'Remove' : 'Add' %> <%= rel.productName %> <%= isRelatedWishlisted ? 'from' : 'to' %> wishlist" aria-pressed="<%= isRelatedWishlisted %>"><span data-wishlist-heart aria-hidden="true"><%= isRelatedWishlisted ? '♥' : '♡' %></span></button>
                                     <a class="related-product-link" href="/products/<%= rel._id %>">
                                         <div class="related-product-image"><% if (rel.images && rel.images[0]) { %><img src="<%= rel.images[0] %>" alt="<%= rel.productName %>"><% } else { %><span>FITPRO</span><% } %></div>
                                         <small><%= rel.brandId && rel.brandId.name ? rel.brandId.name : (rel.categoryId && rel.categoryId.name ? rel.categoryId.name : 'Equipment') %></small>
@@ -283,10 +285,6 @@
 
         const updateSelectedVariant = (variant) => {
             selectedVariant = variant;
-            if (wishlistButton) {
-                if (variant?._id) wishlistButton.dataset.variantId = variant._id;
-                else delete wishlistButton.dataset.variantId;
-            }
             if (!variant) return;
             const variantBasePrice = Number(variant.price || 0);
             const variantDisplayPrice = variantBasePrice * (1 - bestOfferPercentage / 100);
@@ -360,6 +358,7 @@
                 }
 
                 if (typeof window.updateCartBadgeCount === 'function') window.updateCartBadgeCount(result.count);
+                if (typeof window.updateWishlistBadgeCount === 'function') window.updateWishlistBadgeCount(result.wishlistCount);
 
                 if (window.showAppModal) {
                     window.showAppModal(result.message || 'Product added to cart successfully!', 'success');
