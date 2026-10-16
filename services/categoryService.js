@@ -1,5 +1,4 @@
 const Category = require('../models/categoryModel');
-const Brand = require('../models/brandModel');
 const Product = require('../models/productModel');
 const { validateCategory, validateCategoryImage } = require('../validators/categoryValidators');
 
@@ -15,9 +14,10 @@ const getCategories = async ({ page, limit, searchQuery }) => {
         .lean();
     const categoryIds = categories.map(category => category._id);
     const [brandCounts, productCounts, totalCategories, allCategories, activeCategories] = await Promise.all([
-        Brand.aggregate([
-            { $match: { categoryId: { $in: categoryIds } } },
-            { $group: { _id: '$categoryId', count: { $sum: 1 } } }
+        Product.aggregate([
+            { $match: { categoryId: { $in: categoryIds }, brandId: { $ne: null } } },
+            { $group: { _id: { categoryId: '$categoryId', brandId: '$brandId' } } },
+            { $group: { _id: '$_id.categoryId', count: { $sum: 1 } } }
         ]),
         Product.aggregate([
             { $match: { categoryId: { $in: categoryIds } } },

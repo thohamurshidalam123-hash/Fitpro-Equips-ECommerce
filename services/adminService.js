@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const Order = require('../models/orderModel');
 const bcrypt = require('bcrypt');
 const { sendOtpEmail } = require('./emailServices');
 
@@ -56,6 +57,13 @@ const getCustomers = async ({ page, limit, searchQuery, status }) => {
         User.countDocuments({ role: 'user', isBlocked: false }),
         User.countDocuments({ role: 'user', isBlocked: true })
     ]);
+    const orderCounts = users.length ? await Order.aggregate([
+        { $match: { userId: { $in: users.map(user => user._id) } } },
+        { $group: { _id: '$userId', count: { $sum: 1 } } }
+    ]) : [];
+    const orderCountMap = new Map(orderCounts.map(item => [String(item._id), item.count]));
+    users.forEach(user => { user.orderCount = orderCountMap.get(String(user._id)) || 0; });
+
     return { users, totalUsers, totalPages: Math.ceil(totalUsers / limit), activeCount, blockedCount };
 };
 

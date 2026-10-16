@@ -1,5 +1,6 @@
 const userService = require('../services/userService');
 const walletService = require('../services/walletService');
+const couponService = require('../services/couponService');
 const { getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
 
 // Rendering login page
@@ -36,6 +37,7 @@ const loadProfile = async (req, res) => {
             return;
         }
         const wallet = await walletService.getWalletData(req.session.userId);
+        const availableCoupons = await couponService.getAvailableCoupons();
 
         const showOtpVerification = Boolean(req.session.pendingProfileUpdate && req.session.profileOtp);
         const pendingEmail = req.session.pendingProfileUpdate ? req.session.pendingProfileUpdate.email : null;
@@ -45,6 +47,7 @@ const loadProfile = async (req, res) => {
         res.render('user/userProfile', {
             user,
             wallet,
+            availableCoupons,
             currentPage: 'profile',
             showOtpVerification,
             pendingEmail,
@@ -233,9 +236,11 @@ const loadResetPassword = async (req, res) => {
         res.render('user/resetPassword', {
             currentPage: 'reset-password',
             message: req.session.resetMessage || '',
+            messageType: req.session.resetMessageType || 'error',
             otpResendSeconds: getOtpResendSeconds(req.session.resetOtpResendAt)
         });
         delete req.session.resetMessage;
+        delete req.session.resetMessageType;
     } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
@@ -250,6 +255,7 @@ const resendResetOtp = async (req, res) => {
         const resendSeconds = getOtpResendSeconds(req.session.resetOtpResendAt);
         if (resendSeconds > 0) {
             req.session.resetMessage = 'Please wait before requesting another OTP.';
+            req.session.resetMessageType = 'error';
             return res.redirect('/reset-password');
         }
 
@@ -258,6 +264,7 @@ const resendResetOtp = async (req, res) => {
             return res.status(500).render('user/resetPassword', {
                 currentPage: 'reset-password',
                 message: 'Failed to send OTP. Please try again later.',
+                messageType: 'error',
                 otpResendSeconds: 0
             });
         }
@@ -266,12 +273,14 @@ const resendResetOtp = async (req, res) => {
         req.session.resetOtpExpiry = Date.now() + 180000;
         setOtpResendAvailableAt(req.session, 'resetOtpResendAt');
         req.session.resetMessage = 'A new OTP has been sent to your email.';
+        req.session.resetMessageType = 'success';
         return res.redirect('/reset-password');
     } catch (error) {
         console.log(error.message);
         return res.status(500).render('user/resetPassword', {
             currentPage: 'reset-password',
-            message: 'Server error. Please try again later.'
+            message: 'Server error. Please try again later.',
+            messageType: 'error'
         });
     }
 };
@@ -299,6 +308,7 @@ const processForgotPassword = async (req, res) => {
             req.session.resetOtpExpiry = Date.now() + 180000;
             setOtpResendAvailableAt(req.session, 'resetOtpResendAt');
             req.session.resetMessage = 'OTP sent successfully. Please check your email.';
+            req.session.resetMessageType = 'success';
 
             return res.redirect('/reset-password');
         }

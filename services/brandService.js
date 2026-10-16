@@ -1,4 +1,5 @@
 const fs = require('fs');
+const mongoose = require('mongoose');
 const Brand = require('../models/brandModel');
 const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
@@ -18,7 +19,16 @@ const getBrands = async ({ page, limit, searchQuery, statusFilter, categoryFilte
     const query = {};
     if (searchQuery) query.name = { $regex: searchQuery, $options: 'i' };
     if (statusFilter) query.status = statusFilter;
-    if (categoryFilter) query.categoryId = categoryFilter;
+    if (categoryFilter) {
+        const productBrandIds = await Product.distinct('brandId', {
+            categoryId: categoryFilter,
+            brandId: { $ne: null }
+        });
+        query.$or = [
+            { categoryId: categoryFilter },
+            { _id: { $in: productBrandIds } }
+        ];
+    }
 
     const [brands, totalBrands, activeBrands, inactiveBrands, categories, lowStockBrandIds] = await Promise.all([
         Brand.find(query).populate('categoryId', 'name').sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(),
@@ -30,8 +40,10 @@ const getBrands = async ({ page, limit, searchQuery, statusFilter, categoryFilte
     ]);
 
     const brandIds = brands.map(brand => brand._id);
+    const productQuery = { brandId: { $in: brandIds } };
+    if (categoryFilter) productQuery.categoryId = new mongoose.Types.ObjectId(categoryFilter);
     const productCounts = await Product.aggregate([
-        { $match: { brandId: { $in: brandIds } } },
+        { $match: productQuery },
         { $group: { _id: '$brandId', count: { $sum: 1 }, revenue: { $sum: { $multiply: ['$regularPrice', '$availableStock'] } } } }
     ]);
     const countMap = new Map(productCounts.map(item => [String(item._id), item]));

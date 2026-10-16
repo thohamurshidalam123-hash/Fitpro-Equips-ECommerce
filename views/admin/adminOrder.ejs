@@ -175,8 +175,9 @@
 
                 <select name="payment" class="orders-filter-select" onchange="this.form.submit()" aria-label="Filter by payment">
                     <option value="all" <%= filters.payment === 'all' ? 'selected' : '' %>>Payment</option>
-                    <option value="Paid" <%= filters.payment === 'Paid' ? 'selected' : '' %>>Paid</option>
+                    <option value="Completed" <%= filters.payment === 'Completed' ? 'selected' : '' %>>Completed</option>
                     <option value="Pending" <%= filters.payment === 'Pending' ? 'selected' : '' %>>Pending</option>
+                    <option value="Refunded" <%= filters.payment === 'Refunded' ? 'selected' : '' %>>Refunded</option>
                 </select>
                 <button class="orders-search-button" type="submit">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
