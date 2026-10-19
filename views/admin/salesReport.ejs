@@ -129,6 +129,9 @@
             .sales-kpi { min-height: 58px; }
             .sales-table-footer { align-items: flex-start; flex-direction: column; }
         }
+        .sales-date-field { display: flex; flex-direction: column; gap: 2px; }
+        .sales-date-field label { color: #52617a; font-size: 8px; }
+        .sales-date-error { min-height: 10px; margin: 0; color: #c62828; font-size: 8px; }
     </style>
 </head>
 <body>
@@ -182,7 +185,7 @@
             </section>
 
             <section class="sales-filterbar" aria-label="Report filters">
-                <form action="/admin/sales-reports" method="GET" style="display: flex; width: 100%; align-items: center; gap: 6px;">
+                <form action="/admin/sales-reports" method="GET" novalidate style="display: flex; width: 100%; align-items: center; gap: 6px;">
                     <label class="sales-live-region" for="reportPeriod">Report period</label>
                     <select class="sales-period-select" name="period" id="reportPeriod" onchange="this.form.submit()">
                         <option value="daily" <%= currentFilter === 'daily' ? 'selected' : '' %>>Daily</option>
@@ -194,10 +197,18 @@
 
                     <!-- Custom Date Range Inputs -->
                     <% if(currentFilter === 'custom') { %>
-                        <input type="date" name="startDate" value="<%= startDate %>" style="height: 21px; border: 1px solid #d7dfec; border-radius: 5px; font-size: 8px; padding: 0 5px;">
+                        <div class="sales-date-field">
+                            <label for="reportStartDate">Start date</label>
+                            <input id="reportStartDate" type="date" name="startDate" value="<%= customStartDate %>" aria-describedby="reportStartDateError" style="height: 21px; border: 1px solid #d7dfec; border-radius: 5px; font-size: 8px; padding: 0 5px;">
+                            <p class="sales-date-error" id="reportStartDateError" role="alert"><%= dateErrors.startDate || '' %></p>
+                        </div>
                         <span style="font-size: 8px;">to</span>
-                        <input type="date" name="endDate" value="<%= endDate %>" style="height: 21px; border: 1px solid #d7dfec; border-radius: 5px; font-size: 8px; padding: 0 5px;">
-                        <button type="submit" class="sales-apply" style="margin-left: 5px;">Apply Custom Dates</button>
+                        <div class="sales-date-field">
+                            <label for="reportEndDate">End date</label>
+                            <input id="reportEndDate" type="date" name="endDate" value="<%= customEndDate %>" aria-describedby="reportEndDateError" style="height: 21px; border: 1px solid #d7dfec; border-radius: 5px; font-size: 8px; padding: 0 5px;">
+                            <p class="sales-date-error" id="reportEndDateError" role="alert"><%= dateErrors.endDate || '' %></p>
+                        </div>
+                        <button type="submit" name="applyCustomDates" value="true" class="sales-apply" style="margin-left: 5px;">Apply Custom Dates</button>
                     <% } %>
 
                     <span class="sales-filter-spacer"></span>
@@ -265,6 +276,29 @@
     </div>
 
     <script>
+        const customDateForm = document.querySelector('.sales-filterbar form');
+        const reportPeriod = document.getElementById('reportPeriod');
+        const validateCustomDateRange = () => {
+            if (reportPeriod.value !== 'custom') return true;
+            const startInput = document.getElementById('reportStartDate');
+            const endInput = document.getElementById('reportEndDate');
+            const startError = document.getElementById('reportStartDateError');
+            const endError = document.getElementById('reportEndDateError');
+            startError.textContent = '';
+            endError.textContent = '';
+            if (!startInput.value) startError.textContent = 'Start date is required';
+            if (!endInput.value) endError.textContent = 'End date is required';
+            if (startInput.value && endInput.value && startInput.value > endInput.value) {
+                endError.textContent = 'End date must be on or after start date';
+            }
+            const isValid = !startError.textContent && !endError.textContent;
+            if (!isValid) (startError.textContent ? startInput : endInput).focus();
+            return isValid;
+        };
+        customDateForm.addEventListener('submit', event => {
+            if (!validateCustomDateRange()) event.preventDefault();
+        });
+
         // Filter Form Tabs Logic
         document.querySelectorAll('.sales-period-tab').forEach(button => {
             button.addEventListener('click', () => {
@@ -306,6 +340,7 @@
         document.getElementById('exportPdf').addEventListener('click', () => {
             const periodSelect = document.getElementById('reportPeriod');
             const period = periodSelect.value;
+            if (!validateCustomDateRange()) return;
             let url = `/admin/sales-reports/pdf?period=${period}`;
             
             if (period === 'custom') {

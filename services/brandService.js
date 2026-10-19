@@ -5,6 +5,7 @@ const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 
 const createBrandSlug = name => name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const validateBrand = (name, description) => {
     const errors = {};
     if (!name) errors.name = 'Brand name is required';
@@ -115,7 +116,7 @@ const createBrand = async ({ name, description, categoryId, featured, logo, offe
     if (!await Category.exists({ _id: categoryId, status: 'Active' })) {
         return { success: false, errors: { categoryId: 'Please select a valid category' } };
     }
-    const duplicate = await Brand.findOne({ name: new RegExp(`^${name}$`, 'i') });
+    const duplicate = await Brand.findOne({ name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
     if (duplicate) return { success: false, errors: { name: 'Brand name already exists' } };
 
     const slug = `${createBrandSlug(name)}-${Date.now()}`;
@@ -130,11 +131,12 @@ const updateBrand = async ({ id, name, description, categoryId, featured, logo, 
     if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!categoryId) errors.categoryId = 'Category is required';
     if (!id) errors.form = 'Brand ID is missing';
+    if (logo && !['image/jpeg', 'image/png'].includes(logo.mimetype)) errors.logo = 'Only JPEG or PNG images are allowed';
     if (Object.keys(errors).length) return { success: false, errors };
     if (!await Category.exists({ _id: categoryId, status: 'Active' })) {
         return { success: false, errors: { categoryId: 'Please select a valid category' } };
     }
-    const duplicate = await Brand.findOne({ _id: { $ne: id }, name: new RegExp(`^${name}$`, 'i') });
+    const duplicate = await Brand.findOne({ _id: { $ne: id }, name: new RegExp(`^${escapeRegex(name)}$`, 'i') });
     if (duplicate) return { success: false, errors: { name: 'Brand name already exists' } };
 
     const updates = { name, description, categoryId, featured, offerPercentage };

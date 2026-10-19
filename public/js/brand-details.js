@@ -27,7 +27,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!description) errors.description = 'Brand description is required';
         else if (description.length > 250) errors.description = 'Brand description cannot exceed 250 characters';
         if (!categoryId) errors.categoryId = 'Category is required';
-        if (logoInput.files.length) {
+        if (logoInput.dataset.invalidFile === 'true') {
+            errors.logo = 'File not supported';
+        } else if (logoInput.files.length) {
             const file = logoInput.files[0];
             if (!['image/png', 'image/jpeg'].includes(file.type)) errors.logo = 'File not supported';
             else if (file.size > 5 * 1024 * 1024) errors.logo = 'Image cannot exceed 5 MB';
@@ -39,7 +41,20 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('closeBrandModal').addEventListener('click', () => modal.classList.add('hidden'));
     document.getElementById('cancelBrand').addEventListener('click', () => modal.classList.add('hidden'));
     modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); });
-    logoInput.addEventListener('change', () => { logoProcessed = false; if (window.processImageInput) window.processImageInput(logoInput); const error = validateLogo(); const element = form.querySelector('[data-error-for="logo"]'); element.textContent = error || ''; logoInput.classList.toggle('has-error', Boolean(error)); });
+    logoInput.addEventListener('change', async () => {
+        logoProcessed = false;
+        if (window.processImageInput) logoInput.imageProcessingPromise = window.processImageInput(logoInput);
+        if (logoInput.imageProcessingPromise) await logoInput.imageProcessingPromise;
+        const message = logoInput.dataset.invalidFile === 'true' ? 'File not supported' : validateLogo();
+        if (message) window.showInlineFieldErrors(form, { logo: message });
+        else {
+            const error = form.querySelector('[data-error-for="logo"]');
+            error.textContent = '';
+            error.hidden = true;
+            logoInput.classList.remove('inline-validation-invalid');
+            logoInput.removeAttribute('aria-invalid');
+        }
+    });
     logoInput.addEventListener('imageprocessed', () => { logoProcessed = true; });
     form.addEventListener('submit', async event => { event.preventDefault(); clearErrors(); const validationErrors = validateBrandForm(); if (Object.keys(validationErrors).length) { showErrors(validationErrors); return; } const logoError = validateLogo(); if (logoError) { showErrors({ logo: logoError }); return; } if (logoInput.files.length && (!logoProcessed || logoInput.dataset.processing === 'true')) { showErrors({ logo: 'Please finish editing the selected logo' }); return; } const submit = form.querySelector('[type="submit"]'); submit.disabled = true; const data = new FormData(form); data.set('featured', String(featuredInput.checked)); try { const response = await fetch('/admin/brands/edit', { method: 'POST', body: data }); const result = await response.json(); if (!response.ok || !result.success) { showErrors(result.errors || { form: result.message || 'Unable to update brand.' }); return; } showBrandSuccessModal(result.message || 'Brand updated successfully.', () => window.location.reload()); } catch (error) { showErrors({ form: 'Unable to update brand. Please try again.' }); } finally { submit.disabled = false; } });
 });

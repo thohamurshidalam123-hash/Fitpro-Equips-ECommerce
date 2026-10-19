@@ -1,6 +1,7 @@
 const Category = require('../models/categoryModel');
 const Product = require('../models/productModel');
 const { validateCategory, validateCategoryImage } = require('../validators/categoryValidators');
+const escapeRegex = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 // For loading categories with brand and product counts
 const getCategories = async ({ page, limit, searchQuery }) => {
@@ -56,7 +57,7 @@ const createCategory = async ({ name, description, featured, image, offerPercent
     if (Object.keys(errors).length) return { success: false, errors };
 
     const existingCategory = await Category.findOne({
-        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+        name: { $regex: new RegExp(`^${escapeRegex(name.trim())}$`, 'i') }
     });
     if (existingCategory) return { success: false, errors: { name: 'Category name already exists' } };
 
@@ -82,7 +83,7 @@ const updateCategory = async ({ id, name, description, featured, image, offerPer
 
     const existingCategory = await Category.findOne({
         _id: { $ne: id },
-        name: { $regex: new RegExp(`^${name.trim()}$`, 'i') }
+        name: { $regex: new RegExp(`^${escapeRegex(name.trim())}$`, 'i') }
     });
     if (existingCategory) return { success: false, errors: { name: 'Category name already exists' } };
 

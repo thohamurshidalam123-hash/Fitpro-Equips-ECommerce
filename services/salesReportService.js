@@ -20,6 +20,24 @@ const getSalesOverviewStats = async () => {
     };
 };
 
+const isValidDateInput = value => {
+    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+};
+
+const validateCustomDateRange = (startDate, endDate) => {
+    const errors = {};
+    if (!startDate) errors.startDate = 'Start date is required';
+    else if (!isValidDateInput(startDate)) errors.startDate = 'Enter a valid start date';
+    if (!endDate) errors.endDate = 'End date is required';
+    else if (!isValidDateInput(endDate)) errors.endDate = 'Enter a valid end date';
+    if (!errors.startDate && !errors.endDate && startDate > endDate) {
+        errors.endDate = 'End date must be on or after start date';
+    }
+    return errors;
+};
+
 const getSalesReportData = async (period = 'weekly', customStartDate, customEndDate) => {
     let startDate, endDate;
     const now = new Date();
@@ -175,5 +193,6 @@ const generatePdfReport = async (period, customStartDate, customEndDate) => {
 module.exports = {
     getSalesReportData,
     getSalesOverviewStats,
-    generatePdfReport
+    generatePdfReport,
+    validateCustomDateRange
 };

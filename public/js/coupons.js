@@ -30,6 +30,50 @@
         maximum: document.getElementById('maximumDiscount')
     };
 
+    const clearCouponErrors = () => {
+        window.clearInlineFieldErrors(form);
+        form.querySelectorAll('[data-error-for]').forEach(error => {
+            error.textContent = '';
+            error.hidden = true;
+        });
+    };
+
+    const showCouponErrors = errors => {
+        clearCouponErrors();
+        window.showInlineFieldErrors(form, errors);
+    };
+
+    const validateCouponForm = () => {
+        const errors = {};
+        const discountValue = Number(fields.value.value);
+        const minimumPurchase = Number(fields.minimum.value);
+        const usageLimit = Number(fields.limit.value);
+        const maximumDiscount = fields.maximum.value === '' ? null : Number(fields.maximum.value);
+        const expiryDate = fields.expiry.value;
+
+        if (!fields.code.value.trim()) errors.couponCode = 'Coupon code is required';
+        if (!fields.name.value.trim()) errors.couponName = 'Coupon name is required';
+        if (!['percentage', 'fixed'].includes(fields.type.value)) errors.discountType = 'Select a valid discount type';
+        if (fields.value.value === '' || !Number.isFinite(discountValue) || discountValue < 0) errors.discountValue = 'Enter a valid discount value';
+        else if (fields.type.value === 'percentage' && discountValue > 100) errors.discountValue = 'Percentage discount cannot exceed 100%';
+        if (fields.minimum.value === '' || !Number.isFinite(minimumPurchase) || minimumPurchase < 0) errors.minPurchaseAmount = 'Enter a valid minimum purchase amount';
+        if (fields.limit.value === '' || !Number.isInteger(usageLimit) || usageLimit < 1) errors.usageLimitPerUser = 'Usage limit must be a whole number greater than 0';
+        if (!expiryDate) errors.expiryDate = 'Expiry date is required';
+        else {
+            const parsedExpiry = new Date(`${expiryDate}T00:00:00`);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (Number.isNaN(parsedExpiry.getTime())) errors.expiryDate = 'Enter a valid expiry date';
+            else if (parsedExpiry <= today) errors.expiryDate = 'Expiry date must be in the future';
+        }
+        if (maximumDiscount !== null && (!Number.isFinite(maximumDiscount) || maximumDiscount < 0)) errors.maxDiscountAmount = 'Maximum discount cannot be negative';
+        if (!fields.description.value.trim()) errors.description = 'Description is required';
+        if (fields.type.value === 'fixed' && !errors.discountValue && !errors.minPurchaseAmount && discountValue >= minimumPurchase) {
+            errors.discountValue = 'Fixed discount must be less than minimum purchase amount';
+        }
+        return errors;
+    };
+
     const closeModal = () => {
         modal.classList.add('hidden');
         modal.setAttribute('aria-hidden', 'true');
@@ -37,6 +81,7 @@
 
     const openCreateModal = () => {
         form.reset();
+        clearCouponErrors();
         fields.id.value = '';
         fields.active.checked = true;
         fields.type.value = 'percentage';
@@ -60,6 +105,7 @@
 
     document.querySelectorAll('.edit-coupon').forEach(button => {
         button.addEventListener('click', () => {
+            clearCouponErrors();
             fields.id.value = button.dataset.id || '';
             fields.code.value = button.dataset.code || '';
             fields.name.value = button.dataset.name || '';
@@ -83,27 +129,13 @@
     // Form Submission & Validation
     form.addEventListener('submit', async event => {
         event.preventDefault();
-
-        // Validations
+        clearCouponErrors();
         const discountType = fields.type.value;
         const discountValue = parseFloat(fields.value.value);
         const minPurchase = parseFloat(fields.minimum.value);
         const maxDiscount = fields.maximum.value ? parseFloat(fields.maximum.value) : null;
-        const expiryDate = new Date(fields.expiry.value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (expiryDate <= today) {
-            return window.showAppModal('Expiry date must be in the future', 'error');
-        }
-
-        if (discountType === 'percentage' && discountValue > 100) {
-            return window.showAppModal('Percentage discount cannot exceed 100%', 'error');
-        }
-
-        if (discountType === 'fixed' && discountValue >= minPurchase) {
-            return window.showAppModal('Fixed discount must be less than minimum purchase amount', 'error');
-        }
+        const validationErrors = validateCouponForm();
+        if (Object.keys(validationErrors).length) return showCouponErrors(validationErrors);
 
         const payload = {
             couponCode: fields.code.value,
@@ -136,7 +168,8 @@
                     onClose: () => window.location.href = '/admin/coupons'
                 });
             } else {
-                window.showAppModal(data.message || 'Failed to save coupon', 'error');
+                if (data.errors) showCouponErrors(data.errors);
+                else window.showAppModal(data.message || 'Failed to save coupon', 'error');
             }
         } catch (error) {
             console.error('Error:', error);

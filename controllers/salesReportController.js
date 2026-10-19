@@ -7,10 +7,14 @@ const loadSalesReport = async (req, res) => {
         }
 
         const { period, startDate, endDate } = req.query;
+        const dateErrors = period === 'custom' && (req.query.applyCustomDates === 'true' || startDate || endDate)
+            ? salesReportService.validateCustomDateRange(startDate, endDate)
+            : {};
+        const hasDateErrors = Object.keys(dateErrors).length > 0;
 
         // For feching data
         const [reportData, overviewStats] = await Promise.all([
-            salesReportService.getSalesReportData(period, startDate, endDate),
+            salesReportService.getSalesReportData(period, hasDateErrors ? undefined : startDate, hasDateErrors ? undefined : endDate),
             salesReportService.getSalesOverviewStats()
         ]);
 
@@ -22,6 +26,9 @@ const loadSalesReport = async (req, res) => {
             currentFilter: reportData.currentFilter,
             startDate: reportData.startDate,
             endDate: reportData.endDate,
+            customStartDate: startDate || '',
+            customEndDate: endDate || '',
+            dateErrors,
             ...overviewStats
         });
 
@@ -38,6 +45,10 @@ const downloadPdfReport = async (req, res) => {
         }
 
         const { period, startDate, endDate } = req.query;
+
+        if (period === 'custom' && Object.keys(salesReportService.validateCustomDateRange(startDate, endDate)).length) {
+            return res.status(400).send('Please select a valid custom date range.');
+        }
 
         // Generate the PDF stream
         const pdfStream = await salesReportService.generatePdfReport(period, startDate, endDate);

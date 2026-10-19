@@ -11,21 +11,25 @@ document.addEventListener('DOMContentLoaded', () => {
 	const title = document.getElementById('categoryModalTitle');
 	const error = document.getElementById('categoryFormError');
 	const submitButton = form.querySelector('button[type="submit"]');
-	const fieldErrors = [...form.querySelectorAll('[data-error-for]')];
+	const clearFieldError = field => {
+		const messageElement = form.querySelector(`[data-error-for="${field}"]`);
+		const input = form.querySelector(`[name="${field}"]`);
+		if (messageElement) messageElement.textContent = '';
+		if (messageElement) messageElement.hidden = true;
+		if (input) {
+			input.classList.remove('has-error', 'inline-validation-invalid');
+			input.removeAttribute('aria-invalid');
+		}
+	};
 	const clearErrors = () => {
+		window.clearInlineFieldErrors(form);
 		error.textContent = '';
-		fieldErrors.forEach(field => field.textContent = '');
+		form.querySelectorAll('[data-error-for]').forEach(field => field.textContent = '');
 		form.querySelectorAll('.has-error').forEach(field => field.classList.remove('has-error'));
 	};
 	const showErrors = errors => {
 		clearErrors();
-		Object.entries(errors || {}).forEach(([field, message]) => {
-			const messageElement = form.querySelector(`[data-error-for="${field}"]`);
-			const input = form.querySelector(`[name="${field}"]`);
-			if (messageElement) messageElement.textContent = message;
-			if (input) input.classList.add('has-error');
-			if (field === 'form') error.textContent = message;
-		});
+		window.showInlineFieldErrors(form, errors);
 	};
 	const validateForm = () => {
 		const errors = {};
@@ -64,6 +68,12 @@ document.addEventListener('DOMContentLoaded', () => {
 	document.getElementById('openAddCategory').addEventListener('click', () => openModal());
 	document.getElementById('closeCategoryModal').addEventListener('click', closeModal);
 	document.getElementById('cancelCategory').addEventListener('click', closeModal);
+	imageInput.addEventListener('change', async () => {
+		if (imageInput.imageProcessingPromise) await imageInput.imageProcessingPromise;
+		if (imageInput.dataset.invalidFile === 'true') {
+			window.showInlineFieldErrors(form, { image: 'File not supported' });
+		} else clearFieldError('image');
+	});
 	modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });
 	document.querySelectorAll('.edit-category').forEach(button => button.addEventListener('click', () => openModal({ id: button.dataset.id, name: button.dataset.name, description: button.dataset.description, featured: button.dataset.featured, image: button.dataset.image, offerPercentage: button.dataset.offer })));
 	document.querySelectorAll('.toggle-category').forEach(button => button.addEventListener('click', async () => {

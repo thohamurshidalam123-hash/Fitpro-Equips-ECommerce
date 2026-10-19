@@ -1,6 +1,14 @@
 const couponService = require('../services/couponService');
 const Coupon = require('../models/couponModel');
 
+const getCouponValidationErrors = error => {
+    if (error.code === 11000) return { couponCode: 'Coupon code already exists.' };
+    if (error.name === 'ValidationError') {
+        return Object.fromEntries(Object.entries(error.errors).map(([field, detail]) => [field, detail.message]));
+    }
+    return null;
+};
+
 // For apllying coupon
 const applyCoupon = async (req, res) => {
     try{
@@ -111,21 +119,23 @@ const getCoupons = async (req, res) => {
 // For creating a new coupon
 const createCoupon = async (req,res) => {
     try{
-        const { couponCode } = req.body;
+        const couponCode = String(req.body.couponCode || '').trim().toUpperCase();
+        if (!couponCode) return res.status(400).json({ success: false, errors: { couponCode: 'Coupon code is required.' } });
 
         // For validating if coupon code already exist
-        const existingCoupon = await Coupon.findOne({ couponCode: couponCode.toUpperCase() });
+        const existingCoupon = await Coupon.findOne({ couponCode });
         if(existingCoupon){
-            return res.status(400).json({ message: 'Coupon code already exist.' });
+            return res.status(400).json({ success: false, message: 'Please correct the errors below.', errors: { couponCode: 'Coupon code already exists.' } });
         }
 
-        const newCoupon = new Coupon(req.body);
+        const newCoupon = new Coupon({ ...req.body, couponCode });
         await newCoupon.save();
 
-        res.status(201).json({ message: 'Coupon created successfully'});
+        res.status(201).json({ success: true, message: 'Coupon created successfully'});
     }catch(error) {
         console.error(error);
-        res.status(500).json({ message:'Error creating coupon'});
+        const errors = getCouponValidationErrors(error);
+        res.status(errors ? 400 : 500).json({ success: false, message: errors ? 'Please correct the errors below.' : 'Error creating coupon', ...(errors ? { errors } : {}) });
     }
 };
 
@@ -133,23 +143,25 @@ const createCoupon = async (req,res) => {
 const updateCoupon = async (req, res) => {
     try{
         const { id } = req.params;
-        const { couponCode } = req.body;
+        const couponCode = String(req.body.couponCode || '').trim().toUpperCase();
+        if (!couponCode) return res.status(400).json({ success: false, errors: { couponCode: 'Coupon code is required.' } });
 
         // For ensuring updated code doesn't conflict with another
         const existingCoupon = await Coupon.findOne({
-            couponCode: couponCode.toUpperCase(),
+            couponCode,
             _id: { $ne: id }
         });
 
         if (existingCoupon) {
-            return res.status(400).json({ message:'Coupon code already exist'});
+            return res.status(400).json({ success: false, message: 'Please correct the errors below.', errors: { couponCode: 'Coupon code already exists.' } });
         }
 
-        await Coupon.findByIdAndUpdate(id, req.body, { new: true});
-        res.status(200).json({ message: 'Coupon update successfully'});
+        await Coupon.findByIdAndUpdate(id, { ...req.body, couponCode }, { new: true, runValidators: true });
+        res.status(200).json({ success: true, message: 'Coupon update successfully'});
     }catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error in updating coupon' });
+        const errors = getCouponValidationErrors(error);
+        res.status(errors ? 400 : 500).json({ success: false, message: errors ? 'Please correct the errors below.' : 'Error in updating coupon', ...(errors ? { errors } : {}) });
     }
 };
 

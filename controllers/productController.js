@@ -104,7 +104,7 @@ const loadProductDetails = async (req, res) => {
 const addVariant = async (req,res) => {
     try{
         const result = await productService.createVariant({ productId: req.params.productId, data: req.body, files: req.files });
-        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        if (!result.success) return res.status(result.statusCode).json({ success: false, errors: result.errors, message: result.message });
         res.json({ success: true, message: 'Variant added successfully'});
     }catch(error){
         console.error('Add variant error:', error.message);
@@ -116,7 +116,7 @@ const addVariant = async (req,res) => {
 const editVariant = async (req, res) => {
     try{
         const result = await productService.updateVariant({ ...req.params, data: req.body, files: req.files });
-        if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        if (!result.success) return res.status(result.statusCode).json({ success: false, errors: result.errors, message: result.message });
         res.json({ success: true, message: 'Variant updated successfully'});
     }catch(error){
         console.error('Error in editing variant:',error.message);

@@ -452,7 +452,15 @@ async function submitVariantForm(form, url, method, successMessage) {
 	try {
 		const response = await fetch(url, { method, body: formData });
 		const result = await response.json();
-		if (!response.ok || !result.success) throw new Error(result.message || 'Unable to save variant.');
+		if (!response.ok || !result.success) {
+			if (result.errors) {
+				Object.entries(result.errors).forEach(([field, message]) => setVariantFieldError(form, field, message));
+				setVariantError(form, result.message || 'Please correct the errors below.');
+				submitButton.disabled = false;
+				return;
+			}
+			throw new Error(result.message || 'Unable to save variant.');
+		}
 		showResultModal(result.message || successMessage, 'success', () => window.location.reload());
 	} catch (error) {
 		setVariantError(form, error.message);

@@ -16,7 +16,7 @@
     <title>Coupons | Fitpro Equips</title>
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <link rel="stylesheet" href="/css/admin-scale.css">
-    <link rel="stylesheet" href="/css/coupons.css">
+    <link rel="stylesheet" href="/css/coupons.css?v=20261019-1">
 </head>
 <body>
     <div class="admin-dashboard">
@@ -100,18 +100,18 @@
         <div class="coupon-modal-panel" role="dialog" aria-modal="true" aria-labelledby="couponModalTitle">
             <button class="modal-close" type="button" data-close-coupon aria-label="Close modal">×</button>
             <div class="modal-heading"><span class="modal-icon" aria-hidden="true">%</span><div><h2 id="couponModalTitle">Create Coupon</h2><p>Set up a promotional offer for your customers.</p></div></div>
-            <form id="couponForm">
+            <form id="couponForm" novalidate>
                 <input type="hidden" id="couponId" name="couponId" />
                 <div class="coupon-form-grid">
-                    <div class="form-field"><label for="couponCode">Coupon code</label><input id="couponCode" name="couponCode" placeholder="e.g. FIT10" required></div>
-                    <div class="form-field"><label for="couponName">Coupon name</label><input id="couponName" name="couponName" placeholder="e.g. Fitness New Year" required></div>
-                    <div class="form-field"><label for="discountType">Discount type</label><select id="discountType" name="discountType" required><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select></div>
-                    <div class="form-field"><label for="discountValue">Discount value</label><input id="discountValue" name="discountValue" type="number" min="0" step="0.01" placeholder="e.g. 10" required></div>
-                    <div class="form-field"><label for="minimumPurchase">Minimum purchase</label><div class="input-prefix"><span>₹</span><input id="minimumPurchase" name="minPurchaseAmount" type="number" min="0" step="0.01" placeholder="0" required></div></div>
-                    <div class="form-field"><label for="usageLimit">Usage limit (per user)</label><input id="usageLimit" name="usageLimitPerUser" type="number" min="1" step="1" placeholder="e.g. 1" required></div>
-                    <div class="form-field"><label for="expiryDate">Expiry date</label><input id="expiryDate" name="expiryDate" type="date" required></div>
-                    <div class="form-field"><label for="maximumDiscount">Maximum discount (Optional)</label><div class="input-prefix"><span>₹</span><input id="maximumDiscount" name="maxDiscountAmount" type="number" min="0" step="0.01" placeholder="No limit"></div></div>
-                    <div class="form-field form-field-wide"><label for="couponDescription">Description</label><textarea id="couponDescription" name="description" rows="3" placeholder="Describe this coupon..." required></textarea></div>
+                    <div class="form-field"><label for="couponCode">Coupon code</label><input id="couponCode" name="couponCode" placeholder="e.g. FIT10" required><p class="coupon-field-error" data-error-for="couponCode"></p></div>
+                    <div class="form-field"><label for="couponName">Coupon name</label><input id="couponName" name="couponName" placeholder="e.g. Fitness New Year" required><p class="coupon-field-error" data-error-for="couponName"></p></div>
+                    <div class="form-field"><label for="discountType">Discount type</label><select id="discountType" name="discountType" required><option value="percentage">Percentage</option><option value="fixed">Fixed amount</option></select><p class="coupon-field-error" data-error-for="discountType"></p></div>
+                    <div class="form-field"><label for="discountValue">Discount value</label><input id="discountValue" name="discountValue" type="number" min="0" step="0.01" placeholder="e.g. 10" required><p class="coupon-field-error" data-error-for="discountValue"></p></div>
+                    <div class="form-field"><label for="minimumPurchase">Minimum purchase</label><div class="input-prefix"><span>₹</span><input id="minimumPurchase" name="minPurchaseAmount" type="number" min="0" step="0.01" placeholder="0" required></div><p class="coupon-field-error" data-error-for="minPurchaseAmount"></p></div>
+                    <div class="form-field"><label for="usageLimit">Usage limit (per user)</label><input id="usageLimit" name="usageLimitPerUser" type="number" min="1" step="1" placeholder="e.g. 1" required><p class="coupon-field-error" data-error-for="usageLimitPerUser"></p></div>
+                    <div class="form-field"><label for="expiryDate">Expiry date</label><input id="expiryDate" name="expiryDate" type="date" required><p class="coupon-field-error" data-error-for="expiryDate"></p></div>
+                    <div class="form-field"><label for="maximumDiscount">Maximum discount (Optional)</label><div class="input-prefix"><span>₹</span><input id="maximumDiscount" name="maxDiscountAmount" type="number" min="0" step="0.01" placeholder="No limit"></div><p class="coupon-field-error" data-error-for="maxDiscountAmount"></p></div>
+                    <div class="form-field form-field-wide"><label for="couponDescription">Description</label><textarea id="couponDescription" name="description" rows="3" placeholder="Describe this coupon..." required></textarea><p class="coupon-field-error" data-error-for="description"></p></div>
                     <div class="form-field form-field-wide status-field"><div><label for="couponActive">Status</label><small>Make this coupon available to customers.</small></div><label class="switch"><input id="couponActive" name="isActive" type="checkbox" checked><span class="slider"></span></label></div>
                 </div>
                 <div class="modal-actions"><button class="secondary-button" type="button" data-close-coupon>Cancel</button><button class="primary-button" type="submit"><span id="couponSubmitLabel">Create Coupon</span></button></div>
@@ -120,6 +120,6 @@
     </div>
 
     <%- include('../partials/admin-footer.ejs') %>
-    <script src="/js/coupons.js"></script>
+    <script src="/js/coupons.js?v=20261019-1"></script>
 </body>
 </html>

@@ -155,20 +155,22 @@ const validateVariant = ({ variantColor, variantWeight, variantPrice, variantSto
     const weight = Number(variantWeight);
     const price = Number(variantPrice);
     const stock = Number(variantStock);
-    if (!color) return { message: 'Please select a variant color.' };
-    if (!variantWeight || Number.isNaN(weight) || weight <= 0) return { message: 'Variant weight must be greater than 0.' };
-    if (!variantPrice || Number.isNaN(price) || price <= 0) return { message: 'Variant price must be greater than 0.' };
+    const errors = {};
+    if (!color) errors.variantColor = 'Please select a variant color.';
+    if (!variantWeight || Number.isNaN(weight) || weight <= 0) errors.variantWeight = 'Variant weight must be greater than 0.';
+    if (!variantPrice || Number.isNaN(price) || price <= 0) errors.variantPrice = 'Variant price must be greater than 0.';
     if (variantStock === undefined || variantStock === null || variantStock === '' || Number.isNaN(stock) || !Number.isInteger(stock) || stock < 0) {
-        return { message: 'Variant stock must be a whole number greater than or equal to 0.' };
+        errors.variantStock = 'Variant stock must be a whole number greater than or equal to 0.';
     }
+    if (Object.keys(errors).length) return { errors };
     return { color, weight, price, stock };
 };
 
 // For adding a product variant
 const createVariant = async ({ productId, data, files }) => {
     const values = validateVariant(data);
-    if (values.message) return { statusCode: 400, message: values.message };
-    if (!files || files.length < 3) return { statusCode: 400, message: 'Please upload at least 3 images' };
+    if (values.errors) return { statusCode: 400, message: 'Please correct the errors below.', errors: values.errors };
+    if (!files || files.length < 3) return { statusCode: 400, message: 'Please correct the errors below.', errors: { images: 'Please upload at least 3 images' } };
 
     const product = await Product.findById(productId);
     if (!product) return { statusCode: 404, message: 'Product not found' };
@@ -190,8 +192,8 @@ const createVariant = async ({ productId, data, files }) => {
 // For editing a product variant
 const updateVariant = async ({ productId, variantId, data, files }) => {
     const values = validateVariant(data);
-    if (values.message) return { statusCode: 400, message: values.message };
-    if (files && files.length > 0 && files.length < 3) return { statusCode: 400, message: 'Please upload at least 3 images' };
+    if (values.errors) return { statusCode: 400, message: 'Please correct the errors below.', errors: values.errors };
+    if (files && files.length > 0 && files.length < 3) return { statusCode: 400, message: 'Please correct the errors below.', errors: { images: 'Please upload at least 3 images' } };
 
     const product = await Product.findById(productId);
     if (!product) return { statusCode: 404, message: 'Product not found' };
