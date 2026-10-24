@@ -19,6 +19,7 @@
 	}
 
 	function clearControlError(control) {
+		if (control.dataset.invalidFile === 'true') return;
 		const form = control.form;
 		if (!form) return;
 		const fieldName = control.name || control.dataset.validationName || control.id;

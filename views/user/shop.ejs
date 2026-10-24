@@ -207,7 +207,7 @@
                 const name = document.createElement('strong');
                 name.textContent = variant.name || `${variant.weight}${variant.weightUnit || 'kg'}`;
                 const details = document.createElement('span');
-                details.textContent = `${variant.color || ''} · ₹${Number(variant.price || 0).toFixed(2)} · ${variant.stock} left`;
+                details.textContent = `${variant.color || ''} · ₹${Number(variant.displayPrice ?? variant.price ?? 0).toFixed(2)} · ${variant.stock} left`;
                 option.append(name, details);
                 return option;
             });

@@ -3,11 +3,10 @@
     <nav class="main-nav" aria-label="Main navigation">
         <a class="<%= currentPage === 'home' ? 'active' : '' %>" href="/">Home</a>
         <a class="<%= currentPage === 'shop' ? 'active' : '' %>" href="/shop">Shop</a>
-        <a href="/#about">About Us</a>
-        <a href="/#contact">Contact</a>
+        <a class="<%= currentPage === 'about' ? 'active' : '' %>" href="/about-us">About Us</a>
+        <a href="#contact-modal" data-open-contact-modal aria-haspopup="dialog">Contact</a>
     </nav>
     <div class="header-actions" aria-label="Quick actions">
-        <span class="icon search-icon" aria-hidden="true"></span>
         <a class="icon heart-icon wishlist-wrap" href="/wishlist" aria-label="Open wishlist" title="Wishlist">
             <span class="wishlist-count" data-wishlist-badge>0</span>
         </a>

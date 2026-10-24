@@ -4,6 +4,10 @@ const addForm = document.getElementById('addProductForm');
 const editForm = document.getElementById('editProductForm');
 const advancedFiltersModal = document.getElementById('advancedFiltersModal');
 
+document.querySelectorAll('.stock-bar i[data-stock-width]').forEach(bar => {
+	bar.style.width = `${bar.dataset.stockWidth}%`;
+});
+
 function openModal(modal) {
 	modal.classList.remove('hidden');
 	document.body.classList.add('modal-open');

@@ -189,6 +189,48 @@ body {
 	overflow-y: auto;
 }
 
+.admin-page-topbar {
+	height: 53px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 14px;
+	margin: 0 calc(var(--admin-topbar-gutter, 47px) * -1) 23px;
+	padding: 0 18px;
+	border-bottom: 1px solid #dfe4ee;
+	background: #fff;
+}
+
+.admin-global-search {
+	width: min(100%, 332px);
+	height: 31px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 0 8px;
+	border: 1px solid #d9dfeb;
+	border-radius: 7px;
+	background: #f5f7fb;
+	color: #78849a;
+}
+
+.admin-global-search span { font-size: 20px; }
+.admin-global-search input { width: 100%; border: 0; outline: 0; background: transparent; color: #354158; font: inherit; font-size: 11px; }
+.admin-global-search input:focus-visible { outline: 2px solid #8eb6f7; outline-offset: 2px; }
+.admin-topbar-actions { display: flex; align-items: center; gap: 20px; }
+.admin-topbar-actions a { color: #0758d8; font-size: 11px; font-weight: 700; text-decoration: none; }
+.admin-topbar-actions a:hover { text-decoration: underline; }
+.coupons-content { --admin-topbar-gutter: 47px; }
+.category-content { --admin-topbar-gutter: 2rem; }
+.product-page > .main-content { --admin-topbar-gutter: 20px; }
+.order-management-page > .main-content { --admin-topbar-gutter: 28px; }
+.sales-report-main { --admin-topbar-gutter: 18px; }
+.detail-main { --admin-topbar-gutter: 27px; }
+
+@media (max-width: 800px) {
+	.admin-page-topbar { --admin-topbar-gutter: 16px; margin-bottom: 20px; padding: 0 16px; }
+}
+
 /* Dashboard Header */
 .dashboard-header {
 	display: flex;

@@ -12,13 +12,14 @@
 	<div class="admin-dashboard product-page">
 		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'products' }) %>
 		<main class="main-content">
+			<%- include('../partials/admin-page-topbar.ejs') %>
 			<section class="product-heading">
 				<div><p class="breadcrumb">Dashboard <span>›</span> Products</p><h1>Product Management</h1></div>
 				<button class="add-product" id="openAddProduct" type="button">＋ Add Product</button>
 			</section>
 
 			<section class="product-stats" aria-label="Product summary">
-				<div><span>Total<br>Products</span><strong><%= metrics && metrics.total || 0 %></strong><em class="positive">⌁</em></div>
+				<div><span>Total<br>Products</span><strong><%= metrics && metrics.total || 0 %></strong></div>
 				<div><span>Active</span><strong class="green"><%= metrics && metrics.active || 0 %></strong></div>
 				<div><span>Out of Stock</span><strong class="red"><%= metrics && metrics.outOfStock || 0 %></strong></div>
 				<div><span>Low Stock</span><strong class="orange"><%= metrics && metrics.lowStock || 0 %></strong></div>
@@ -42,7 +43,7 @@
 								<td><%= product.categoryId && product.categoryId.name || 'Uncategorized' %></td>
 								<td><%= product.brandId && product.brandId.name || 'Unassigned' %></td>
 								<td class="price">₹<%= Number(product.salePrice || product.regularPrice || 0).toLocaleString('en-IN') %></td>
-								<td><span class="stock-number <%= stock < 20 ? 'low' : stock < 50 ? 'medium' : '' %>"><%= stock %></span><span class="stock-bar"><i style="width:<%= Math.min(stock, 100) %>%"></i></span></td>
+								<td><span class="stock-number <%= stock < 20 ? 'low' : stock < 50 ? 'medium' : '' %>"><%= stock %></span><span class="stock-bar"><i data-stock-width="<%= Math.min(stock, 100) %>"></i></span></td>
 								<td><% if (product.bestOfferPercentage > 0) { %><span class="offer"><%= product.bestOfferPercentage %>% OFF</span><% } else { %><span class="no-offer">No Offer</span><% } %></td>
 								<td><span class="status-pill <%= product.status === 'Active' ? 'active' : product.status === 'Low Stock' ? 'low' : 'out' %>"><%= product.status || 'Active' %></span></td>
 								<td class="actions"><button class="view-product" type="button" title="View product" aria-label="View <%= product.productName %>">&#128065;</button><button class="edit-product" type="button" title="Edit product" data-id="<%= product._id %>" data-name="<%= product.productName %>" data-category="<%= product.categoryId && product.categoryId._id || '' %>" data-brand="<%= product.brandId && product.brandId._id || '' %>" data-price="<%= product.regularPrice || 0 %>" data-offer="<%= product.offerPercentage || 0 %>" data-stock="<%= stock %>" data-description="<%= product.description || '' %>" data-status="<%= product.status || 'Active' %>" data-highlight-title1="<%= product.highlights && product.highlights[0] ? product.highlights[0].title : '' %>" data-highlight-title2="<%= product.highlights && product.highlights[1] ? product.highlights[1].title : '' %>" data-highlight-title3="<%= product.highlights && product.highlights[2] ? product.highlights[2].title : '' %>" data-highlight-title4="<%= product.highlights && product.highlights[3] ? product.highlights[3].title : '' %>">✎</button></td>

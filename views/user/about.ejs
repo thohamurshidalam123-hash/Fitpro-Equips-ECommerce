@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>About Us | Fitpro Equips</title>
+	<link rel="stylesheet" href="/css/landing.css">
+	<link rel="stylesheet" href="/css/about.css">
+</head>
+<body>
+	<div class="page-shell about-shell">
+		<%- include('../partials/user-header', { currentPage: 'about' }) %>
+
+		<main class="about-page">
+			<section class="about-hero">
+				<div class="about-hero-copy">
+					<p class="about-eyebrow"><span></span> EQUIPMENT FOR LONGEVITY</p>
+					<h1>Empowering Every Athlete &amp; Fitness Space</h1>
+					<p class="about-intro">Precision-engineered fitness equipment built for durability, biomechanical performance, and commercial &amp; home gym excellence. We help you train smarter in a premium environment.</p>
+					<div class="about-hero-actions"><span class="about-button primary">Shop Our Gear <span aria-hidden="true">→</span></span><span class="about-button secondary">Our Hallmarks</span></div>
+				</div>
+				<div class="about-hero-visual">
+					<img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&amp;fit=crop&amp;w=1300&amp;q=85" alt="A bright, fully equipped training studio">
+					<div class="about-image-caption"><span>STUDIO SERIES</span><strong>Performance starts with your space.</strong></div>
+				</div>
+			</section>
+
+			<section class="about-stats" aria-label="Fitpro Equips at a glance">
+				<article><strong>10<span>+</span></strong><p>Years of innovation</p><small>Committed to better training spaces.</small></article>
+				<article><strong>99.4<span>%</span></strong><p>Customer satisfaction</p><small>Built on dependable service and quality.</small></article>
+				<article><strong>24/7</strong><p>Dedicated support</p><small>Here when your equipment needs us.</small></article>
+			</section>
+
+			<section class="about-story" aria-labelledby="about-story-title">
+				<div class="about-story-visual">
+					<img src="https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&amp;fit=crop&amp;w=1100&amp;q=85" alt="Strength equipment arranged in a modern gym">
+					<span>BUILT FOR EVERY REP</span>
+				</div>
+				<div class="about-story-copy">
+					<p class="about-eyebrow">OUR STORY</p>
+					<h2 id="about-story-title">Crafting strength since the first blueprint</h2>
+					<p>Fitpro Equips began with one simple belief: the right equipment can make every training space more welcoming, capable, and inspiring. We bring thoughtful design and reliable performance together for athletes, coaches, and fitness communities.</p>
+					<p>From a focused home setup to a busy training floor, our collection is selected to support consistent progress and stand up to everyday use.</p>
+					<div class="about-principles">
+						<div><strong>01</strong><span><b>Thoughtful design</b><small>Equipment made to work naturally in your space.</small></span></div>
+						<div><strong>02</strong><span><b>Reliable quality</b><small>Materials chosen for the work ahead.</small></span></div>
+						<div><strong>03</strong><span><b>Real support</b><small>People ready to help along the way.</small></span></div>
+					</div>
+				</div>
+			</section>
+
+			<section class="about-team" aria-labelledby="about-team-title">
+				<div class="about-section-heading"><div><p class="about-eyebrow">LEADERSHIP</p><h2 id="about-team-title">The people behind Fitpro Equips</h2></div><p>A dedicated collective of fitness enthusiasts, product specialists, and customer advocates making training spaces better.</p></div>
+				<div class="about-team-grid">
+					<article class="about-team-card"><img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&amp;fit=crop&amp;w=700&amp;q=85" alt="Portrait of Fitpro Equips founder"><div><small>FOUNDER &amp; CEO</small><h3>Rahul Mehta</h3><p>Building practical equipment and better ways to train.</p></div></article>
+					<article class="about-team-card"><img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&amp;fit=crop&amp;w=700&amp;q=85" alt="Portrait of the product lead"><div><small>HEAD OF PRODUCT</small><h3>Sana Khan</h3><p>Bringing considered design to every piece of gear.</p></div></article>
+					<article class="about-team-card"><img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&amp;fit=crop&amp;w=700&amp;q=85" alt="Portrait of the customer experience lead"><div><small>CUSTOMER EXPERIENCE</small><h3>Elena Rodrigues</h3><p>Making every customer feel supported at every step.</p></div></article>
+				</div>
+			</section>
+
+			<section class="about-contact" aria-labelledby="about-contact-title">
+				<div class="about-contact-copy">
+					<p class="about-eyebrow">DIRECT CONNECTION</p>
+					<h2 id="about-contact-title">Headquarters &amp; direct support</h2>
+					<p>Questions about your training space or equipment? Our team is here to help.</p>
+					<div class="about-contact-detail"><span aria-hidden="true">⌖</span><div><small>OUR LOCATION</small><strong>Pune, Maharashtra, India</strong></div></div>
+					<div class="about-contact-detail"><span aria-hidden="true">✆</span><div><small>PHONE</small><strong>6238833963</strong></div></div>
+					<div class="about-contact-detail"><span aria-hidden="true">✉</span><div><small>EMAIL</small><strong>fitproequips.test1@gmail.com</strong></div></div>
+					<div class="about-contact-hours"><span></span><p><strong>Dedicated support</strong><small>Monday - Saturday, 9:00 AM - 6:00 PM</small></p></div>
+				</div>
+				<div class="about-map" role="img" aria-label="Map showing Pune, Maharashtra">
+					<div class="about-map-canvas" aria-hidden="true">
+						<span class="map-neighborhood neighborhood-one">SHIVAJI NAGAR</span>
+						<span class="map-neighborhood neighborhood-two">DECCAN GYMKHANA</span>
+						<span class="map-neighborhood neighborhood-three">PUNE</span>
+						<span class="map-road road-one">J.M. ROAD</span>
+						<span class="map-road road-two">SENAPATI BAPAT RD</span>
+						<span class="map-location-pin"></span>
+					</div>
+					<div class="about-map-label"><span aria-hidden="true">●</span><div><strong>Fitpro Equips</strong><small>Pune, Maharashtra</small></div></div>
+				</div>
+			</section>
+		</main>
+
+		<%- include('../partials/user-footer') %>
+	</div>
+</body>
+</html>

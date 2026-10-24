@@ -13,6 +13,7 @@
     <div class="admin-dashboard brands-page">
         <%- include('../partials/admin-sidebar.ejs', { currentPage: 'brands' }) %>
         <main class="main-content brand-detail-content">
+            <%- include('../partials/admin-page-topbar.ejs') %>
             <div class="brand-detail-breadcrumb"><a href="/admin/brands">Brands</a><span>›</span><strong><%= brand.name %></strong></div>
             <section class="brand-detail-heading">
                 <div class="brand-detail-title"><h1><%= brand.name %></h1><span class="brand-status <%= brand.status === 'Active' ? 'active' : 'inactive' %>"><%= brand.status %></span></div>

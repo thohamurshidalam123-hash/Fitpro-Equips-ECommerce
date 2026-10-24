@@ -90,7 +90,7 @@
         .detail-item-quantity { margin: 0 0 6px; color: #4f5f77; font-size: 8px; }
         .detail-item-price { display: block; color: var(--detail-blue); font-size: 12px; font-weight: 700; }
         .item-actions { display: flex; gap: 5px; margin-top: 5px; }
-        .item-action { min-height: 17px; padding: 1px 7px; border: 1px solid #c8dafa; border-radius: 3px; color: var(--detail-blue); background: #fff; font-size: 7px; text-decoration: none; }
+        .item-action { min-height: 17px; padding: 1px 7px; border: 1px solid #c8dafa; border-radius: 3px; color: var(--detail-blue); background: #fff; font-size: 7px; text-decoration: none; cursor: pointer;}
         .item-action.primary { border-color: #148348; color: #fff; background: #16884d; }
         .item-action:hover { filter: brightness(.96); }
 
@@ -167,7 +167,7 @@
             <nav class="detail-breadcrumb" aria-label="Breadcrumb">
                 <a href="/">Home</a><span aria-hidden="true">›</span>
                 <a href="/account">My Account</a><span aria-hidden="true">›</span>
-                <a href="/account/orders">Order History</a><span aria-hidden="true">›</span>
+                <a href="/orders">Order History</a><span aria-hidden="true">›</span>
                 <span aria-current="page">Order Details</span>
             </nav>
 
@@ -200,8 +200,8 @@
                         Download Invoice
                     </a>
 
-                    <!-- Show Cancel if active -->
-                    <% if (order.orderStatus !== 'Delivered' && order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned' && order.orderStatus !== 'Return requested') { %>
+                    <!-- Show Cancel Entire Order if active -->
+                    <% if (!['Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) { %>
                         <button class="cancel-order-button" id="btnOpenCancel" type="button">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="m9 9 6 6m0-6-6 6"></path></svg>
                             Cancel Order
@@ -214,7 +214,7 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
                             Return Order
                         </button>
-                    <% } else { %>
+                    <% } else if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned' && order.orderStatus !== 'Return requested') { %>
                         <button class="return-order-button" type="button" disabled title="Returns are available after delivery">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
                             Return Order
@@ -232,7 +232,7 @@
                 if (order.orderStatus === 'Delivered') { s2 = 'complete'; s3 = 'complete'; s4 = 'complete'; s5 = 'complete'; progressClass = 'delivered'; }
             %>
 
-            <% if (order.orderStatus !== 'Cancelled' && order.orderStatus !== 'Returned' && order.orderStatus !== 'Return requested') { %>
+            <% if (!['Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) { %>
             <section class="tracking-panel" aria-labelledby="tracking-title">
                 <h2 class="section-title" id="tracking-title">Tracking Timeline</h2>
                 <ol class="tracking-timeline" data-progress="<%= progressClass %>" aria-label="Order tracking progress">
@@ -265,15 +265,27 @@
                 <section class="items-panel" aria-labelledby="items-title">
                     <h2 class="section-title" id="items-title">Items in This Order</h2>
                     
-                    <% order.items.forEach(item => { %>
+                    <% order.items.forEach(item => { 
+                        const itemStatus = item.itemStatus || order.orderStatus;
+                        const isActive = !['Cancelled', 'Returned', 'Return requested'].includes(itemStatus);
+                        const isDelivered = order.orderStatus === 'Delivered' || itemStatus === 'Delivered';
+                    %>
                     <article class="detail-item">
                         <div class="detail-item-image"><img src="<%= item.image %>" alt="<%= item.name %>"></div>
                         <div>
                             <h3 class="detail-item-name"><%= item.name %></h3>
                             <p class="detail-item-meta">Product ID: <%= item.productId %></p>
+                            <p class="detail-item-meta">Status: <strong style="color:var(--detail-blue)"><%= itemStatus %></strong></p>
                             <p class="detail-item-quantity">Qty: <%= item.quantity %></p>
+                            
                             <div class="item-actions">
                                 <a class="item-action" href="/products/<%= item.productId %>">View Product</a>
+                                
+                                <% if (isActive && !isDelivered) { %>
+                                    <button type="button" class="item-action" style="color:#c53540; border-color:#f0c6ca;" onclick="openCancelModal('<%= item._id %>')">Cancel Item</button>
+                                <% } else if (isActive && isDelivered) { %>
+                                    <button type="button" class="item-action" style="color:#c2410c; border-color:#fed7aa;" onclick="openReturnModal('<%= item._id %>')">Return Item</button>
+                                <% } %>
                             </div>
                         </div>
                         <strong class="detail-item-price">₹<%= item.price.toLocaleString('en-IN') %></strong>
@@ -293,7 +305,7 @@
                         <h2 class="aside-title" id="summary-title">Order Summary</h2>
                         <p class="summary-row"><span>Subtotal</span><strong>₹<%= order.subtotal.toLocaleString('en-IN') %></strong></p>
                         <p class="summary-row"><span>Discount</span><strong class="discount">-₹<%= order.discount.toLocaleString('en-IN') %></strong></p>
-                        <p class="summary-row"><span>Tax (GST)</span><strong>₹<%= order.tax.toLocaleString('en-IN') %></strong></p>
+                        <p class="summary-row"><span>Tax (GST 18%)</span><strong>₹<%= order.tax.toLocaleString('en-IN') %></strong></p>
                         <p class="summary-row"><span>Shipping</span><strong><%= order.shippingCost === 0 ? 'FREE' : '₹' + order.shippingCost %></strong></p>
                         <div class="summary-total"><span>Grand Total</span><strong>₹<%= order.grandTotal.toLocaleString('en-IN') %></strong></div>
                     </section>
@@ -301,7 +313,7 @@
                     <section class="help-panel" aria-labelledby="help-title">
                         <h2 class="help-title" id="help-title">Need Help?</h2>
                         <p class="help-copy">Our performance experts are available 24/7 to assist you.</p>
-                        <a class="support-link" href="/contact"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>Support</a>
+                        <a class="support-link" href="#contact-modal" data-open-contact-modal aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m3 7 9 6 9-6"></path></svg>Support</a>
                     </section>
                 </aside>
             </div>
@@ -315,11 +327,11 @@
                     <button class="close-modal" data-close>×</button>
                 </div>
                 <div class="modal-body">
-                    <p>Are you sure you want to cancel this order? This action cannot be undone and stock will be returned.</p>
+                    <p>Are you sure you want to cancel? This action cannot be undone and stock will be returned.</p>
                     <textarea class="modal-textarea" id="cancelReason" placeholder="Reason for cancellation (Optional)"></textarea>
                     <p class="inline-validation-message" id="cancelReasonError" hidden></p>
                     <div class="modal-actions">
-                        <button class="btn btn-cancel" data-close>Keep Order</button>
+                        <button class="btn btn-cancel" data-close>Go Back</button>
                         <button class="btn btn-danger" id="btnConfirmCancel">Confirm Cancellation</button>
                     </div>
                 </div>
@@ -334,7 +346,7 @@
                     <button class="close-modal" data-close>×</button>
                 </div>
                 <div class="modal-body">
-                    <p>Please provide a reason for returning this delivered order. A reason is mandatory to process the return.</p>
+                    <p>Please provide a reason for returning. A reason is mandatory to process the return.</p>
                     <textarea class="modal-textarea" id="returnReason" placeholder="Reason for return (Required)"></textarea>
                     <p class="inline-validation-message" id="returnReasonError" hidden></p>
                     <div class="modal-actions">
@@ -377,6 +389,23 @@
             const returnReasonError = document.getElementById('returnReasonError');
             const reasonPattern = /^[A-Za-z0-9][A-Za-z0-9 .,!?'-]*$/;
 
+            let currentItemId = null; // Used to track which item is being acted upon
+
+            // Globally scoped functions for inline onclick handlers
+            window.openCancelModal = function(itemId = null) {
+                currentItemId = itemId;
+                cancelModal.classList.add('active');
+            };
+
+            window.openReturnModal = function(itemId = null) {
+                currentItemId = itemId;
+                returnModal.classList.add('active');
+            };
+
+            // Full Order Modal Triggers
+            document.getElementById('btnOpenCancel')?.addEventListener('click', () => window.openCancelModal(null));
+            document.getElementById('btnOpenReturn')?.addEventListener('click', () => window.openReturnModal(null));
+
             const validateReason = (reason, required) => {
                 if (required && !reason) return 'Please provide a reason for the return.';
                 if (!reason) return '';
@@ -405,18 +434,11 @@
             cancelReason?.addEventListener('input', () => clearReasonError(cancelReason, cancelReasonError));
             returnReason?.addEventListener('input', () => clearReasonError(returnReason, returnReasonError));
             
-            document.getElementById('btnOpenCancel')?.addEventListener('click', () => {
-                cancelModal.classList.add('active');
-            });
-            
-            document.getElementById('btnOpenReturn')?.addEventListener('click', () => {
-                returnModal.classList.add('active');
-            });
-
             document.querySelectorAll('[data-close]').forEach(btn => {
                 btn.addEventListener('click', () => {
                     cancelModal?.classList.remove('active');
                     returnModal?.classList.remove('active');
+                    currentItemId = null;
                 });
             });
 
@@ -437,11 +459,11 @@
                     const res = await fetch(`/account/orders/${orderId}/cancel`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ reason })
+                        body: JSON.stringify({ reason: reason, itemId: currentItemId }) // Include itemId
                     });
                     const data = await res.json();
                     if (data.success) {
-                        const successMessage = data.message || 'Order cancelled successfully';
+                        const successMessage = data.message || 'Cancelled successfully';
                         if (window.showAppModal) {
                             window.showAppModal(successMessage, 'success', {
                                 onClose: () => window.location.reload()
@@ -455,7 +477,7 @@
                         if (reasonFieldError) {
                             showReasonError(cancelReason, cancelReasonError, reasonFieldError);
                         } else {
-                            window.showAppModal ? window.showAppModal(data.message || 'Unable to cancel this order.', 'error') : alert(data.message || 'Unable to cancel this order.');
+                            window.showAppModal ? window.showAppModal(data.message || 'Unable to process cancellation.', 'error') : alert(data.message || 'Unable to process cancellation.');
                         }
                         btn.textContent = 'Confirm Cancellation';
                         btn.disabled = false;
@@ -484,7 +506,7 @@
                     const res = await fetch(`/account/orders/${orderId}/return`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ reason })
+                        body: JSON.stringify({ reason: reason, itemId: currentItemId }) // Include itemId
                     });
                     const data = await res.json();
                     if (data.success) {
@@ -542,7 +564,6 @@
                             description: "Order Payment Retry",
                             order_id: data.razorpayOrderId,
                             handler: async function (response) {
-                                // Reusing your existing checkout verification route
                                 const verifyRes = await fetch('/checkout/verify-payment', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
@@ -591,3 +612,4 @@
     </script>
 </body>
 </html>
+```<FollowUp>

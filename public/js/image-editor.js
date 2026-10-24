@@ -120,14 +120,14 @@
 		};
 		const files = [...input.files];
 		if (!files.length) { delete input.dataset.processing; return null; }
-		const unsupportedFile = files.find(file => !['image/png', 'image/jpeg'].includes(file.type));
+		const unsupportedFile = files.find(file => !['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type));
 		if (unsupportedFile) {
 			input.value = '';
 			input.dataset.invalidFile = 'true';
 			delete input.dataset.processing;
-			const error = input.closest('form')?.querySelector(`[data-field-error="${input.name}"], [data-error-for="${input.name}"]`);
-			if (error) error.textContent = 'File not supported';
-			input.classList.add('has-error');
+			if (typeof window.showInlineFieldErrors === 'function') {
+				window.showInlineFieldErrors(input.form, { [input.name]: 'Choose a PNG, JPEG, GIF, or WebP image.' });
+			}
 			input.processedFiles = [];
 			return null;
 		}

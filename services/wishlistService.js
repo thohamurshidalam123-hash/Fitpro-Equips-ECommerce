@@ -1,5 +1,6 @@
 const Wishlist = require('../models/wishlistModel');
 const Product = require('../models/productModel');
+const { getBestOfferPercentage, getHighestVariantPrice, getEffectivePrice } = require('../utils/offerPricing');
 
 const getWishlistBadgeCount = async userId => {
     const wishlist = await Wishlist.findOne({ userId }).select('products').lean();
@@ -20,12 +21,29 @@ const getWishlist = async ({ userId, page, limit }) => {
     const wishlist = await Wishlist.findOne({ userId }).populate({
         path: 'products.productId',
         populate: [
-            { path: 'categoryId', select: 'name' },
-            { path: 'brandId', select: 'name' }
+            { path: 'categoryId', select: 'name offerPercentage' },
+            { path: 'brandId', select: 'name offerPercentage' }
         ]
     }).slice('products', [(currentPage - 1) * limit, limit]).lean();
     const validItems = wishlist?.products ? wishlist.products.filter(item => item.productId !== null) : [];
-    return { wishlistItems: validItems, itemCount, page: currentPage, limit, totalPages };
+    const wishlistItems = validItems.map(item => {
+        const product = item.productId;
+        const highestVariantPrice = getHighestVariantPrice(product);
+        return {
+            ...item,
+            productId: {
+                ...product,
+                regularPrice: highestVariantPrice ?? (Number(product.regularPrice) || 0),
+                bestOfferPercentage: getBestOfferPercentage(product),
+                displayPrice: getEffectivePrice(product),
+                variants: (product.variants || []).map(variant => ({
+                    ...variant,
+                    displayPrice: getEffectivePrice(product, variant)
+                }))
+            }
+        };
+    });
+    return { wishlistItems, itemCount, page: currentPage, limit, totalPages };
 };
 
 // For adding a product to wishlist

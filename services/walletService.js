@@ -2,6 +2,8 @@ const Wallet = require('../models/walletModel');
 const Razorpay = require('razorpay');
 const crypto = require('crypto');
 
+const roundCurrency = amount => Math.round((Number(amount) + Number.EPSILON) * 100) / 100;
+
 const razorpayInstance = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
@@ -20,11 +22,12 @@ const getOrCreateWallet = async (userId) => {
 // For crediting money to wallet from refund
 const creditWallet = async (userId, amount, description, orderId = null ) => {
     const wallet = await getOrCreateWallet(userId);
-    wallet.balance += amount;
+    const roundedAmount = roundCurrency(amount);
+    wallet.balance = roundCurrency(wallet.balance + roundedAmount);
 
     wallet.transactions.push({
         type: 'credit',
-        amount: amount,
+        amount: roundedAmount,
         description: description,
         orderId: orderId
     });
@@ -36,16 +39,17 @@ const creditWallet = async (userId, amount, description, orderId = null ) => {
 // For debiting money from wallet for paying order
 const debitWallet = async (userId, amount, description, orderId = null) => {
     const wallet = await getOrCreateWallet(userId);
+    const roundedAmount = roundCurrency(amount);
 
-    if (wallet.balance < amount ) {
+    if (wallet.balance < roundedAmount ) {
         throw new Error('Insufficient wallet balance');
     }
 
-    wallet.balance -= amount;
+    wallet.balance = roundCurrency(wallet.balance - roundedAmount);
 
     wallet.transactions.push({
         type: 'debit',
-        amount: amount,
+        amount: roundedAmount,
         description: description,
         orderId: orderId
     });

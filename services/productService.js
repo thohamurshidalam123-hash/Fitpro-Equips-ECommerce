@@ -8,6 +8,18 @@ const getHighlights = data => Array.from({ length: 4 }, (_, index) => ({
     title: String(data[`highlightTitle${index + 1}`] || '').trim()
 })).filter(highlight => highlight.title);
 
+const productNameExists = async (productName, excludeProductId) => {
+    const normalizedName = String(productName || '').trim().replace(/\s+/g, ' ');
+    if (!normalizedName) return false;
+
+    const flexibleName = normalizedName
+        .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/ /g, '\\s+');
+    const query = { productName: new RegExp(`^${flexibleName}$`, 'i') };
+    if (excludeProductId) query._id = { $ne: excludeProductId };
+    return Boolean(await Product.exists(query));
+};
+
 // For loading products with inventory summaries
 const getProducts = async ({ page, limit, searchQuery, categoryFilter, statusFilter, minPrice, maxPrice }) => {
     const query = {};
@@ -65,6 +77,7 @@ const createProduct = async ({ data, files }) => {
     if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!brandId) errors.brandId = 'Brand is required';
     if (!files || files.length < 3) errors.images = 'Please upload at least 3 images';
+    if (!errors.productName && await productNameExists(productName)) errors.productName = 'A product with this name already exists';
     if (Object.keys(errors).length) return { success: false, errors };
     if (!await Brand.exists({ _id: brandId, status: 'Active' })) {
         return { success: false, errors: { brandId: 'Please select a valid brand' } };
@@ -97,6 +110,7 @@ const updateProduct = async ({ productId, data, files }) => {
     const errors = validateProduct({ ...data, availableStock: availableStock ?? product.availableStock });
     if (!Number.isFinite(offerPercentage) || offerPercentage < 0 || offerPercentage > 100) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
     if (!brandId) errors.brandId = 'Brand is required';
+    if (!errors.productName && await productNameExists(productName, productId)) errors.productName = 'A product with this name already exists';
     if (Object.keys(errors).length) return { statusCode: 400, errors };
     if (!await Brand.exists({ _id: brandId, status: 'Active' })) {
         return { statusCode: 400, errors: { brandId: 'Please select a valid brand' } };

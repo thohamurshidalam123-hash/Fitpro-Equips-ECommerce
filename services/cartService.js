@@ -44,7 +44,7 @@ const getCartPageData = async ({ userId, requestedPage }) => {
     });
 
     const tax = Number((subtotal * 0.0018).toFixed(2));
-    const shipping = subtotal > 0 && subtotal < 1500 ? 500 : 0;
+    const shipping = subtotal > 0 && subtotal <= 5000 ? 500 : 0;
     const total = subtotal + tax + shipping;
     const cartPageItems = cartItems.slice((page - 1) * itemsPerPage, page * itemsPerPage);
     return { cartItems, cartPageItems, subtotal, tax, shipping, total, canCheckout, itemCount: cartItems.length, page, totalPages };

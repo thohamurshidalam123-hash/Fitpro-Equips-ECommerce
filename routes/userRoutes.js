@@ -143,6 +143,7 @@ router.delete('/delete-address/:id', requireUserSession, addressController.delet
 router.post('/google-login', userController.googleLogin);
 
 // Shop page routes
+router.get('/about-us', (req, res) => res.render('user/about', { currentPage: 'about' }));
 router.get('/shop',userShopController.loadShopPage);
 router.get('/products/:id',userShopController.productDetailsPage)
 

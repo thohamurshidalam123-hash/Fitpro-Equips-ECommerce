@@ -69,11 +69,21 @@ const placeOrder = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Please log in first.' });
         }
         const result = await checkoutService.placeOrder({
-            ...req.body,
             userId,
+            addressId: req.body.addressId,
+            paymentMethod: req.body.paymentMethod,
             couponCode: req.session.appliedCoupon?.code
         });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
+        if (result.paymentMethod === 'razorpay') {
+            req.session.pendingRazorpayPayment = {
+                gatewayOrderId: result.razorpayOrderId,
+                amount: result.amount,
+                addressId: req.body.addressId,
+                couponCode: req.session.appliedCoupon?.code,
+                userId
+            };
+        }
         delete req.session.appliedCoupon;
         return res.status(201).json(result);
     } catch (error) {
@@ -101,11 +111,17 @@ const loadOrderSuccess = async (req, res) => {
 // For verifying payment
 const verifyPayment = async (req, res) => {
     try{
-        const { orderId, paymentData } = req.body;
-        const result = await checkoutService.verifyRazorpayPayment({ orderId, paymentData });
+        const { orderId: gatewayOrderId, paymentData } = req.body;
+        const result = await checkoutService.verifyRazorpayPayment({
+            gatewayOrderId,
+            paymentData,
+            pendingPayment: req.session.pendingRazorpayPayment,
+            userId: req.session.userId
+        });
 
         if (result.success) {
-            return res.status(200).json({ success: true, message: 'Payment verified successfully.'});
+            delete req.session.pendingRazorpayPayment;
+            return res.status(200).json({ success: true, orderId: result.orderId, message: 'Payment verified successfully.'});
         }else{
             return res.status(400).json({ success: false, message: result.message });
         }
@@ -118,7 +134,16 @@ const verifyPayment = async (req, res) => {
 // For handling payment fialure callback
 const paymentFailure = async (req, res) => {
     try{
-        await checkoutService.handlePaymentFailure({ orderId: req.body.orderId });
+        await checkoutService.handlePaymentFailure({
+            gatewayOrderId: req.body.orderId,
+            pendingPayment: req.session.pendingRazorpayPayment
+        });
+        if (req.session.pendingRazorpayPayment?.gatewayOrderId === req.body.orderId) {
+            if (req.session.pendingRazorpayPayment.couponCode) {
+                req.session.appliedCoupon = { code: req.session.pendingRazorpayPayment.couponCode };
+            }
+            delete req.session.pendingRazorpayPayment;
+        }
         return res.status(200).json({ success: true});
     }catch(error) {
         console.error('Error handling payment failure:',error);

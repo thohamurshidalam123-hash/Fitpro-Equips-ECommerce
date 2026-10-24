@@ -129,16 +129,7 @@
         <%- include('../partials/admin-sidebar.ejs', { currentPage: 'orders' }) %>
 
         <main class="main-content">
-            <header class="orders-topbar">
-                <label class="orders-global-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
-                    <input type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search admin">
-                </label>
-                <div class="orders-top-actions">
-                    <button class="orders-notification" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button>
-                    <a class="orders-support" href="#support">Support</a>
-                </div>
-            </header>
+            <%- include('../partials/admin-page-topbar.ejs') %>
 
             <div class="orders-heading">
                 <nav class="orders-breadcrumb" aria-label="Breadcrumb"><span>Dashboard</span><span aria-hidden="true">›</span><span>Orders</span></nav>

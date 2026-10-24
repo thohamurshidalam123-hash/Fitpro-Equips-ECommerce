@@ -33,7 +33,7 @@
 				option.disabled = !available;
 				option.setAttribute('aria-pressed', 'false');
 				name.textContent = variant.name || `${variant.weight}${variant.weightUnit || 'kg'}`;
-				details.textContent = [variant.color, `₹${Number(variant.price || 0).toFixed(2)}`, `${variant.stock} left`].filter(Boolean).join(' · ');
+				details.textContent = [variant.color, `₹${Number(variant.displayPrice ?? variant.price ?? 0).toFixed(2)}`, `${variant.stock} left`].filter(Boolean).join(' · ');
 				option.append(name, details);
 				return option;
 			}));

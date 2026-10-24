@@ -10,7 +10,10 @@ const orderSchema = new mongoose.Schema({
         image: String,
         price: Number,
         quantity: Number,
-        itemTotal: Number
+        itemTotal: Number,
+        itemStatus: { type: String, default: 'Pending' },
+        cancellationReason: String,
+        returnReason: String 
     }],
     shippingAddress: new mongoose.Schema({
         name: String,

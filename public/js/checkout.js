@@ -321,15 +321,20 @@ document.addEventListener('DOMContentLoaded', () => {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
-                                        orderId: data.orderId,
+                                        orderId: data.razorpayOrderId,
                                         paymentData: response
                                     })
                                 });
                                 const verifyData = await verifyRes.json();
                                 if (verifyData.success) {
-                                    window.location.href = `/order-success/${data.orderId}`;
+                                    window.location.href = `/order-success/${verifyData.orderId}`;
                                 } else {
-                                    window.location.href = `/order-failed/${data.orderId}`;
+                                    await fetch('/checkout/payment-failed', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ orderId: data.razorpayOrderId })
+                                    });
+                                    window.location.href = `/order-failed/${data.razorpayOrderId}`;
                                 }
                             },
                             modal: {
@@ -338,9 +343,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     await fetch('/checkout/payment-failed', {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ orderId: data.orderId })
+                                        body: JSON.stringify({ orderId: data.razorpayOrderId })
                                     });
-                                    window.location.href = `/order-failed/${data.orderId}`;
+                                    window.location.href = `/order-failed/${data.razorpayOrderId}`;
                                 }
                             }
                         };
@@ -351,9 +356,9 @@ document.addEventListener('DOMContentLoaded', () => {
                             await fetch('/checkout/payment-failed', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ orderId: data.orderId })
+                                body: JSON.stringify({ orderId: data.razorpayOrderId })
                             });
-                            window.location.href = `/order-failed/${data.orderId}`;
+                            window.location.href = `/order-failed/${data.razorpayOrderId}`;
                         });
                         rzp.open();
                     } else if (data.paymentMethod === 'wallet') {

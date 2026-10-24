@@ -23,10 +23,7 @@
         <%- include('../partials/admin-sidebar.ejs', { currentPage: 'coupons' }) %>
 
         <main class="main-content coupons-content">
-            <div class="coupons-topbar">
-                <label class="global-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search admin pages"></label>
-                <div class="topbar-actions"><button type="button" aria-label="Notifications">♧</button><a href="mailto:support@fitpro.com">Support</a></div>
-            </div>
+            <%- include('../partials/admin-page-topbar.ejs') %>
 
             <section class="coupons-heading">
                 <div><h1>Coupon Management</h1><p>Create, manage, and monitor promotional coupons and discount campaigns.</p></div>

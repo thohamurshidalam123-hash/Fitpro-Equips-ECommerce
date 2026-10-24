@@ -29,6 +29,8 @@ a { color: inherit; text-decoration: none; }
 .user-icon::after { content: ""; position: absolute; left: 3px; right: 3px; bottom: 1px; height: 5px; border: 1px solid currentColor; border-radius: 8px 8px 4px 4px; }
 .cart-wrap { position: relative; height: 11px; }
 .cart-count { position: absolute; top: -7px; right: -7px; display: grid; width: 10px; height: 10px; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); font-size: 6px; }
+.wishlist-wrap { height: 13px; }
+.wishlist-count { position: absolute; top: -7px; right: -7px; display: grid; width: 10px; height: 10px; place-items: center; border-radius: 50%; color: #fff; background: var(--blue); font-size: 6px; }
 .main-content { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .welcome-panel { min-height: 620px; position: relative; display: flex; align-items: flex-end; padding: clamp(32px, 5vw, 72px); color: #fff; background: linear-gradient(180deg, rgba(23,52,79,.05), rgba(35,77,142,.48)), url("https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1600&q=85") center / cover; }
 .welcome-copy { max-width: 380px; }

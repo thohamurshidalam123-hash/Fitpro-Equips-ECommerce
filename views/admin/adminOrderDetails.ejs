@@ -40,7 +40,9 @@
         
         /* Status Selector Dropdown Styling */
         .status-select { height: 28px; padding: 0 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 10px; font-weight: 600; color: #08764a; background: #d9f7e9; cursor: pointer; outline: none; }
+        .status-select.item-level { height: 24px; font-size: 8px; padding: 0 4px; }
         .status-badge { display: inline-flex; align-items: center; gap: 4px; min-height: 28px; padding: 0 12px; border-radius: 6px; font-size: 10px; font-weight: 650; text-transform: uppercase; }
+        .status-badge.item-level { min-height: 20px; padding: 0 8px; font-size: 8px; }
         .status-badge.cancelled { color: #bd3940; background: #fde7e8; }
         .status-badge.delivered { color: #087b4e; background: #d9f7eb; }
         .status-badge.returned { color: #6b21a8; background: #f3e8ff; }
@@ -68,13 +70,18 @@
         .products-table { width: 100%; border-collapse: collapse; text-align: left; }
         .products-table thead { background: #f2f5fd; }
         .products-table th { height: 23px; padding: 0 9px; color: #66738a; font-size: 7px; font-weight: 550; }
-        .products-table td { padding: 7px 9px; color: #334158; font-size: 7px; }
+        .products-table td { padding: 7px 9px; color: #334158; font-size: 7px; border-bottom: 1px solid #f1f5f9; }
+        .products-table tr:last-child td { border-bottom: none; }
         .product-cell { display: flex; min-width: 0; align-items: center; gap: 7px; }
         .product-photo { display: grid; width: 27px; height: 27px; flex: 0 0 27px; place-items: center; overflow: hidden; border-radius: 4px; background: #f1f3f7; }
         .product-photo img { width: 100%; height: 100%; object-fit: cover; }
         .product-title { display: block; max-width: 120px; color: #29364b; font-size: 7px; font-weight: 650; line-height: 1.35; }
         .products-table .number-cell { white-space: nowrap; }
         .products-table .subtotal-cell { color: #29364b; font-weight: 700; white-space: nowrap; }
+
+        .item-action-btn { background: none; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 4px; font-size: 7px; cursor: pointer; color: #475569; }
+        .item-action-btn.approve { border-color: #10b981; color: #10b981; }
+        .item-action-btn.reject { border-color: #ef4444; color: #ef4444; }
 
         .side-panel { padding: 11px 10px; }
         .side-panel .panel-kicker { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -100,16 +107,7 @@
         <%- include('../partials/admin-sidebar.ejs', { currentPage: 'orders' }) %>
 
         <main class="detail-main">
-            <header class="detail-topbar">
-                <label class="global-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
-                    <input type="search" placeholder="Search..." aria-label="Search admin">
-                </label>
-                <div class="topbar-actions">
-                    <button class="topbar-notice" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button>
-                    <a class="topbar-support" href="#support">Support</a>
-                </div>
-            </header>
+            <%- include('../partials/admin-page-topbar.ejs') %>
 
             <nav class="detail-breadcrumb" aria-label="Breadcrumb">
                 <a href="/admin/dashboard">Dashboard</a><span aria-hidden="true">›</span>
@@ -129,8 +127,14 @@
                     
                     <% if (isEndState) { %>
                         <span class="status-badge <%= order.orderStatus.toLowerCase() %>"><%= order.orderStatus %></span>
+                        <% if (order.orderStatus === 'Return requested') { %>
+                            <div style="display:flex; gap: 5px; margin-left: 10px;">
+                                <button class="item-action-btn approve" onclick="handleReturnAction('<%= order._id %>', null, 'approve')">Approve Full Return</button>
+                                <button class="item-action-btn reject" onclick="handleReturnAction('<%= order._id %>', null, 'reject')">Reject</button>
+                            </div>
+                        <% } %>
                     <% } else { %>
-                        <select id="orderStatusSelect" class="status-select" data-current-status="<%= order.orderStatus %>">
+                        <select class="status-select status-update-trigger" data-order-id="<%= order._id %>" data-current-status="<%= order.orderStatus %>">
                             <% flow.forEach((statusStep, index) => { %>
                                 <option value="<%= statusStep %>" <%= order.orderStatus === statusStep ? 'selected' : '' %> <%= index < currentIndex ? 'disabled' : '' %>><%= statusStep %></option>
                             <% }); %>
@@ -165,17 +169,43 @@
                         <header class="products-panel-header"><strong id="productsTitle">Ordered Products</strong><span><%= order.items.length %> Items</span></header>
                         <div class="products-table-wrap">
                             <table class="products-table">
-                                <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Subtotal</th></tr></thead>
+                                <thead><tr><th>Product</th><th>Qty</th><th>Status & Actions</th><th>Price</th><th>Subtotal</th></tr></thead>
                                 <tbody>
-                                    <% order.items.forEach(item => { %>
+                                    <% order.items.forEach(item => { 
+                                        const itemStatus = item.itemStatus || order.orderStatus;
+                                        const isItemEndState = ['Delivered', 'Returned', 'Cancelled', 'Return requested'].includes(itemStatus);
+                                        const itemCurrentIndex = flow.indexOf(itemStatus);
+                                    %>
                                     <tr>
                                         <td>
                                             <div class="product-cell">
                                                 <span class="product-photo"><img src="<%= item.image %>" alt="<%= item.name %>"></span>
-                                                <span><span class="product-title"><%= item.name %></span></span>
+                                                <span>
+                                                    <span class="product-title"><%= item.name %></span>
+                                                    <% if(item.cancellationReason) { %><span style="color:#ef4444; font-size:6px; display:block;">Reason: <%= item.cancellationReason %></span><% } %>
+                                                    <% if(item.returnReason) { %><span style="color:#ef4444; font-size:6px; display:block;">Reason: <%= item.returnReason %></span><% } %>
+                                                </span>
                                             </div>
                                         </td>
                                         <td class="number-cell"><%= item.quantity %></td>
+                                        <td>
+                                            <% if (isItemEndState) { %>
+                                                <span class="status-badge item-level <%= itemStatus.toLowerCase().replace(' ', '-') %>"><%= itemStatus %></span>
+                                                <% if (itemStatus === 'Return requested') { %>
+                                                    <div style="display:flex; gap: 4px; margin-top: 4px;">
+                                                        <button class="item-action-btn approve" onclick="handleReturnAction('<%= order._id %>', '<%= item._id %>', 'approve')">Approve</button>
+                                                        <button class="item-action-btn reject" onclick="handleReturnAction('<%= order._id %>', '<%= item._id %>', 'reject')">Reject</button>
+                                                    </div>
+                                                <% } %>
+                                            <% } else { %>
+                                                <select class="status-select item-level status-update-trigger" data-order-id="<%= order._id %>" data-item-id="<%= item._id %>" data-current-status="<%= itemStatus %>">
+                                                    <% flow.forEach((statusStep, index) => { %>
+                                                        <option value="<%= statusStep %>" <%= itemStatus === statusStep ? 'selected' : '' %> <%= index < itemCurrentIndex ? 'disabled' : '' %>><%= statusStep %></option>
+                                                    <% }); %>
+                                                    <option value="Cancelled">Cancelled</option>
+                                                </select>
+                                            <% } %>
+                                        </td>
                                         <td class="number-cell">₹<%= item.price.toLocaleString('en-IN') %></td>
                                         <td class="subtotal-cell">₹<%= (item.price * item.quantity).toLocaleString('en-IN') %></td>
                                     </tr>
@@ -235,31 +265,32 @@
             <p class="app-notification-message" id="appNotificationMessage"></p>
             <div class="app-notification-actions">
                 <button class="app-notification-close" type="button">OK</button>
-                <button class="app-notification-cancel" type="button">Cancel</button>
+                <button class="app-notification-cancel" type="button" style="display: none;">Cancel</button>
             </div>
         </div>
     </div>
     <script src="/js/notification-modal.js"></script>
     <script src="/js/invoice-download.js"></script>
     <script>
-        const orderStatusSelect = document.getElementById('orderStatusSelect');
-        if (orderStatusSelect) {
-            orderStatusSelect.addEventListener('change', async function() {
+        // Universal Status Update Handler (Handles both Full Order and Individual Items)
+        document.querySelectorAll('.status-update-trigger').forEach(selectElement => {
+            selectElement.addEventListener('change', async function() {
                 const newStatus = this.value;
-                const previousStatus = this.dataset.currentStatus || this.querySelector('option[selected]')?.value;
-                const orderId = '<%= order._id %>';
+                const previousStatus = this.dataset.currentStatus;
+                const orderId = this.dataset.orderId;
+                const itemId = this.dataset.itemId || null; 
 
                 try {
                     const res = await fetch(`/admin/orders/${orderId}/status`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ status: newStatus })
+                        body: JSON.stringify({ status: newStatus, itemId: itemId })
                     });
                     const data = await res.json();
                     
                     if (data.success) {
                         this.dataset.currentStatus = newStatus;
-                        window.showAppModal('Order status successfully updated to ' + newStatus, 'success', {
+                        window.showAppModal(`${itemId ? 'Item' : 'Order'} status successfully updated to ` + newStatus, 'success', {
                             onClose: () => window.location.reload()
                         });
                     } else {
@@ -272,7 +303,31 @@
                     window.showAppModal('Server error while updating status.', 'error');
                 }
             });
-        }
+        });
+
+        // Handle Approve/Reject Return for both Full Order and Items
+        window.handleReturnAction = async function(orderId, itemId, action) {
+            const endpoint = `/admin/orders/${orderId}/${action}-return`;
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ itemId: itemId })
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    window.showAppModal(data.message, 'success', {
+                        onClose: () => window.location.reload()
+                    });
+                } else {
+                    window.showAppModal(data.message || `Failed to ${action} return.`, 'error');
+                }
+            } catch (error) {
+                console.error('Action error:', error);
+                window.showAppModal('Server error.', 'error');
+            }
+        };
     </script>
 </body>
 </html>

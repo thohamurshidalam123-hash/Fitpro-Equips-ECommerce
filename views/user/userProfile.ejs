@@ -142,11 +142,11 @@
                                     <% if (transaction.type === 'credit') { %>
                                         <span class="wallet-transaction-icon credit" aria-hidden="true">↙</span>
                                         <span class="wallet-transaction-copy"><strong><%= transaction.description %></strong><small>Credit</small></span>
-                                        <strong class="wallet-transaction-amount credit">+₹<%= Number(transaction.amount).toLocaleString('en-IN') %></strong>
+                                        <strong class="wallet-transaction-amount credit">+₹<%= Number(transaction.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
                                     <% } else { %>
                                         <span class="wallet-transaction-icon debit" aria-hidden="true">↗</span>
                                         <span class="wallet-transaction-copy"><strong><%= transaction.description %></strong><small>Debit</small></span>
-                                        <strong class="wallet-transaction-amount">-₹<%= Number(transaction.amount).toLocaleString('en-IN') %></strong>
+                                        <strong class="wallet-transaction-amount">-₹<%= Number(transaction.amount).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></strong>
                                     <% } %>
                                 </li>
                             <% }); %>

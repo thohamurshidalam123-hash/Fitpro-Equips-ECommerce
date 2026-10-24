@@ -139,14 +139,14 @@
         <%- include('../partials/admin-sidebar.ejs', { currentPage: 'sales-reports' }) %>
 
         <main class="main-content sales-report-main" id="reportContentArea">
-            <header class="sales-topbar">
-                <label class="sales-global-search">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"></circle><path d="m16 16 4.5 4.5"></path></svg>
-                    <input id="recentOrderSearch" type="search" placeholder="Search orders, customers, or IDs..." aria-label="Search recent orders">
+            <header class="admin-page-topbar">
+                <label class="admin-global-search">
+                    <span aria-hidden="true">⌕</span>
+                    <input id="recentOrderSearch" type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search recent orders">
                 </label>
-                <div class="sales-top-actions">
-                    <button class="sales-notification" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button>
-                    <a class="sales-support" href="mailto:support@fitpro.com">Support</a>
+                <div class="admin-topbar-actions">
+                    <!-- <button class="sales-notification" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button> -->
+                    <a href="mailto:support@fitpro.com">Support</a>
                 </div>
             </header>
 
@@ -326,14 +326,71 @@
 
         // Export to Excel using SheetJS
         document.getElementById('exportCsv').addEventListener('click', () => {
-            // Get the table
             const table = document.getElementById('salesDataTable');
-            
-            // Convert to a workbook
-            const wb = XLSX.utils.table_to_book(table, {sheet: "Sales Report"});
-            
-            // Save file
-            XLSX.writeFile(wb, `Sales_Report_<%= currentFilter %>.xlsx`);
+            const currencyValue = value => Number(value.replace(/[^\d.-]/g, '')) || 0;
+            const kpiValues = [...document.querySelectorAll('.sales-kpi-value')].map(element => element.textContent.trim());
+            const reportPeriod = document.querySelector('#reportPeriod option:checked').textContent.trim();
+            const startDate = '<%= startDate %>';
+            const endDate = '<%= endDate %>';
+            const orderRows = [...table.querySelectorAll('tbody .recent-order-row')].map(row => {
+                const cells = [...row.cells].map(cell => cell.textContent.trim());
+                const totalDiscount = currencyValue(cells[3]);
+                const couponDiscount = currencyValue(cells[4]);
+                return [
+                    cells[0],
+                    cells[1],
+                    currencyValue(cells[2]),
+                    totalDiscount,
+                    couponDiscount,
+                    Math.max(0, totalDiscount - couponDiscount),
+                    cells[5],
+                    cells[6]
+                ];
+            });
+            const headers = [
+                'Order ID', 'Customer', 'Amount', 'Total Discount', 'Coupon Discount',
+                'Product Offer Discount', 'Payment Method', 'Date'
+            ];
+            const worksheetData = [
+                ['Fitpro Equips Sales Report'],
+                ['Period', reportPeriod],
+                ['Date Range', `${startDate} to ${endDate}`],
+                [],
+                ['Summary Statistics'],
+                ['Total Orders', currencyValue(kpiValues[0])],
+                ['Total Order Amount', currencyValue(kpiValues[1])],
+                ['Total Discounts Given', currencyValue(kpiValues[2])],
+                ['Total Coupon Deductions', currencyValue(kpiValues[3])],
+                [],
+                ['Detailed Order History'],
+                headers,
+                ...(orderRows.length ? orderRows : [['No sales found for this period']])
+            ];
+            const worksheet = XLSX.utils.aoa_to_sheet(worksheetData);
+            worksheet['!merges'] = [
+                { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+                { s: { r: 4, c: 0 }, e: { r: 4, c: 1 } },
+                { s: { r: 10, c: 0 }, e: { r: 10, c: 7 } }
+            ];
+            worksheet['!cols'] = [
+                { wch: 20 }, { wch: 24 }, { wch: 16 }, { wch: 17 },
+                { wch: 17 }, { wch: 23 }, { wch: 20 }, { wch: 16 }
+            ];
+
+            [7, 8, 9].forEach(row => {
+                const cell = worksheet[XLSX.utils.encode_cell({ r: row - 1, c: 1 })];
+                if (cell) cell.z = '₹#,##0.00';
+            });
+            orderRows.forEach((_, index) => {
+                [2, 3, 4, 5].forEach(column => {
+                    const cell = worksheet[XLSX.utils.encode_cell({ r: index + 12, c: column })];
+                    if (cell) cell.z = '₹#,##0.00';
+                });
+            });
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'Sales Report');
+            XLSX.writeFile(workbook, `Sales_Report_<%= currentFilter %>.xlsx`);
         });
 
         // NEW: Export to PDF by triggering the Backend Route

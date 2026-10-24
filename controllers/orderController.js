@@ -47,12 +47,12 @@ const loadOrderDetails = async (req, res) => {
 const cancelOrder = async (req, res) => {
     try{
         const userId = req.session.userId;
-        const result = await orderService.cancelOrder({ userId, orderId: req.params.id, reason: req.body.reason });
+        const result = await orderService.cancelOrder({ userId, orderId: req.params.id, itemId: req.body.itemId, reason: req.body.reason });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message, errors: result.errors });
         res.json(result);
 
         }catch(error){
-            console.error('Error in cancel oreder:'.error);
+            console.error('Error in cancel oreder:',error);
             res.status(500).json({ success: false, message: 'Server Error'});
     }
 };
@@ -61,7 +61,7 @@ const cancelOrder = async (req, res) => {
 const returnOrder = async (req, res) => {
     try{
         const userId = req.session.userId;
-        const result = await orderService.returnOrder({ userId, orderId: req.params.id, reason: req.body.reason });
+        const result = await orderService.returnOrder({ userId, orderId: req.params.id, itemId: req.body.itemId, reason: req.body.reason });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message, errors: result.errors });
         res.json(result);
     }catch(error) {

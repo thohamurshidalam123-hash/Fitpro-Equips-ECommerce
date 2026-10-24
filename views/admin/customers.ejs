@@ -15,6 +15,7 @@
 
 		<!-- Main Content -->
 		<main class="main-content">
+			<%- include('../partials/admin-page-topbar.ejs') %>
 			<!-- Page Title Section -->
 			<div class="page-header">
 				<div>
@@ -28,7 +29,7 @@
 				<div class="stat-card">
 					<div class="stat-header">
 						<span class="stat-icon customers">👥</span>
-						<span class="stat-change up">+12.5%</span>
+						<!-- <span class="stat-change up">+12.5%</span> -->
 					</div>
 					<p class="stat-label">TOTAL CUSTOMERS</p>
 					<p class="stat-value"><%= totalUsers || 0 %></p>
@@ -37,7 +38,7 @@
 				<div class="stat-card">
 					<div class="stat-header">
 						<span class="stat-icon new">👤</span>
-						<span class="stat-change up">+8.2%</span>
+						<!-- <span class="stat-change up">+8.2%</span> -->
 					</div>
 					<p class="stat-label">NEW TODAY</p>
 					<p class="stat-value">18</p>
@@ -46,7 +47,7 @@
 				<div class="stat-card">
 					<div class="stat-header">
 						<span class="stat-icon active">⚡</span>
-						<span class="stat-change">90% of total</span>
+						<!-- <span class="stat-change">90% of total</span> -->
 					</div>
 					<p class="stat-label">ACTIVE USERS</p>
 					<p class="stat-value"><%= activeCount || 0 %></p>
@@ -55,7 +56,7 @@
 				<div class="stat-card">
 					<div class="stat-header">
 						<span class="stat-icon blocked">🚫</span>
-						<span class="stat-change down">-2.4%</span>
+						<!-- <span class="stat-change down">-2.4%</span> -->
 					</div>
 					<p class="stat-label">BLOCKED</p>
 					<p class="stat-value"><%= blockedCount || 0 %></p>

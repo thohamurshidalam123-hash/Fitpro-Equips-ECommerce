@@ -100,7 +100,7 @@ const createOrderAddress = async ({ userId, data }) => {
 };
 
 // For placing an order and updating stock
-const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
+const placeOrder = async ({ userId, addressId, paymentMethod, couponCode, paymentVerified = false }) => {
     if (!['cod', 'razorpay', 'wallet'].includes(paymentMethod)) {
         return { statusCode: 400, message: 'Invalid payment method selected'}
     }
@@ -190,8 +190,8 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
             type: selectedAddress.addressType
         },
         paymentMethod: formattedPaymentMethod,
-        paymentStatus: paymentMethod === 'wallet' ? 'Completed' : 'Pending',
-        orderStatus: paymentMethod === 'wallet' ? 'Proccessing' : 'Pending',
+        paymentStatus: paymentMethod === 'cod' ? 'Pending' : 'Completed',
+        orderStatus: paymentMethod === 'cod' ? 'Pending' : 'Processing',
         subtotal,
         tax,
         shippingCost,
@@ -202,7 +202,7 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
     });
 
     let razorpayOrder = null;
-    if (paymentMethod === 'razorpay') {
+    if (paymentMethod === 'razorpay' && !paymentVerified) {
         try {
             razorpayOrder = await razorpayInstance.orders.create({
                 amount: Math.round(grandTotal * 100),
@@ -213,11 +213,16 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
             console.error('Razorpay order initialization error:', error.message);
             return { statusCode: 502, message: 'Failed to initialize payment gateway. Your cart has not been changed.' };
         }
+        return {
+            success: true,
+            paymentMethod: 'razorpay',
+            razorpayOrderId: razorpayOrder.id,
+            amount: razorpayOrder.amount,
+            key: process.env.RAZORPAY_KEY_ID
+        };
     }
 
-    await newOrder.save();
-
-    // For deducting wallet balance
+    // Debit before saving so a failed wallet payment cannot leave an unpaid order.
     if (paymentMethod === 'wallet') {
         try{
             await walletService.debitWallet(
@@ -228,43 +233,47 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
             );
         }catch(error) {
             console.error("Error in updating wallet after order creation:",error);
-            newOrder.paymentStatus = 'Failed';
-            newOrder.orderStatus = 'Pending';
-            await newOrder.save();
             return { statusCode: 500, message: 'Failed to update wallet balance'}
         }
     }
 
-    for (const item of cart.items) {
-        if (item.variantId) {
-            await Product.updateOne(
-                { _id: item.productId._id, 'variants._id': item.variantId },
-                { $inc: { 'variants.$.stock': -item.quantity } }
-            );
-            const updatedProduct = await Product.findById(item.productId._id);
-            if (updatedProduct) {
-                updatedProduct.availableStock = updatedProduct.variants.reduce(
-                    (total, productVariant) => total + (Number(productVariant.stock) || 0),
-                    0
-                );
-                await updatedProduct.save();
+    try {
+        await newOrder.save();
+    } catch (error) {
+        if (paymentMethod === 'wallet') {
+            try {
+                await walletService.creditWallet(userId, grandTotal, `Refund for failed order ${orderId}`, newOrder._id);
+            } catch (refundError) {
+                console.error('Error refunding wallet after order save failure:', refundError);
             }
-        } else {
-            await Product.findByIdAndUpdate(item.productId._id, { $inc: { availableStock: -item.quantity } });
         }
+        throw error;
+    }
+
+    for (const item of cart.items) {
+        const product = await Product.findById(item.productId._id);
+        if (!product) continue;
+
+        if (item.variantId) {
+            const variant = product.variants.id(item.variantId);
+            if (variant) {
+                variant.stock = Math.max(0, (Number(variant.stock) || 0) - item.quantity);
+                variant.status = variant.stock === 0 ? 'Out of Stock' : (variant.status === 'Out of Stock' ? 'Active' : variant.status);
+            }
+            product.availableStock = product.variants.reduce(
+                (total, productVariant) => total + (Number(productVariant.stock) || 0),
+                0
+            );
+        } else {
+            product.availableStock = Math.max(0, (Number(product.availableStock) || 0) - item.quantity);
+        }
+
+        if (product.availableStock === 0) product.status = 'Out of Stock';
+        else if (product.status === 'Out of Stock') product.status = 'Active';
+        await product.save();
     }
     await Cart.findOneAndDelete({ userId });
 
-    if (paymentMethod === 'razorpay') {
-        return {
-            success: true,
-            orderId: newOrder._id,
-            paymentMethod: 'razorpay',
-            razorpayOrderId: razorpayOrder.id,
-            amount: razorpayOrder.amount,
-            key: process.env.RAZORPAY_KEY_ID
-        };
-    }
     return {
         success: true,
         orderId: newOrder._id,
@@ -274,8 +283,15 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode }) => {
 };
 
 // For verifying razorpay payment signature
-const verifyRazorpayPayment = async ({ orderId, paymentData }) => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData;
+const verifyRazorpayPayment = async ({ gatewayOrderId, paymentData, pendingPayment, userId }) => {
+    if (!pendingPayment || pendingPayment.userId !== userId || pendingPayment.gatewayOrderId !== gatewayOrderId) {
+        return { success: false, message: 'This payment attempt is invalid or has expired.' };
+    }
+
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData || {};
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || razorpay_order_id !== gatewayOrderId) {
+        return { success: false, message: 'Payment verification details are incomplete.' };
+    }
 
     const sign = razorpay_order_id + "|" + razorpay_payment_id;
     const expectedSign = crypto
@@ -283,18 +299,43 @@ const verifyRazorpayPayment = async ({ orderId, paymentData }) => {
     .update(sign.toString())
     .digest("hex");
 
-    if (razorpay_signature === expectedSign) {
-        await Order.findByIdAndUpdate(orderId, { paymentStatus: 'Completed', orderStatus: 'Processing' });
-        return { success: true }; 
-    }else{
-        await Order.findByIdAndUpdate(orderId, { paymentStatus:  'Failed' });
-        return { success: false, message: 'Invalid payment signature.'};
+    const expectedBuffer = Buffer.from(expectedSign);
+    const receivedBuffer = Buffer.from(String(razorpay_signature));
+    if (expectedBuffer.length !== receivedBuffer.length || !crypto.timingSafeEqual(expectedBuffer, receivedBuffer)) {
+        return { success: false, message: 'Invalid payment signature.' };
     }
+
+    let gatewayPayment;
+    try {
+        gatewayPayment = await razorpayInstance.payments.fetch(razorpay_payment_id);
+    } catch (error) {
+        console.error('Razorpay payment lookup error:', error.message);
+        return { success: false, message: 'Unable to confirm payment status.' };
+    }
+    if (
+        gatewayPayment.order_id !== gatewayOrderId
+        || gatewayPayment.status !== 'captured'
+        || gatewayPayment.amount !== pendingPayment.amount
+    ) {
+        return { success: false, message: 'Payment has not been completed.' };
+    }
+
+    const result = await placeOrder({
+        userId,
+        addressId: pendingPayment.addressId,
+        paymentMethod: 'razorpay',
+        couponCode: pendingPayment.couponCode,
+        paymentVerified: true
+    });
+    if (!result.success) return { success: false, message: result.message };
+    return { success: true, orderId: result.orderId };
 };
 
 // For handling payment failure/ modal close
-const handlePaymentFailure = async ({ orderId }) => {
-    await Order.findByIdAndUpdate(orderId, { paymentStatus: 'Failed' });
+const handlePaymentFailure = async ({ gatewayOrderId, pendingPayment }) => {
+    if (!pendingPayment || pendingPayment.gatewayOrderId !== gatewayOrderId) {
+        return { success: false, message: 'Payment attempt not found.' };
+    }
     return { success: true };
 };
 

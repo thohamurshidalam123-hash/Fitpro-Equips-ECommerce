@@ -69,6 +69,10 @@ const getShopPageData = async ({ page, limit, search, categoryFilter, brandFilte
 
         return {
             ...product,
+            variants: (product.variants || []).map(variant => ({
+                ...variant,
+                displayPrice: getEffectivePrice(product, variant)
+            })),
             availableStock,
             bestOfferPercentage,
             displayPrice : finalPrice

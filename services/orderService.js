@@ -5,6 +5,7 @@ const mongoose = require('mongoose');
 const walletService = require('./walletService');
 const { validateOrderReason } = require('../validators/orderValidators');
 
+
 // For adjusting stock of order items
 const adjustOrderItemStock = async (item, quantityChange) => {
     const product = await Product.findById(item.productId);
@@ -83,55 +84,118 @@ const getOrderDetails = async ({ orderId, userId }) => {
     return { order, estimatedDelivery };
 };
 
+// For calculating proportional refund
+const calculateItemRefund = (item, order) => {
+    const proportion = item.itemTotal / order.subtotal;
+    const proportionalDiscount = order.discount * proportion;
+    const proportionalTax = order.tax * proportion;
+    // For disabling shipping charge refund for partial cancellation, enabling only if it is last item
+    return item.itemTotal + proportionalTax - proportionalDiscount;
+
+};
+
 // For cancelling an order and restoring stock
-const cancelOrder = async ({ orderId, userId, reason }) => {
+const cancelOrder = async ({ orderId, userId, itemId, reason }) => {
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
     const reasonError = validateOrderReason(normalizedReason);
     if (reasonError) return { statusCode: 400, message: reasonError, errors: { reason: reasonError } };
 
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return { statusCode: 404, message: 'Order not found' };
-    if (['Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) {
-        return { statusCode: 400, message: 'This order cannot be cancelled' };
-    }
-    const paymentWasCompleted = ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
-    order.orderStatus = 'Cancelled';
-    if (normalizedReason) order.cancellationReason = normalizedReason;
     
+    const paymentWasCompleted = ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
+    
+    let refundAmount = 0;
+    // For partial cancellation
+    if(itemId) {
+        const item = order.items.id(itemId);
+        if(!item) return { statusCode: 404, message: 'Item not found in order'};
+        if([ 'Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(item.itemStatus)){
+            return { statusCode: 400, message: 'This item cannot be cancelled'};
+        }
+
+        item.itemStatus = 'Cancelled';
+        item.cancellationReason = normalizedReason;
+        refundAmount = calculateItemRefund(item, order);
+        await adjustOrderItemStock(item, item.quantity);
+
+        // For marking full order cancelled if all items are cancelled
+        const allCancelled = order.items.every(i => i.itemStatus === 'Cancelled');
+        if (allCancelled) order.orderStatus = 'Cancelled';
+    }
+    else {
+        // For full order cancellation
+        if ([ 'Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) {
+            return { statusCode: 400, message: 'This order cannot be cancelled'};
+        }
+        order.orderStatus = 'Cancelled';
+        if (normalizedReason) order.cancellationReason = normalizedReason;
+        refundAmount = order.grandTotal;
+
+        for (const item of order.items) {
+            if (item.itemStatus !== 'Cancelled') {
+                item.itemStatus = 'Cancelled';
+                item.cancellationReason = normalizedReason;
+                await adjustOrderItemStock(item, item.quantity);
+            }
+        }
+    }
+
+
     //For refunding to wallet for paid orders
-    if (paymentWasCompleted) {
+    if (paymentWasCompleted && refundAmount > 0) {
         await walletService.creditWallet(
             userId,
-            order.grandTotal,
-            `Refund for cancelled order ${order.orderId}`,
+            refundAmount,
+            `Refund for cancelled order ${itemId ? 'item' : 'order'} from #${order.orderId}`,
             order._id
         );
-        order.paymentStatus = 'Refunded';
+        if (order.orderStatus === 'Cancelled') order.paymentStatus = 'Refunded';
     } 
 
     await order.save();
-    for (const item of order.items) await adjustOrderItemStock(item, item.quantity);
     return {
         success: true,
         message: paymentWasCompleted
-            ? 'Order cancelled successfully. The refund has been credited to your wallet.'
+            ? `Order cancelled successfully. The refund amount of ₹${refundAmount.toFixed(2)} has been credited to your wallet.`
             : 'Order cancelled successfully'
     };
 };
 
 // For returning an order and restoring stock
-const returnOrder = async ({ orderId, userId, reason }) => {
+const returnOrder = async ({ orderId, userId, itemId, reason }) => {
     const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
     const reasonError = validateOrderReason(normalizedReason, { required: true });
     if (reasonError) return { statusCode: 400, message: reasonError, errors: { reason: reasonError } };
 
     const order = await Order.findOne({ _id: orderId, userId });
     if (!order) return { statusCode: 404, message: 'Order not found' };
-    if (order.orderStatus !== 'Delivered') return { statusCode: 400, message: 'Only delivered order can be returned' };
+
+    const isOrderDelivered = order.orderStatus === 'Delivered';
+
+    if (itemId) {
+        // For partial return
+        const item = order.items.id(itemId);
+        if (!item) return { statusCode: 404, message: 'Item not found'};
+        // If the order is delivered , the item is delivered
+        if (!isOrderDelivered && item.itemStatus !== 'Delivered') {
+            return { statusCode: 400, message: 'Only delivered items can be returned'}
+        }
+        item.itemStatus = 'Return requested';
+        item.returnReason = normalizedReason;
+    } else {
+        // Full return
+        if (!isOrderDelivered) return { statusCode: 400, message: 'Only delivered orders can be returned'};
+        for (const item of order.items) {
+            if (item.itemStatus !== 'Cancelled' && item.itemStatus !== 'Returned') {
+                item.itemStatus = 'Return requested';
+                item.returnReason = normalizedReason;
+            }
+        }
+    }
 
     // For changing status to requested.
     order.orderStatus = 'Return requested';
-    order.returnReason = normalizedReason;
     await order.save();
     
     return { success: true, message: 'Order return initiated successfully' };
