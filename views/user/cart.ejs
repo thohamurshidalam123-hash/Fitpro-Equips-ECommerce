@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitpro Equips | Shopping Cart</title>
+    <title><%= storeName %> | Shopping Cart</title>
     <link rel="stylesheet" href="/css/landing.css">
     <style>
     :root {
@@ -901,6 +901,10 @@
             </section>
         </div>
 
+        <% if (couponUnavailableNotice) { %>
+            <div id="couponUnavailableNotice" data-message="<%= couponUnavailableNotice %>" hidden></div>
+        <% } %>
+
         <%- include('../partials/user-footer') %>
     </div>
 
@@ -1181,6 +1185,13 @@
     document.getElementById('btnApplyCartCoupon').addEventListener('click', () => {
         selectCartCoupon(cartCouponCode.value.trim().toUpperCase());
     });
+
+    const couponUnavailableNotice = document.getElementById('couponUnavailableNotice');
+    if (couponUnavailableNotice) {
+        window.showAppModal(couponUnavailableNotice.dataset.message, 'error', {
+            onClose: () => { window.location.href = '/checkout'; }
+        });
+    }
 </script>
 </body>
 </html>

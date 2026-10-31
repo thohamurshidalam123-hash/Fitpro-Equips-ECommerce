@@ -2,6 +2,7 @@ const User = require('../models/user');
 const Order = require('../models/orderModel');
 const bcrypt = require('bcrypt');
 const { sendOtpEmail } = require('./emailServices');
+const { isOtpExpired } = require('../helpers/otpResend');
 
 const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
@@ -27,7 +28,7 @@ const sendAdminResetOtp = async email => {
 // For verifying an admin password reset OTP
 const verifyAdminResetOtp = ({ otp, expectedOtp, expiresAt }) => {
     if (!expectedOtp) return { statusCode: 400, message: 'Session expired. Please login' };
-    if (Date.now() > expiresAt) return { statusCode: 400, message: 'Otp has expired. Please request new one' };
+    if (isOtpExpired(expiresAt)) return { statusCode: 400, message: 'OTP has timed out. Please request a new OTP.' };
     if (otp !== expectedOtp) return { statusCode: 400, message: 'Invalid Otp' };
     return { success: true };
 };

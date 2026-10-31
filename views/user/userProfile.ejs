@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fitpro Equips | My Account</title>
+    <title><%= storeName %> | My Account</title>
     <link rel="stylesheet" href="/css/landing.css">
     <link rel="stylesheet" href="/css/profile.css">
 </head>
@@ -49,7 +49,7 @@
                 <a class="account-card" href="#wallet" data-open-wallet-modal><span class="card-icon">▤</span><h2>Wallet</h2><p>Manage your balance and payment methods</p><span class="card-link">Manage Wallet →</span></a>
             </section>
 
-            <section class="trust-strip" aria-label="Fitpro Equips benefits">
+            <section class="trust-strip" aria-label="<%= storeName %> benefits">
                 <div><span class="trust-icon">♢</span><span><strong>Secure Shopping</strong><small>100% Protected Payments</small></span></div>
                 <div><span class="trust-icon">ϟ</span><span><strong>Fast Delivery</strong><small>2-3 Business Days</small></span></div>
                 <div><span class="trust-icon">✣</span><span><strong>Premium Quality</strong><small>Tested Performance Gear</small></span></div>
@@ -321,7 +321,7 @@
                     key: orderData.key,
                     amount: orderData.amount,
                     currency: orderData.currency || 'INR',
-                    name: 'Fitpro Equips',
+                    name: <%- JSON.stringify(storeName) %>,
                     description: 'Wallet balance top-up',
                     order_id: orderData.razorpayOrderId,
                     handler: async paymentData => {
@@ -390,7 +390,7 @@
                     } else if (result.requireOtp) {
                         const otpEmail = document.getElementById('profileOtpEmail');
                         if (otpEmail && result.pendingEmail) otpEmail.textContent = result.pendingEmail;
-                        startProfileOtpResendTimer(result.resendSeconds || 60);
+                        startProfileOtpResendTimer(result.resendSeconds || 180);
                         profileOtpResendMessage.textContent = '';
                         closeModal(profileModal);
                         openModal(otpModal);
@@ -419,7 +419,7 @@
                 const response = await fetch('/resend-profile-otp', { method: 'POST' });
                 const result = await response.json();
                 if (result.success) {
-                    startProfileOtpResendTimer(result.resendSeconds || 60);
+                    startProfileOtpResendTimer(result.resendSeconds || 180);
                     profileOtpResendMessage.textContent = result.message;
                 } else {
                     if (result.resendSeconds > 0) startProfileOtpResendTimer(result.resendSeconds);

@@ -14,7 +14,11 @@ const loadCheckout = async (req, res) => {
             appliedCouponCode: req.session.appliedCoupon?.code
         });
         if (!data) return res.redirect('/cart');
-        if (req.session.appliedCoupon && !data.appliedCoupon) delete req.session.appliedCoupon;
+        if (req.session.appliedCoupon && !data.appliedCoupon) {
+            delete req.session.appliedCoupon;
+            req.session.couponUnavailableNotice = "Coupon is not added as it's unavailable";
+            return res.redirect('/cart');
+        }
 
         // For rendering checkout page
         res.render('user/checkout', {

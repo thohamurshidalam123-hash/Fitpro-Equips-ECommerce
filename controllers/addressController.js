@@ -9,7 +9,7 @@ const addAddress = async (req, res) => {
         }
 
         // For validate address data
-        const errors = validateAddressFields(req.body);
+        const errors = await validateAddressFields(req.body);
         if(Object.keys(errors).length > 0) {
             return res.status(400).json({
                 success: false,
@@ -39,7 +39,7 @@ const editAddress = async (req, res) => {
             return res.status(401).json({ success: false, message: 'Please log in first'});
         }
 
-        const errors = validateAddressFields(req.body);
+        const errors = await validateAddressFields(req.body);
         if(Object.keys(errors).length > 0) {
             return res.status(400).json({
                 success: false,

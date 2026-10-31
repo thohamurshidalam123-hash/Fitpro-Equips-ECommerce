@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Details | Fitpro Equips Admin</title>
+    <title>Order Details | <%= storeName %> Admin</title>
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <link rel="stylesheet" href="/css/admin-scale.css">
     <style>
@@ -82,6 +82,12 @@
         .item-action-btn { background: none; border: 1px solid #cbd5e1; padding: 3px 6px; border-radius: 4px; font-size: 7px; cursor: pointer; color: #475569; }
         .item-action-btn.approve { border-color: #10b981; color: #10b981; }
         .item-action-btn.reject { border-color: #ef4444; color: #ef4444; }
+        .return-reject-modal { position: fixed; inset: 0; z-index: 2100; display: none; place-items: center; padding: 16px; background: rgba(15, 23, 42, .55); }
+        .return-reject-modal.active { display: grid; }
+        .return-reject-panel { width: min(100%, 420px); padding: 20px; border-radius: 8px; background: #fff; box-shadow: 0 18px 48px rgba(15, 23, 42, .2); }
+        .return-reject-panel label { display: block; margin: 14px 0 5px; font-size: 12px; font-weight: 650; }
+        .return-reject-panel textarea { box-sizing: border-box; width: 100%; padding: 9px; border: 1px solid #cbd5e1; border-radius: 5px; font: inherit; font-size: 12px; resize: vertical; }
+        .return-reject-error { min-height: 16px; margin: 4px 0 0; color: #dc2626; font-size: 11px; }
 
         .side-panel { padding: 11px 10px; }
         .side-panel .panel-kicker { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
@@ -257,6 +263,19 @@
         </main>
     </div>
 
+    <div class="return-reject-modal" id="returnRejectModal" role="dialog" aria-modal="true" aria-labelledby="returnRejectTitle">
+        <div class="return-reject-panel">
+            <h2 id="returnRejectTitle" style="margin:0; font-size:16px;">Reject return request</h2>
+            <label for="returnRejectionReason">Reason for rejection</label>
+            <textarea id="returnRejectionReason" rows="4" maxlength="500" aria-describedby="returnRejectionReasonError"></textarea>
+            <p class="return-reject-error" id="returnRejectionReasonError" hidden></p>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+                <button class="item-action-btn" id="btnCancelReturnRejection" type="button">Cancel</button>
+                <button class="item-action-btn reject" id="btnConfirmReturnRejection" type="button">Reject return</button>
+            </div>
+        </div>
+    </div>
+
     <link rel="stylesheet" href="/css/notification-modal.css">
     <div class="app-notification-overlay" id="appNotification" role="dialog" aria-modal="true" aria-labelledby="appNotificationTitle" aria-describedby="appNotificationMessage">
         <div class="app-notification-modal" role="document">
@@ -306,20 +325,49 @@
         });
 
         // Handle Approve/Reject Return for both Full Order and Items
-        window.handleReturnAction = async function(orderId, itemId, action) {
+        const returnRejectModal = document.getElementById('returnRejectModal');
+        const returnRejectionReason = document.getElementById('returnRejectionReason');
+        const returnRejectionReasonError = document.getElementById('returnRejectionReasonError');
+        const confirmReturnRejection = document.getElementById('btnConfirmReturnRejection');
+        let pendingReturnRejection = null;
+
+        const closeReturnRejectModal = () => {
+            returnRejectModal.classList.remove('active');
+            pendingReturnRejection = null;
+        };
+
+        const showReturnRejectionError = message => {
+            returnRejectionReasonError.textContent = message;
+            returnRejectionReasonError.hidden = false;
+            returnRejectionReason.setAttribute('aria-invalid', 'true');
+            returnRejectionReason.focus();
+        };
+
+        returnRejectionReason.addEventListener('input', () => {
+            returnRejectionReasonError.textContent = '';
+            returnRejectionReasonError.hidden = true;
+            returnRejectionReason.removeAttribute('aria-invalid');
+        });
+
+        document.getElementById('btnCancelReturnRejection').addEventListener('click', closeReturnRejectModal);
+
+        const processReturnAction = async (orderId, itemId, action, reason = '') => {
             const endpoint = `/admin/orders/${orderId}/${action}-return`;
             try {
                 const res = await fetch(endpoint, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ itemId: itemId })
+                    body: JSON.stringify({ itemId, reason })
                 });
                 const data = await res.json();
                 
                 if (data.success) {
+                    if (action === 'reject') closeReturnRejectModal();
                     window.showAppModal(data.message, 'success', {
                         onClose: () => window.location.reload()
                     });
+                } else if (action === 'reject' && data.errors && data.errors.reason) {
+                    showReturnRejectionError(data.errors.reason);
                 } else {
                     window.showAppModal(data.message || `Failed to ${action} return.`, 'error');
                 }
@@ -328,6 +376,32 @@
                 window.showAppModal('Server error.', 'error');
             }
         };
+
+        window.handleReturnAction = function(orderId, itemId, action) {
+            if (action === 'reject') {
+                pendingReturnRejection = { orderId, itemId };
+                returnRejectionReason.value = '';
+                returnRejectionReasonError.textContent = '';
+                returnRejectionReasonError.hidden = true;
+                returnRejectionReason.removeAttribute('aria-invalid');
+                returnRejectModal.classList.add('active');
+                returnRejectionReason.focus();
+                return;
+            }
+            processReturnAction(orderId, itemId, action);
+        };
+
+        confirmReturnRejection.addEventListener('click', () => {
+            if (!pendingReturnRejection) return;
+            const reason = returnRejectionReason.value.trim();
+            if (!reason) {
+                showReturnRejectionError('Please provide a reason for rejecting this return.');
+                return;
+            }
+            confirmReturnRejection.disabled = true;
+            processReturnAction(pendingReturnRejection.orderId, pendingReturnRejection.itemId, 'reject', reason)
+                .finally(() => { confirmReturnRejection.disabled = false; });
+        });
     </script>
 </body>
 </html>

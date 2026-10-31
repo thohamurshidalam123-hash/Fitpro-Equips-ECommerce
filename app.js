@@ -3,6 +3,7 @@ const session = require('express-session');
 const path = require('path');
 const passport = require('passport');
 const User = require('./models/user');
+const settingsService = require('./services/settingsService');
 const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
@@ -44,6 +45,19 @@ app.use((req, res, next) => {
         'Expires': '0',
         'Surrogate-Control': 'no-store'
     });
+    next();
+});
+
+app.use(async (req, res, next) => {
+    try {
+        const settings = await settingsService.getSettings();
+        res.locals.storeName = settings.storeName;
+        res.locals.supportPhone = settings.supportPhone;
+    } catch (error) {
+        console.error('Store name load error:', error.message);
+        res.locals.storeName = 'Fitpro Equips';
+        res.locals.supportPhone = '+91 6238833963';
+    }
     next();
 });
 

@@ -27,6 +27,8 @@ const loadCartPage = async (req, res) => {
             }
         }
         const finalTotal = subtotal + tax + shipping - discount;
+        const couponUnavailableNotice = req.session.couponUnavailableNotice;
+        delete req.session.couponUnavailableNotice;
 
         // For rendering cart
         return res.render('user/cart', {
@@ -35,7 +37,8 @@ const loadCartPage = async (req, res) => {
             availableCoupons,
             appliedCoupon: req.session.appliedCoupon,
             discount: discount,
-            total: finalTotal
+            total: finalTotal,
+            couponUnavailableNotice
         });
     } catch (error) {
         console.error('Cart load error:', error.message);

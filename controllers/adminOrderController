@@ -76,8 +76,8 @@ const handleApproveReturn = async (req, res) => {
 // For rejecting return
 const handleRejectReturn = async (req, res) => {
     try {
-        const { itemId } = req.body;
-        const result = await adminOrderService.rejectReturn(req.params.id, itemId);
+        const { itemId, reason } = req.body;
+        const result = await adminOrderService.rejectReturn(req.params.id, itemId, reason);
         res.json(result);
     } catch (error) {
         res.status(500).json({ success: false, message: 'Server Error' });

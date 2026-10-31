@@ -1,7 +1,7 @@
 const userService = require('../services/userService');
 const walletService = require('../services/walletService');
 const couponService = require('../services/couponService');
-const { getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
+const { getOtpExpiryTimestamp, getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
 
 // Rendering login page
 const loadLogin = async (req, res) => {
@@ -71,7 +71,7 @@ const registerUser = async (req, res) => {
         // Store user data and OTP in session
         req.session.userData = result.userData;
         req.session.otp = result.otp;
-        req.session.otpExpiry = Date.now() + 180000; // OTP valid for 3 minutes
+        req.session.otpExpiry = getOtpExpiryTimestamp(); // OTP valid for 3 minutes
         setOtpResendAvailableAt(req.session, 'otpResendAt');
 
         // Return success response
@@ -171,7 +171,7 @@ const resendOtp = async (req, res) => {
         const result = await userService.resendRegistrationOtp(userData.email);
         if (result.emailSent) {
             req.session.otp = result.otp;
-            req.session.otpExpiry = Date.now() + 180000;
+            req.session.otpExpiry = getOtpExpiryTimestamp();
             setOtpResendAvailableAt(req.session, 'otpResendAt');
             return res.render('user/otpVerification', {
                 message: 'A new OTP has been sent to your email.',
@@ -270,7 +270,7 @@ const resendResetOtp = async (req, res) => {
         }
 
         req.session.resetOtp = result.otp;
-        req.session.resetOtpExpiry = Date.now() + 180000;
+        req.session.resetOtpExpiry = getOtpExpiryTimestamp();
         setOtpResendAvailableAt(req.session, 'resetOtpResendAt');
         req.session.resetMessage = 'A new OTP has been sent to your email.';
         req.session.resetMessageType = 'success';
@@ -305,7 +305,7 @@ const processForgotPassword = async (req, res) => {
         if (result.status === 'sent') {
             req.session.resetEmail = result.email;
             req.session.resetOtp = result.otp;
-            req.session.resetOtpExpiry = Date.now() + 180000;
+            req.session.resetOtpExpiry = getOtpExpiryTimestamp();
             setOtpResendAvailableAt(req.session, 'resetOtpResendAt');
             req.session.resetMessage = 'OTP sent successfully. Please check your email.';
             req.session.resetMessageType = 'success';
@@ -390,10 +390,10 @@ const updateProfile = async (req, res) => {
         if (result.requireOtp) {
             req.session.pendingProfileUpdate = result.pendingProfileUpdate;
             req.session.profileOtp = result.otp;
-            req.session.profileOtpExpiry = Date.now() + 180000;
+            req.session.profileOtpExpiry = getOtpExpiryTimestamp();
             setOtpResendAvailableAt(req.session, 'profileOtpResendAt');
             // Send JSON telling frontend to open OTP modal
-            return res.json({ success: true, requireOtp: true, pendingEmail: result.pendingEmail, resendSeconds: 60 });
+            return res.json({ success: true, requireOtp: true, pendingEmail: result.pendingEmail, resendSeconds: getOtpResendSeconds(req.session.profileOtpResendAt) });
         }
 
         // Send JSON telling frontend it was completely successful
@@ -458,9 +458,9 @@ const resendProfileOtp = async (req, res) => {
         }
 
         req.session.profileOtp = result.otp;
-        req.session.profileOtpExpiry = Date.now() + 180000;
+        req.session.profileOtpExpiry = getOtpExpiryTimestamp();
         setOtpResendAvailableAt(req.session, 'profileOtpResendAt');
-        return res.json({ success: true, message: 'A new OTP has been sent to your email.', resendSeconds: 60 });
+        return res.json({ success: true, message: 'A new OTP has been sent to your email.', resendSeconds: getOtpResendSeconds(req.session.profileOtpResendAt) });
     } catch (error) {
         console.error('Profile OTP resend error:', error.message);
         return res.status(500).json({ success: false, message: 'Server Error' });

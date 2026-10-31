@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Login | Fitpro Equips</title>
+    <title>Admin Login | <%= storeName %></title>
     <link rel="stylesheet" href="/css/admin-login.css">
     <link rel="stylesheet" href="/css/inline-validation.css">
     <style>
@@ -56,7 +56,7 @@
         <!-- Admin Header -->
         <header class="admin-header">
             <div class="admin-header-content">
-                <a href="/" class="admin-brand">Fitpro Equips</a>
+                <a href="/" class="admin-brand"><%= storeName %></a>
                 <div class="admin-icons">
                     <a href="/" class="back-btn">← Back to Website</a>
                 </div>
@@ -215,6 +215,7 @@
                                     id="email" 
                                     name="email" 
                                     type="email" 
+                                    value="<%= typeof email !== 'undefined' ? email : '' %>"
                                     placeholder="admin@apexvitality.com" 
                                     class="form-input"
                                     autocomplete="email" 
@@ -279,7 +280,7 @@
         <!-- Admin Footer -->
         <footer class="admin-footer">
             <div class="footer-content">
-                <p class="copyright">&copy; 2026 Fitpro Equips. All rights reserved.</p>
+                <p class="copyright">&copy; 2026 <%= storeName %>. All rights reserved.</p>
                 <div class="footer-links">
                     <a href="/security-policy">Security Policy</a>
                     <a href="/terms">Terms</a>
@@ -425,7 +426,7 @@
         }
 
         // --- OTP Resend Timer Function ---
-        function startOtpResendTimer(seconds = 60) {
+        function startOtpResendTimer(seconds = 180) {
             const resendBtn = document.getElementById('resendOtpBtn');
             const timerSpan = document.getElementById('otpTimer');
             clearInterval(otpResendInterval);
@@ -458,7 +459,7 @@
 
                 if (result.success) {
                     showNotification('OTP has been resent to your email!', 'success', 'OTP Resent');
-                    startOtpResendTimer(result.resendSeconds || 60);
+                    startOtpResendTimer(result.resendSeconds || 180);
                 } else {
                     showNotification(result.message || 'Failed to resend OTP', 'error', 'Error');
                     if (result.resendSeconds > 0) startOtpResendTimer(result.resendSeconds);
@@ -502,7 +503,7 @@
                 if (result.success) {
                     closeAdminModal('forgotModal');
                     openAdminModal('otpModal');
-                    startOtpResendTimer(result.resendSeconds || 60);
+                    startOtpResendTimer(result.resendSeconds || 180);
                     emailInput.value = '';
                 } else if (result.errors) {
                     window.showInlineFieldErrors(e.target, result.errors);

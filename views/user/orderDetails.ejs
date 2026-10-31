@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Details | Fitpro Equips</title>
+    <title>Order Details | <%= storeName %></title>
     <link rel="stylesheet" href="/css/inline-validation.css">
     <link rel="stylesheet" href="/css/landing.css">
     <style>
@@ -267,7 +267,7 @@
                     
                     <% order.items.forEach(item => { 
                         const itemStatus = item.itemStatus || order.orderStatus;
-                        const isActive = !['Cancelled', 'Returned', 'Return requested'].includes(itemStatus);
+                        const isActive = !item.returnRejected && !['Cancelled', 'Returned', 'Return requested'].includes(itemStatus);
                         const isDelivered = order.orderStatus === 'Delivered' || itemStatus === 'Delivered';
                     %>
                     <article class="detail-item">
@@ -276,6 +276,9 @@
                             <h3 class="detail-item-name"><%= item.name %></h3>
                             <p class="detail-item-meta">Product ID: <%= item.productId %></p>
                             <p class="detail-item-meta">Status: <strong style="color:var(--detail-blue)"><%= itemStatus %></strong></p>
+                            <% if (item.returnRejected) { %>
+                                <p class="detail-item-meta" style="color:#c53540;">Return request rejected as <%= item.returnRejectionReason || 'unavailable' %>.</p>
+                            <% } %>
                             <p class="detail-item-quantity">Qty: <%= item.quantity %></p>
                             
                             <div class="item-actions">
@@ -560,7 +563,7 @@
                             key: data.key,
                             amount: data.amount,
                             currency: "INR",
-                            name: "Fitpro Equips",
+                            name: <%- JSON.stringify(storeName) %>,
                             description: "Order Payment Retry",
                             order_id: data.razorpayOrderId,
                             handler: async function (response) {

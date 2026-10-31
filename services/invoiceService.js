@@ -1,18 +1,21 @@
 const PDFDocument = require('pdfkit');
 const Order = require('../models/orderModel');
+const settingsService = require('./settingsService');
 
 const formatCurrency = amount => `INR ${Number(amount || 0).toLocaleString('en-IN')}`;
 const isInvoicePaid = order => ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
 
 // For generating an invoice PDF
-const createInvoicePdf = order => new Promise((resolve, reject) => {
+const createInvoicePdf = async order => {
+    const { storeName } = await settingsService.getSettings();
+    return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const chunks = [];
     doc.on('data', chunk => chunks.push(chunk));
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     doc.on('error', reject);
 
-    doc.fontSize(20).fillColor('#0968ec').text('Fitpro Equips', 50, 50);
+    doc.fontSize(20).fillColor('#0968ec').text(storeName, 50, 50);
     doc.fontSize(10.5).fillColor('#64748b').text('Tax Invoice / Receipt', 50, 75);
     doc.fontSize(10).fillColor('#1e293b')
         .text(`Order ID: #${order.orderId}`, 400, 50, { align: 'right' })
@@ -69,9 +72,10 @@ const createInvoicePdf = order => new Promise((resolve, reject) => {
         .text('Grand Total:', rightX, y)
         .text(formatCurrency(order.grandTotal), 460, y, { width: 80, align: 'right' });
     doc.fontSize(9).font('Helvetica').fillColor('#94a3b8')
-        .text('Thank you for shopping with Fitpro Equips! This is a computer-generated invoice.', 50, 730, { align: 'center', width: 495 });
+        .text(`Thank you for shopping with ${storeName}! This is a computer-generated invoice.`, 50, 730, { align: 'center', width: 495 });
     doc.end();
-});
+    });
+};
 
 // For fetching a user's invoice
 const getUserInvoice = async ({ orderId, userId }) => {

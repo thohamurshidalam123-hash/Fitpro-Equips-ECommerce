@@ -3,7 +3,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>Fitpro Equips | Email Verification</title>
+	<title><%= storeName %> | Email Verification</title>
 	<link rel="stylesheet" href="/css/landing.css">
 	<style>
 		:root { --blue: #2864e8; --deep-blue: #0751cb; --ink: #172238; --muted: #677186; --pale: #f2f6ff; --navy: #111d2b; }
@@ -50,11 +50,11 @@
 							<input class="otp-input" type="text" inputmode="numeric" maxlength="1" aria-label="Digit 6" data-validation-name="otp" required>
 						</div>
 						<input type="hidden" name="otp" id="otp-value">
-						<div class="otp-meta"><span>Resend code in <strong id="countdown">01:00</strong></span><button class="resend-button" type="submit" formaction="/resend-otp" formmethod="POST" formnovalidate id="resend-button" data-remaining="<%= otpResendSeconds %>" disabled hidden>Resend Code</button></div>
+						<div class="otp-meta"><span>Resend code in <strong id="countdown">03:00</strong></span><button class="resend-button" type="submit" formaction="/resend-otp" formmethod="POST" formnovalidate id="resend-button" data-remaining="<%= otpResendSeconds %>" disabled hidden>Resend Code</button></div>
 						<button class="verify-button" type="submit">Verify OTP <span aria-hidden="true">&#10003;</span></button>
 						<p class="wrong-email">Wrong email address? <a href="/register">Change Email</a></p>
 					</form>
-					<div class="security-box"><span class="security-icon">&#10003;</span><div><strong>Security Tips</strong><p>Never share your code with anyone. Fitpro Equips staff will never ask for your OTP. Your code expires in 5 minutes.</p></div></div>
+					<div class="security-box"><span class="security-icon">&#10003;</span><div><strong>Security Tips</strong><p>Never share your code with anyone. <%= storeName %> staff will never ask for your OTP. Your code expires in 3 minutes.</p></div></div>
 				</div>
 			</section>
 		</main>
@@ -62,7 +62,7 @@
 		<%- include('../partials/user-footer') %>
 	</div>
 		<div class="success-modal <%= typeof registrationSuccess !== 'undefined' && registrationSuccess ? '' : 'hidden' %>" role="dialog" aria-modal="true" aria-labelledby="success-title">
-			<div class="success-dialog"><div class="success-icon" aria-hidden="true">&#10003;</div><h2 id="success-title">You have registered successfully</h2><p>Your account is ready. Welcome to Fitpro Equips.</p><a href="/userProfile">OK</a></div>
+			<div class="success-dialog"><div class="success-icon" aria-hidden="true">&#10003;</div><h2 id="success-title">You have registered successfully</h2><p>Your account is ready. Welcome to <%= storeName %>.</p><a href="/userProfile">OK</a></div>
 		</div>
 	<script>
 		(function () {

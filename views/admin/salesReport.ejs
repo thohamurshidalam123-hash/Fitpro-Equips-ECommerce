@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sales Reports | Fitpro Equips</title>
+    <title>Sales Reports | <%= storeName %></title>
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <link rel="stylesheet" href="/css/admin-scale.css">
     
@@ -352,7 +352,7 @@
                 'Product Offer Discount', 'Payment Method', 'Date'
             ];
             const worksheetData = [
-                ['Fitpro Equips Sales Report'],
+                [<%- JSON.stringify(storeName + ' Sales Report') %>],
                 ['Period', reportPeriod],
                 ['Date Range', `${startDate} to ${endDate}`],
                 [],

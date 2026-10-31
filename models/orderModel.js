@@ -13,7 +13,9 @@ const orderSchema = new mongoose.Schema({
         itemTotal: Number,
         itemStatus: { type: String, default: 'Pending' },
         cancellationReason: String,
-        returnReason: String 
+        returnReason: String,
+        returnRejected: { type: Boolean, default: false },
+        returnRejectionReason: String
     }],
     shippingAddress: new mongoose.Schema({
         name: String,

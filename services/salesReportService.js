@@ -1,5 +1,6 @@
 const Order = require('../models/orderModel');
 const PDFDocument = require('pdfkit-table');
+const settingsService = require('./settingsService');
 
 const getSalesOverviewStats = async () => {
     const [totalOrders, pendingOrders, completedOrders, revenueResult] = await Promise.all([
@@ -135,13 +136,14 @@ const getSalesReportData = async (period = 'weekly', customStartDate, customEndD
 const generatePdfReport = async (period, customStartDate, customEndDate) => {
     // For fetch the exact same data we use for the webpage
     const reportData = await getSalesReportData(period, customStartDate, customEndDate);
+    const { storeName } = await settingsService.getSettings();
     const { orders, kpi, startDate, endDate } = reportData;
 
     // Initialising PDF document
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
 
     // For document Header
-    doc.fontSize(20).text('Fitpro Equips Sales Report', { align: 'center' });
+    doc.fontSize(20).text(`${storeName} Sales Report`, { align: 'center' });
     doc.moveDown();
     
     // For period information

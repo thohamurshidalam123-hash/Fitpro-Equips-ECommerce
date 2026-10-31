@@ -3,6 +3,38 @@ const { validateName, validatePhone, apostrophePattern } = require('./userValida
 const fieldPattern = /^[A-Za-z0-9][A-Za-z0-9 .,\/\#-]*$/;
 const placePattern = /^[A-Za-z][A-Za-z .-]*$/;
 
+const normalizeState = state => {
+    const normalized = String(state || '').toLowerCase().replace(/[^a-z]/g, '');
+    const aliases = {
+        orissa: 'odisha',
+        uttaranchal: 'uttarakhand',
+        pondicherry: 'puducherry',
+        nctofdelhi: 'delhi',
+        nationalcapitalterritoryofdelhi: 'delhi'
+    };
+    return aliases[normalized] || normalized;
+};
+
+const validatePincodeState = async (pincode, state) => {
+    try {
+        const response = await fetch(`https://api.postalpincode.in/pincode/${encodeURIComponent(pincode)}`, {
+            signal: AbortSignal.timeout(5000)
+        });
+        if (!response.ok) return 'Unable to verify this pincode right now. Please try again.';
+
+        const [result] = await response.json();
+        if (result?.Status !== 'Success' || !Array.isArray(result.PostOffice) || !result.PostOffice.length) {
+            return 'Please enter a valid pincode';
+        }
+
+        const expectedState = normalizeState(state);
+        const matchesState = result.PostOffice.some(postOffice => normalizeState(postOffice.State) === expectedState);
+        return matchesState ? null : 'Pincode does not match the selected state';
+    } catch (error) {
+        return 'Unable to verify this pincode right now. Please try again.';
+    }
+};
+
 const validateTextField = (value, label, maxLength, pattern = fieldPattern) => {
     const text = String(value || '').trim();
     if (!text) return `${label} is required`;
@@ -12,7 +44,7 @@ const validateTextField = (value, label, maxLength, pattern = fieldPattern) => {
     return null;
 };
 
-const validateAddress = (data) => {
+const validateAddress = async (data) => {
     const errors = {};
     const fullNameError = validateName(data.fullName, 'Full Name');
     const phoneError = validatePhone(data.phone);
@@ -33,6 +65,10 @@ const validateAddress = (data) => {
     const pincode = String(data.pincode || '').trim();
     if (!pincode) errors.pincode = 'Pincode is required';
     else if (!/^\d{6}$/.test(pincode)) errors.pincode = 'Pincode must be a 6-digit number';
+    else if (!stateError) {
+        const pincodeError = await validatePincodeState(pincode, data.state);
+        if (pincodeError) errors.pincode = pincodeError;
+    }
 
     const landmark = String(data.landmark || '').trim();
     if (landmark && (landmark.length > 50 || apostrophePattern.test(landmark) || landmark.includes('_') || !fieldPattern.test(landmark))) {

@@ -8,6 +8,7 @@ const Razorpay = require('razorpay');
 const crypto = require('crypto');
 const walletService = require('./walletService');
 const { getEffectivePrice } = require('../utils/offerPricing');
+const settingsService = require('./settingsService');
 
 // For initializing razorpay
 const razorpayInstance = new Razorpay({
@@ -58,7 +59,8 @@ const getCheckoutData = async ({ userId, addressId, appliedCouponCode }) => {
     }
 
     const tax = Number((subtotal * 0.0018).toFixed(2));
-    const shipping = subtotal > 5000 ? 0 : 500;
+    const { shippingCharge, freeShippingThreshold } = await settingsService.getSettings();
+    const shipping = subtotal > freeShippingThreshold ? 0 : shippingCharge;
     const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
     const grandTotal = subtotal + tax + shipping - discount;
     return { cartItems: formattedItems, addresses, activeAddress, appliedCoupon, totals: { subtotal, tax, shipping, discount, grandTotal } };
@@ -78,7 +80,7 @@ const createOrderAddress = async ({ userId, data }) => {
         landmark: data.landmark,
         addressType: data.addressType
     };
-    const errors = validateAddress(formData);
+    const errors = await validateAddress(formData);
     if (Object.keys(errors).length) return { success: false, statusCode: 400, errors };
 
     const addressCount = await Address.countDocuments({ userId });
@@ -156,7 +158,8 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode, paymen
     }
 
     const tax = Number((subtotal * 0.0018).toFixed(2));
-    const shippingCost = subtotal > 5000 ? 0 : 500;
+    const { shippingCharge, freeShippingThreshold } = await settingsService.getSettings();
+    const shippingCost = subtotal > freeShippingThreshold ? 0 : shippingCharge;
     const discount = appliedCoupon ? appliedCoupon.discountAmount : 0;
     const grandTotal = subtotal + tax + shippingCost - discount;
     if (paymentMethod === 'cod' && grandTotal > 5000) {
@@ -222,7 +225,7 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode, paymen
         };
     }
 
-    // Debit before saving so a failed wallet payment cannot leave an unpaid order.
+    // For debit before saving so a failed wallet payment cannot leave an unpaid order.
     if (paymentMethod === 'wallet') {
         try{
             await walletService.debitWallet(

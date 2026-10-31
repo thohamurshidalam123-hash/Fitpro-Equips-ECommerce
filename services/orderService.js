@@ -128,16 +128,26 @@ const cancelOrder = async ({ orderId, userId, itemId, reason }) => {
         if ([ 'Delivered', 'Cancelled', 'Returned', 'Return requested'].includes(order.orderStatus)) {
             return { statusCode: 400, message: 'This order cannot be cancelled'};
         }
+        const refundableItems = order.items.filter(item => !['Cancelled', 'Returned'].includes(item.itemStatus));
+        if (!refundableItems.length) {
+            return { statusCode: 400, message: 'No refundable items remain in this order.' };
+        }
+
+        const previouslyRefundedAmount = order.items
+            .filter(item => ['Cancelled', 'Returned'].includes(item.itemStatus))
+            .reduce((total, item) => total + Math.round((calculateItemRefund(item, order) + Number.EPSILON) * 100) / 100, 0);
+        const remainingOrderBalance = Math.max(0, Number((Number(order.grandTotal) - previouslyRefundedAmount).toFixed(2)));
         order.orderStatus = 'Cancelled';
         if (normalizedReason) order.cancellationReason = normalizedReason;
-        refundAmount = order.grandTotal;
+        refundAmount = Math.min(refundableItems.reduce(
+            (total, item) => total + calculateItemRefund(item, order),
+            Number(order.shippingCost) || 0
+        ), remainingOrderBalance);
 
-        for (const item of order.items) {
-            if (item.itemStatus !== 'Cancelled') {
-                item.itemStatus = 'Cancelled';
-                item.cancellationReason = normalizedReason;
-                await adjustOrderItemStock(item, item.quantity);
-            }
+        for (const item of refundableItems) {
+            item.itemStatus = 'Cancelled';
+            item.cancellationReason = normalizedReason;
+            await adjustOrderItemStock(item, item.quantity);
         }
     }
 
@@ -177,6 +187,15 @@ const returnOrder = async ({ orderId, userId, itemId, reason }) => {
         // For partial return
         const item = order.items.id(itemId);
         if (!item) return { statusCode: 404, message: 'Item not found'};
+        if (item.returnRejected) {
+            return { statusCode: 400, message: 'This product\'s return request was rejected and cannot be resubmitted.' };
+        }
+        if (item.itemStatus === 'Return requested') {
+            return { statusCode: 400, message: 'A return request has already been submitted for this product.' };
+        }
+        if (['Cancelled', 'Returned'].includes(item.itemStatus)) {
+            return { statusCode: 400, message: 'This product cannot be returned.' };
+        }
         // If the order is delivered , the item is delivered
         if (!isOrderDelivered && item.itemStatus !== 'Delivered') {
             return { statusCode: 400, message: 'Only delivered items can be returned'}
@@ -186,6 +205,12 @@ const returnOrder = async ({ orderId, userId, itemId, reason }) => {
     } else {
         // Full return
         if (!isOrderDelivered) return { statusCode: 400, message: 'Only delivered orders can be returned'};
+        if (order.items.some(item => item.returnRejected)) {
+            return {
+                statusCode: 400,
+                message: 'A full return cannot be requested because a return request for one or more products was rejected.'
+            };
+        }
         for (const item of order.items) {
             if (item.itemStatus !== 'Cancelled' && item.itemStatus !== 'Returned') {
                 item.itemStatus = 'Return requested';

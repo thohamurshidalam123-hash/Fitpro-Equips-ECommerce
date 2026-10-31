@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Management | Fitpro Equips</title>
+    <title>Order Management | <%= storeName %></title>
     <link rel="stylesheet" href="/css/admin-dashboard.css">
     <link rel="stylesheet" href="/css/admin-scale.css">
     <style>
@@ -275,6 +275,9 @@
         <div style="background: #fff; width: 400px; padding: 24px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
             <h3 style="margin-top: 0; color: #1c2738;">Review Return Request</h3>
             <p style="font-size: 12px; color: #475569; margin-bottom: 20px;"><strong>Customer Reason:</strong> <span id="returnReasonText"></span></p>
+            <label for="returnRejectionReason" style="display:block; margin-bottom:6px; color:#334155; font-size:12px; font-weight:600;">Rejection reason</label>
+            <textarea id="returnRejectionReason" maxlength="500" rows="3" style="box-sizing:border-box; width:100%; margin-bottom:3px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; resize:vertical;"></textarea>
+            <p id="returnRejectionReasonError" style="margin:0 0 14px; color:#dc2626; font-size:12px;" hidden></p>
             
             <div style="display: flex; gap: 10px; justify-content: flex-end;">
                 <button id="btnCloseModal" style="padding: 8px 14px; background: #e2e8f0; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
@@ -295,13 +298,32 @@
         // ADDED JAVASCRIPT FOR RETURN MODAL AND AJAX REQUESTS
         const returnModal = document.getElementById('returnReviewModal');
         const reasonText = document.getElementById('returnReasonText');
+        const rejectionReason = document.getElementById('returnRejectionReason');
+        const rejectionReasonError = document.getElementById('returnRejectionReasonError');
         let currentReturnOrderId = null;
+
+        const showRejectionReasonError = message => {
+            rejectionReasonError.textContent = message;
+            rejectionReasonError.hidden = false;
+            rejectionReason.setAttribute('aria-invalid', 'true');
+            rejectionReason.focus();
+        };
+
+        rejectionReason.addEventListener('input', () => {
+            rejectionReasonError.textContent = '';
+            rejectionReasonError.hidden = true;
+            rejectionReason.removeAttribute('aria-invalid');
+        });
 
         // Open Modal
         document.querySelectorAll('.btn-review-return').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 currentReturnOrderId = e.target.dataset.id;
                 reasonText.textContent = e.target.dataset.reason || 'No reason provided';
+                rejectionReason.value = '';
+                rejectionReasonError.textContent = '';
+                rejectionReasonError.hidden = true;
+                rejectionReason.removeAttribute('aria-invalid');
                 returnModal.style.display = 'flex';
             });
         });
@@ -343,11 +365,22 @@
         // Reject Return
         document.getElementById('btnRejectReturn').addEventListener('click', async () => {
             if(!currentReturnOrderId) return;
+            const reason = rejectionReason.value.trim();
+            if (!reason) {
+                showRejectionReasonError('Please provide a reason for rejecting this return.');
+                return;
+            }
             try {
-                const res = await fetch(`/admin/orders/${currentReturnOrderId}/reject-return`, { method: 'POST' });
+                const res = await fetch(`/admin/orders/${currentReturnOrderId}/reject-return`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason })
+                });
                 const data = await res.json();
                 if(data.success) {
                     showReturnStatusModal(data.message || 'Return request rejected.', 'success');
+                } else if (data.errors && data.errors.reason) {
+                    showRejectionReasonError(data.errors.reason);
                 } else {
                     showReturnStatusModal(data.message || 'Unable to reject return request.', 'error');
                 }

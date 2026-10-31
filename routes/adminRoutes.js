@@ -13,6 +13,7 @@ const invoiceController = require('../controllers/invoiceController');
 const couponController = require('../controllers/couponController');
 const adminDashboardController = require('../controllers/adminDashboardController');
 const salesReportController = require('../controllers/salesReportController');
+const settingsController = require('../controllers/settingsController');
 
 router.use(async (req, res, next) => {
     try {
@@ -85,6 +86,12 @@ router.get('/login',adminController.loadLogin);
 router.post('/login',adminController.adminLogin);
 router.get('/logout',adminController.adminLogout);
 router.get('/dashboard', adminDashboardController.loadDashboard);
+router.get('/settings', (req, res, next) => req.session.adminId ? next() : res.redirect('/admin/login'), settingsController.loadSettings);
+router.post('/settings', requireAdminSession, settingsController.saveSettings);
+router.post('/settings/email/send-otp', requireAdminSession, settingsController.sendEmailChangeOtp);
+router.post('/settings/email/resend-otp', requireAdminSession, settingsController.resendEmailChangeOtp);
+router.post('/settings/email/verify-otp', requireAdminSession, settingsController.verifyEmailChangeOtp);
+router.post('/settings/email/cancel-otp', requireAdminSession, settingsController.cancelEmailChangeOtp);
 router.get('/sales-reports', salesReportController.loadSalesReport);
 router.get('/sales-reports/pdf', salesReportController.downloadPdfReport);
 

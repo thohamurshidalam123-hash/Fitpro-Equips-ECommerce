@@ -1,6 +1,7 @@
 const Order = require('../models/orderModel');
 const walletService = require('./walletService');
 const Product = require('../models/productModel');
+const { validateOrderReason } = require('../validators/orderValidators');
 const unpaidStatusMessage = 'Only paid orders can be updated to corresspondant status';
 const isOrderPaid = order => ['paid', 'completed'].includes(String(order.paymentStatus || '').trim().toLowerCase());
 
@@ -114,9 +115,11 @@ const approveReturn = async (orderId, itemId = null) => {
         // For checking if all item are returned or cancelled
         const allEnded = order.items.every(i => ['Returned', 'Cancelled'].includes(i.itemStatus));
         if (allEnded) {
-            const allReturned = order.items.every(i => i.itemStatus)
+            const allReturned = order.items.every(i => i.itemStatus === 'Returned');
             order.orderStatus = allReturned ? 'Returned' : 'Cancelled';
             order.paymentStatus = 'Refunded';
+        } else if (!order.items.some(i => i.itemStatus === 'Return requested')) {
+            order.orderStatus = 'Delivered';
         }
     } else {
         // For full order return approval
@@ -150,7 +153,13 @@ const approveReturn = async (orderId, itemId = null) => {
 };
 
 // For rejecting return requests
-const rejectReturn = async (orderId, itemId = null) => {
+const rejectReturn = async (orderId, itemId = null, reason) => {
+    const normalizedReason = typeof reason === 'string' ? reason.trim() : '';
+    const reasonError = validateOrderReason(normalizedReason, { required: true });
+    if (reasonError) {
+        return { success: false, statusCode: 400, message: reasonError, errors: { reason: reasonError } };
+    }
+
     const order = await Order.findById(orderId);
     if (!order || order.orderStatus !== 'Return requested') {
         return { success: false, message: 'Invalid return request' };
@@ -162,10 +171,12 @@ const rejectReturn = async (orderId, itemId = null) => {
             return { success: false, message: 'Invalid return request for this item'};
         }
         item.itemStatus = 'Delivered';
+        item.returnRejected = true;
+        item.returnRejectionReason = normalizedReason;
 
         // For reverting overall order status if necessary
         if (order.orderStatus === 'Return requested') {
-            const anyOtherRequested = order.items.some(i => i.itemStatus === 'Return requested' && i._id.toString())
+            const anyOtherRequested = order.items.some(i => i.itemStatus === 'Return requested');
             if (!anyOtherRequested) order.orderStatus = 'Delivered';
         }
     } else {
@@ -176,6 +187,8 @@ const rejectReturn = async (orderId, itemId = null) => {
         for (const item of order.items) {
             if (item.itemStatus === 'Return requested') {
                 item.itemStatus = 'Delivered';
+                item.returnRejected = true;
+                item.returnRejectionReason = normalizedReason;
             }
         }
     }
@@ -255,17 +268,31 @@ const updateOrderStatus = async (orderId, status, itemId = null) => {
         }
 
         if (status === 'Cancelled') {
+            const refundableItems = order.items.filter(item => !['Cancelled', 'Returned'].includes(item.itemStatus));
+            if (!refundableItems.length) {
+                return { statusCode: 400, message: 'No refundable items remain in this order.' };
+            }
+
             order.orderStatus = 'Cancelled';
             if (['Razorpay', 'Wallet'].includes(order.paymentMethod) && isOrderPaid(order)) {
-                await walletService.creditWallet(order.userId, order.grandTotal, `Refund for cancelled order ${order.orderId}`, order._id);
+                const previouslyRefundedAmount = order.items
+                    .filter(item => ['Cancelled', 'Returned'].includes(item.itemStatus))
+                    .reduce((total, item) => total + Math.round((calculateItemRefund(item, order) + Number.EPSILON) * 100) / 100, 0);
+                const remainingOrderBalance = Math.max(0, Number((Number(order.grandTotal) - previouslyRefundedAmount).toFixed(2)));
+                const remainingItemsRefund = refundableItems.reduce(
+                    (total, item) => total + calculateItemRefund(item, order),
+                    Number(order.shippingCost) || 0
+                );
+                const refundAmount = Math.min(remainingItemsRefund, remainingOrderBalance);
+                if (refundAmount > 0) {
+                    await walletService.creditWallet(order.userId, refundAmount, `Refund for cancelled order ${order.orderId}`, order._id);
+                }
                 order.paymentStatus = 'Refunded';
             }
 
-            for (const item of order.items) {
-                if (item.itemStatus !== 'Cancelled' && item.itemStatus !== 'Returned') {
-                    item.itemStatus = 'Cancelled';
-                    await restoreOrderItemStock(item);
-                }
+            for (const item of refundableItems) {
+                item.itemStatus = 'Cancelled';
+                await restoreOrderItemStock(item);
             }
         } else {
             const currentStatusIndex = statusFlow.indexOf(currentStatus);

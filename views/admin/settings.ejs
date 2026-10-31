@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Settings | <%= storeName %></title>
+	<link rel="stylesheet" href="/css/admin-dashboard.css">
+	<link rel="stylesheet" href="/css/admin-scale.css">
+	<style>
+		.settings-content { --admin-topbar-gutter: 27px; }
+		.settings-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr); gap: 16px; align-items: start; }
+		.settings-card { min-width: 0; padding: 20px 18px; border: 1px solid #e2e7f0; border-radius: 9px; background: #fff; }
+		.settings-card h1, .settings-card h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 20px; color: #263248; font-size: 15px; }
+		.settings-card h1 span, .settings-card h2 span { color: #2863e8; font-size: 16px; }
+		.settings-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+		.settings-field { display: grid; gap: 7px; min-width: 0; }
+		.settings-field.full { grid-column: 1 / -1; }
+		.settings-field label { color: #59667d; font-size: 9px; font-weight: 600; }
+		.settings-field input { width: 100%; height: 34px; padding: 0 10px; border: 1px solid #dce2ed; border-radius: 6px; color: #354158; background: #fff; font: inherit; font-size: 11px; }
+		.settings-field input:focus { outline: 2px solid #b9cdfd; border-color: #2863e8; }
+		.settings-field input[aria-invalid="true"] { border-color: #c33b48; }
+		.settings-error { min-height: 12px; color: #b42332; font-size: 9px; }
+		.settings-note, .settings-message { margin: 12px 0 0; color: #65738a; font-size: 10px; }
+		.settings-message[data-state="error"] { color: #b42332; }
+		.settings-message[data-state="success"] { color: #18794e; }
+		.settings-card button, .otp-dialog button { min-height: 32px; padding: 0 12px; border: 1px solid #dce2ed; border-radius: 6px; color: #354158; background: #fff; font: inherit; font-size: 10px; cursor: pointer; }
+		.settings-card button.primary, .otp-dialog button.primary { border-color: #2863e8; color: #fff; background: #2863e8; }
+		.settings-inline-action { display: flex; gap: 8px; align-items: flex-start; }
+		.settings-inline-action .settings-field { flex: 1; }
+		.otp-modal { position: fixed; inset: 0; z-index: 20; display: none; place-items: center; padding: 18px; background: rgba(15, 23, 42, .48); }
+		.otp-modal[aria-hidden="false"] { display: grid; }
+		.otp-dialog { width: min(100%, 380px); padding: 22px; border-radius: 8px; background: #fff; box-shadow: 0 16px 48px rgba(15, 23, 42, .2); }
+		.otp-dialog h2 { margin: 0 0 8px; color: #263248; font-size: 16px; }
+		.otp-dialog p { margin: 0 0 14px; color: #65738a; font-size: 11px; line-height: 1.5; }
+		.otp-dialog .settings-field { margin-bottom: 12px; }
+		.otp-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+		.settings-actions { position: fixed; right: 0; bottom: 0; left: 198px; display: flex; min-height: 52px; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 24px; border-top: 1px solid #e2e7f0; background: #fff; }
+		.settings-actions p { margin: 0; color: #7b879b; font-size: 10px; }
+		.settings-actions div { display: flex; gap: 8px; }
+		.settings-actions button { min-height: 32px; padding: 0 13px; border: 1px solid #dce2ed; border-radius: 6px; color: #354158; background: #fff; font: inherit; font-size: 10px; }
+		.settings-actions button.primary { border-color: #2863e8; color: #fff; background: #2863e8; }
+		@media (max-width: 800px) {
+			.settings-grid { grid-template-columns: 1fr; }
+			.settings-actions { left: 0; }
+		}
+		@media (max-width: 520px) {
+			.settings-fields { grid-template-columns: 1fr; }
+			.settings-field.full { grid-column: auto; }
+			.settings-actions { align-items: flex-start; flex-direction: column; }
+		}
+	</style>
+</head>
+<body>
+	<div class="admin-dashboard">
+		<%- include('../partials/admin-sidebar.ejs', { currentPage: 'settings' }) %>
+		<main class="main-content settings-content">
+			<%- include('../partials/admin-page-topbar.ejs') %>
+			<div class="settings-grid">
+				<section class="settings-card" aria-labelledby="store-information-title">
+					<h1 id="store-information-title"><span aria-hidden="true">▣</span>Store Information</h1>
+					<form id="settingsForm" novalidate>
+						<div class="settings-fields">
+						<div class="settings-field full">
+							<label for="storeName">STORE NAME</label>
+							<input id="storeName" name="storeName" value="<%= settings.storeName %>" minlength="2" maxlength="80" required>
+							<span class="settings-error" data-error="storeName" aria-live="polite"></span>
+						</div>
+						<div class="settings-field full">
+							<label for="adminEmail">ADMIN EMAIL</label>
+							<input id="adminEmail" type="email" value="<%= pendingAdminEmail %>" data-verified-email="<%= adminEmail %>" autocomplete="email">
+							<span class="settings-error" data-error="email" aria-live="polite"></span>
+							<p class="settings-message" id="emailMessage" role="status" aria-live="polite"></p>
+						</div>
+						<div class="settings-field full">
+							<label for="supportPhone">SUPPORT PHONE</label>
+							<input id="supportPhone" name="supportPhone" type="tel" value="<%= settings.supportPhone %>" minlength="7" maxlength="24" autocomplete="tel" required>
+							<span class="settings-error" data-error="supportPhone" aria-live="polite"></span>
+						</div>
+					</div>
+					<p class="settings-message" id="settingsMessage" role="status" aria-live="polite"></p>
+					</form>
+				</section>
+				<section class="settings-card" aria-labelledby="shipping-title">
+					<h2 id="shipping-title"><span aria-hidden="true">↔</span>Shipping</h2>
+					<form id="shippingForm" novalidate>
+						<div class="settings-fields">
+						<div class="settings-field">
+							<label for="defaultCharge">DEFAULT CHARGE</label>
+							<input id="defaultCharge" name="shippingCharge" type="number" min="0" max="10000000" step="1" value="<%= settings.shippingCharge %>" required>
+							<span class="settings-error" data-error="shippingCharge" aria-live="polite"></span>
+						</div>
+						<div class="settings-field">
+							<label for="freeShippingThreshold">FREE SHIPPING THRESHOLD</label>
+							<input id="freeShippingThreshold" name="freeShippingThreshold" type="number" min="0" max="10000000" step="1" value="<%= settings.freeShippingThreshold %>" required>
+							<span class="settings-error" data-error="freeShippingThreshold" aria-live="polite"></span>
+						</div>
+					</div>
+					</form>
+				</section>
+			</div>
+		</main>
+	</div>
+	<footer class="settings-actions">
+		<p id="settingsSaveStatus" role="status">Unsaved changes will be lost.</p>
+		<div>
+			<button type="button" id="discardSettings">Discard</button>
+			<button type="button" class="primary" id="saveSettings">Save Changes</button>
+		</div>
+	</footer>
+	<div class="otp-modal" id="emailOtpModal" aria-hidden="<%= emailOtpActive ? 'false' : 'true' %>" data-expires-at="<%= pendingEmailOtpExpiresAt %>">
+		<div class="otp-dialog" role="dialog" aria-modal="true" aria-labelledby="emailOtpTitle">
+			<h2 id="emailOtpTitle">Verify admin email change</h2>
+			<p id="emailOtpNotice">OTP sent to company mail ID: fitproequips.test1@gmail.com</p>
+			<div class="settings-field">
+				<label for="emailOtp">ONE-TIME PASSWORD</label>
+				<input id="emailOtp" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" aria-describedby="emailOtpError emailOtpTimer">
+				<span class="settings-error" id="emailOtpError" aria-live="polite"></span>
+			</div>
+			<p id="emailOtpTimer" role="status">OTP expires in 03:00</p>
+			<button type="button" class="primary" id="resendEmailOtp" hidden>Resend OTP</button>
+			<div class="otp-dialog-actions">
+				<button type="button" id="cancelEmailOtp">Cancel</button>
+				<button type="button" class="primary" id="verifyEmailOtp">Verify and save</button>
+			</div>
+		</div>
+	</div>
+	<div class="otp-modal" id="settingsSavedModal" aria-hidden="true">
+		<div class="otp-dialog" role="alertdialog" aria-modal="true" aria-labelledby="settingsSavedTitle">
+			<h2 id="settingsSavedTitle">Settings saved</h2>
+			<p id="settingsSavedMessage">Settings saved successfully.</p>
+			<div class="otp-dialog-actions">
+				<button type="button" class="primary" id="settingsSavedOk">OK</button>
+			</div>
+		</div>
+	</div>
+	<script>
+		document.addEventListener('DOMContentLoaded', () => {
+			const settingsForm = document.getElementById('settingsForm');
+			const shippingForm = document.getElementById('shippingForm');
+			const settingsMessage = document.getElementById('settingsMessage');
+			const emailMessage = document.getElementById('emailMessage');
+			const saveStatus = document.getElementById('settingsSaveStatus');
+			const modal = document.getElementById('emailOtpModal');
+			const settingsSavedModal = document.getElementById('settingsSavedModal');
+			const emailInput = document.getElementById('adminEmail');
+			let verifiedAdminEmail = (emailInput.dataset.verifiedEmail || emailInput.value).trim().toLowerCase();
+			const otpInput = document.getElementById('emailOtp');
+			const otpTimerElement = document.getElementById('emailOtpTimer');
+			const resendOtpButton = document.getElementById('resendEmailOtp');
+			const verifyOtpButton = document.getElementById('verifyEmailOtp');
+			let savedValues = {};
+			let otpTimer = null;
+			let otpDeadline = 0;
+
+			const captureValues = () => {
+				savedValues = Object.fromEntries([...settingsForm.elements, ...shippingForm.elements].filter(input => input.name).map(input => [input.name, input.value]));
+			};
+			const showMessage = (element, message, state = '') => {
+				element.textContent = message;
+				element.dataset.state = state;
+			};
+			const clearErrors = form => form.querySelectorAll('[data-error]').forEach(error => {
+				error.textContent = '';
+				const input = form.elements.namedItem(error.dataset.error) || (error.dataset.error === 'email' ? emailInput : null);
+				if (input) input.removeAttribute('aria-invalid');
+			});
+			const getInputError = input => {
+				const validity = input.validity;
+				if (validity.badInput) return 'Enter a valid number.';
+				if (validity.valueMissing) return 'This field is required.';
+				if (validity.typeMismatch) return 'Enter a valid email address.';
+				if (validity.rangeUnderflow) return `Enter a value of at least ${input.min}.`;
+				if (validity.rangeOverflow) return `Enter a value no greater than ${input.max}.`;
+				if (validity.stepMismatch) return 'Enter a whole number.';
+				if (validity.tooShort) return `Enter at least ${input.minLength} characters.`;
+				if (validity.tooLong) return `Enter no more than ${input.maxLength} characters.`;
+				return '';
+			};
+			const validateInput = (input, error) => {
+				const message = getInputError(input);
+				error.textContent = message;
+				if (message) input.setAttribute('aria-invalid', 'true');
+				else input.removeAttribute('aria-invalid');
+				return !message;
+			};
+			const validateForm = form => {
+				let valid = true;
+				form.querySelectorAll('input[name]').forEach(input => {
+					const error = form.querySelector(`[data-error="${input.name}"]`);
+					if (error && !validateInput(input, error)) valid = false;
+				});
+				return valid;
+			};
+			const showErrors = (form, errors = {}) => {
+				clearErrors(form);
+				Object.entries(errors).forEach(([name, message]) => {
+					const error = form.querySelector(`[data-error="${name}"]`);
+					const input = form.elements.namedItem(name) || (name === 'email' ? document.getElementById('adminEmail') : null);
+					if (error) error.textContent = message;
+					if (input) input.setAttribute('aria-invalid', 'true');
+				});
+			};
+			const postJson = async (url, body) => {
+				const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+				const result = await response.json();
+				if (!response.ok) throw result;
+				return result;
+			};
+			const collect = form => Object.fromEntries(new FormData(form).entries());
+			const startOtpCountdown = expiresAt => {
+				clearInterval(otpTimer);
+				otpDeadline = Number(expiresAt);
+				modal.dataset.expiresAt = String(otpDeadline);
+				const updateTimer = () => {
+					const remaining = Math.max(0, Math.ceil((otpDeadline - Date.now()) / 1000));
+					otpTimerElement.hidden = remaining === 0;
+					resendOtpButton.hidden = remaining > 0;
+					if (remaining) {
+						otpTimerElement.textContent = `OTP expires in ${String(Math.floor(remaining / 60)).padStart(2, '0')}:${String(remaining % 60).padStart(2, '0')}`;
+					} else {
+						clearInterval(otpTimer);
+					}
+				};
+			updateTimer();
+			if (otpDeadline > Date.now()) otpTimer = setInterval(updateTimer, 1000);
+			};
+
+			if (modal.getAttribute('aria-hidden') === 'false') {
+				startOtpCountdown(modal.dataset.expiresAt);
+				otpInput.focus();
+			}
+
+			captureValues();
+			[...settingsForm.elements, ...shippingForm.elements].forEach(input => input.addEventListener('input', () => {
+				if (input.getAttribute('aria-invalid') === 'true') {
+					const fieldName = input.id === 'adminEmail' ? 'email' : input.name;
+					const error = fieldName && document.querySelector(`[data-error="${fieldName}"]`);
+					if (error) validateInput(input, error);
+				}
+				const dirty = [...settingsForm.elements, ...shippingForm.elements].some(field => field.name && field.value !== savedValues[field.name]);
+				saveStatus.textContent = dirty ? 'You have unsaved changes.' : 'All changes are saved.';
+			}));
+			document.getElementById('discardSettings').addEventListener('click', () => {
+				[...settingsForm.elements, ...shippingForm.elements].forEach(input => { if (input.name) input.value = savedValues[input.name]; });
+				clearErrors(settingsForm);
+				clearErrors(shippingForm);
+				showMessage(settingsMessage, 'Changes discarded.');
+				saveStatus.textContent = 'All changes are saved.';
+			});
+			document.getElementById('saveSettings').addEventListener('click', async () => {
+				clearErrors(settingsForm);
+				clearErrors(shippingForm);
+				const storeInfoValid = validateForm(settingsForm);
+				const shippingValid = validateForm(shippingForm);
+				const emailValid = validateInput(emailInput, settingsForm.querySelector('[data-error="email"]'));
+				if (!storeInfoValid || !shippingValid || !emailValid) return;
+				if (emailInput.value.trim().toLowerCase() !== verifiedAdminEmail) {
+					try {
+						const result = await postJson('/admin/settings/email/send-otp', {
+							email: emailInput.value,
+							settings: { ...collect(settingsForm), ...collect(shippingForm) }
+						});
+						document.getElementById('emailOtpNotice').textContent = result.message;
+						document.getElementById('emailOtpError').textContent = '';
+						otpInput.value = '';
+						modal.setAttribute('aria-hidden', 'false');
+						startOtpCountdown(result.expiresAt);
+						otpInput.focus();
+					} catch (error) {
+						showErrors(settingsForm, error.errors || {});
+						showErrors(shippingForm, error.errors || {});
+						if (!error.errors) showMessage(emailMessage, error.message || 'Unable to send OTP.', 'error');
+					}
+					return;
+				}
+				try {
+					const result = await postJson('/admin/settings', { ...collect(settingsForm), ...collect(shippingForm) });
+					captureValues();
+					document.body.dataset.storeName = result.settings.storeName;
+					const adminLogo = document.querySelector('.sidebar-header .logo-text h1');
+					if (adminLogo) adminLogo.textContent = result.settings.storeName;
+					document.title = `${result.settings.storeName} | Settings`;
+					document.getElementById('settingsSavedMessage').textContent = result.message || 'Settings saved successfully.';
+					settingsSavedModal.setAttribute('aria-hidden', 'false');
+					document.getElementById('settingsSavedOk').focus();
+					saveStatus.textContent = 'All changes are saved.';
+				} catch (error) {
+					showErrors(settingsForm, error.errors || {});
+					showErrors(shippingForm, error.errors || {});
+					showMessage(settingsMessage, error.message || 'Unable to save settings.', 'error');
+				}
+			});
+			document.getElementById('settingsSavedOk').addEventListener('click', () => {
+				settingsSavedModal.setAttribute('aria-hidden', 'true');
+			});
+
+			resendOtpButton.addEventListener('click', async () => {
+				resendOtpButton.disabled = true;
+				try {
+					const result = await postJson('/admin/settings/email/resend-otp', {});
+					document.getElementById('emailOtpNotice').textContent = result.message;
+					document.getElementById('emailOtpError').textContent = '';
+					otpInput.value = '';
+					startOtpCountdown(result.expiresAt);
+					otpInput.focus();
+				} catch (error) {
+					document.getElementById('emailOtpError').textContent = error.message || 'Unable to resend the OTP.';
+				} finally {
+					resendOtpButton.disabled = false;
+				}
+			});
+			document.getElementById('cancelEmailOtp').addEventListener('click', async () => {
+				try {
+					await postJson('/admin/settings/email/cancel-otp', {});
+				} catch (error) {
+					showMessage(emailMessage, error.message || 'Unable to cancel OTP verification.', 'error');
+					return;
+				}
+				modal.setAttribute('aria-hidden', 'true');
+				clearInterval(otpTimer);
+				modal.dataset.expiresAt = '';
+			});
+			verifyOtpButton.addEventListener('click', async event => {
+				const error = document.getElementById('emailOtpError');
+				error.textContent = '';
+				if (!/^\d{6}$/.test(otpInput.value)) {
+					error.textContent = 'Enter the 6-digit OTP.';
+					return;
+				}
+				event.currentTarget.disabled = true;
+				const originalButtonText = verifyOtpButton.textContent;
+				verifyOtpButton.textContent = 'Verifying...';
+				try {
+					const result = await postJson('/admin/settings/email/verify-otp', { otp: otpInput.value });
+					if (!result.success || !result.redirectUrl) throw new Error(result.message || 'Unable to verify OTP.');
+					window.location.href = result.redirectUrl;
+				} catch (failure) {
+					error.textContent = failure.message || 'Unable to verify OTP.';
+					if (/expired/i.test(error.textContent)) {
+						otpTimerElement.hidden = true;
+						resendOtpButton.hidden = false;
+					}
+				} finally {
+					verifyOtpButton.textContent = originalButtonText;
+					event.currentTarget.disabled = false;
+				}
+			});
+		});
+	</script>
+</body>
+</html>

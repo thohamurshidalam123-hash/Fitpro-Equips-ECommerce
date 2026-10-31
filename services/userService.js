@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 const { sendOtpEmail } = require('./emailServices');
 const { validateName, validateEmail, validatePhone, validatePassword, validateDateOfBirth } = require('../validators/userValidators');
+const { isOtpExpired } = require('../helpers/otpResend');
 const walletService = require('./walletService');
 const crypto = require('crypto');
 
@@ -110,7 +111,7 @@ const createRegisteredUser = async userData => {
 // For verifying registration OTP before creating a user
 const verifyRegistrationOtp = async ({ otp, expectedOtp, expiresAt, userData }) => {
     if (!expectedOtp || !userData) return { status: 'session', message: 'Session expired. Please sign up again.' };
-    if (Date.now() > expiresAt) return { status: 'expired', message: 'OTP has expired. Please try again.' };
+    if (isOtpExpired(expiresAt)) return { status: 'expired', message: 'OTP has timed out. Please request a new OTP.' };
     if (otp !== expectedOtp) return { status: 'invalid', message: 'Wrong OTP. Please try again.' };
     return { success: true, user: await createRegisteredUser(userData) };
 };
@@ -156,10 +157,10 @@ const resendProfileEmailOtp = async email => {
 
 // For verifying OTP and updating a password
 const resetUserPassword = async ({ email, otp, expectedOtp, expiresAt, newPassword, confirmPassword }) => {
+    if (!expectedOtp || isOtpExpired(expiresAt)) return { success: false, errors: { otp: 'OTP has timed out. Please request a new OTP.' } };
     const passwordError = validatePassword(newPassword, 'New password');
     if (passwordError) return { success: false, errors: { newPassword: passwordError } };
     if (newPassword !== confirmPassword) return { success: false, errors: { confirmPassword: 'Passwords do not match.' } };
-    if (Date.now() > expiresAt) return { success: false, errors: { otp: 'OTP expired. Please request a new one.' } };
     if (otp !== expectedOtp) return { success: false, errors: { otp: 'Invalid OTP. Please try again.' } };
 
     const securePassword = await bcrypt.hash(newPassword, 10);
@@ -216,7 +217,7 @@ const updateUserProfile = async ({ userId, data, profileImage }) => {
 // For verifying a profile email OTP
 const verifyProfileEmailOtp = async ({ userId, pendingData, otp, expectedOtp, expiresAt }) => {
     if (!pendingData || !expectedOtp) return { statusCode: 400, message: 'Session expired. Please try editing again.' };
-    if (Date.now() > expiresAt) return { statusCode: 400, message: 'OTP expired. Please try editing again.' };
+    if (isOtpExpired(expiresAt)) return { statusCode: 400, message: 'OTP has timed out. Please request a new OTP.' };
     if (otp !== expectedOtp) return { statusCode: 400, message: 'Invalid OTP. Please try again.' };
     await User.findByIdAndUpdate(userId, {
         name: pendingData.name,

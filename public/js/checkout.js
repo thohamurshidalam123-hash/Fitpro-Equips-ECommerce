@@ -312,7 +312,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             key: data.key,
                             amount: data.amount,
                             currency: "INR",
-                            name: "Fitpro Equips",
+                            name: document.body.dataset.storeName || document.querySelector('.brand')?.textContent || 'Store',
                             description: "Order Payment",
                             order_id: data.razorpayOrderId,
                             handler: async function (response) {

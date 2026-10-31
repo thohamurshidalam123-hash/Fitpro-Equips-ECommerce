@@ -270,6 +270,11 @@ body {
 	justify-content: center;
 }
 
+a.profile-btn {
+	color: inherit;
+	text-decoration: none;
+}
+
 .notification-btn:hover,
 .profile-btn:hover {
 	border-color: #1a73e8;

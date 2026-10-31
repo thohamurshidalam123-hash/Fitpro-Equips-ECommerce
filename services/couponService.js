@@ -23,8 +23,12 @@ const applyCoupon = async (userId, couponCode) => {
         return { success: false, message: 'Invalid coupon code. '};
     }
 
-    if (!coupon.isActive || new Date(coupon.expiryDate) < new Date()) {
-        return { success: false, message: 'This coupon has expired.'}
+    if (!coupon.isActive) {
+        return { success: false, message: "Coupon can't be applied." };
+    }
+
+    if (new Date(coupon.expiryDate) < new Date()) {
+        return { success: false, message: 'This coupon has expired.' };
     }
 
     // For checking user haven't used the limit

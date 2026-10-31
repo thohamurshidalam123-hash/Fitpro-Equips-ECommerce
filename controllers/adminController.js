@@ -1,5 +1,5 @@
 const adminService = require('../services/adminService');
-const { getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
+const { getOtpExpiryTimestamp, getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
 
 // Render admin login page
 const loadLogin = async (req,res) => {
@@ -9,6 +9,7 @@ const loadLogin = async (req,res) => {
         }
         res.render('admin/login', {
             message: null,
+            email: req.query.email || '',
             adminOtpActive: Boolean(req.session.adminResetOtp),
             adminResetEmail: req.session.adminResetEmail || '',
             otpResendSeconds: getOtpResendSeconds(req.session.adminResetOtpResendAt)
@@ -28,7 +29,7 @@ const adminLogin = async (req,res) => {
             req.session.adminId = result.admin._id;
             return res.redirect('/admin/dashboard');
         }
-        return res.render('admin/login', { message: result.message });
+        return res.render('admin/login', { message: result.message, email: req.body.email || '' });
         }catch(error){
             console.log( 'Admin login error:',error.message);
             res.status(500).send('Server Error');
@@ -38,9 +39,12 @@ const adminLogin = async (req,res) => {
 // For admin logout
 const adminLogout = async (req,res) => {
     try{
+        const loginUrl = req.query.email
+            ? `/admin/login?email=${encodeURIComponent(String(req.query.email))}`
+            : '/admin/login';
         req.session.destroy((err) => {
                 if(err) console.log('Error destroying admin session: ',err);
-                res.redirect('/admin/login');
+                res.redirect(loginUrl);
             });
         }catch(error) {
             console.log('Admin logout error:',error.message);
@@ -63,10 +67,10 @@ const forgotPassword = async (req,res) => {
         if (!result.emailSent) return res.status(500).json({ success: false, message: 'Failed to send OTP. Please try again.' });
         req.session.adminResetEmail = email;
         req.session.adminResetOtp = result.otp;
-        req.session.adminResetOtpExpiry = Date.now() + 180000;
+        req.session.adminResetOtpExpiry = getOtpExpiryTimestamp();
         setOtpResendAvailableAt(req.session, 'adminResetOtpResendAt');
         
-        return res.json({ success: true, message: 'OTP sent successfully.', resendSeconds: 60 });
+        return res.json({ success: true, message: 'OTP sent successfully.', resendSeconds: getOtpResendSeconds(req.session.adminResetOtpResendAt) });
     }catch(error){
         return res.status(500).json({ success: false, message: 'Server Error'})
     }
@@ -135,13 +139,13 @@ const resendForgotOtp = async (req,res) => {
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
         if (result.emailSent) {
             req.session.adminResetOtp = result.otp;
-            req.session.adminResetOtpExpiry = Date.now() + 180000; // 3 minutes
+            req.session.adminResetOtpExpiry = getOtpExpiryTimestamp(); // 3 minutes
             setOtpResendAvailableAt(req.session, 'adminResetOtpResendAt');
         } else {
             return res.status(500).json({ success: false, message: 'Failed to send OTP. Please try again.' });
         }
 
-        return res.json({ success: true, message: 'OTP resent successfully to your email.', resendSeconds: 60 });
+        return res.json({ success: true, message: 'OTP resent successfully to your email.', resendSeconds: getOtpResendSeconds(req.session.adminResetOtpResendAt) });
 
     }catch(error){
         console.error('Admin resend OTP error:',error.message);

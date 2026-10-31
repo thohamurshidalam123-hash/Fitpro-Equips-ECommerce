@@ -25,6 +25,7 @@ const getDashboardStats = async () => {
     const topProducts = await Order.aggregate([
         { $match: { orderStatus: 'Delivered'}},
         { $unwind: '$items' },
+        { $match: { 'items.itemStatus': { $ne: 'Returned' } } },
         { $group: {
             _id: '$items.productId',
             productName: { $first: '$items.name' },
@@ -37,6 +38,7 @@ const getDashboardStats = async () => {
     const topCategories = await Order.aggregate([
         { $match: { orderStatus: 'Delivered' } },
         { $unwind: '$items' },
+        { $match: { 'items.itemStatus': { $ne: 'Returned' } } },
         { $lookup: {
             from: 'products',
             localField: 'items.productId',
@@ -63,6 +65,7 @@ const getDashboardStats = async () => {
     const topBrands = await Order.aggregate([
         { $match: { orderStatus: 'Delivered' } },
         { $unwind: '$items' },
+        { $match: { 'items.itemStatus': { $ne: 'Returned' } } },
         { $lookup: {
             from: 'products', 
             localField: 'items.productId',
