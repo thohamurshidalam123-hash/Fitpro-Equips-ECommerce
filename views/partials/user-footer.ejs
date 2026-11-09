@@ -1,14 +1,16 @@
 <footer class="site-footer" id="contact">
     <div class="footer-columns">
-        <div><h3><%= storeName %></h3><p>Empowering your fitness journey with high-performance gear designed for excellence.</p></div>
-        <div><h4>Quick Links</h4><a href="/#about">Privacy Policy</a><a href="/#about">Terms of Service</a><a href="/#contact">Shipping &amp; Returns</a><a href="/#contact">Contact Us</a></div>
-        <div><h4>Shop</h4><a href="/#categories">Dumbbells</a><a href="/#categories">Olympic Bars</a><a href="/#categories">Rowing Machines</a><a href="/#categories">Squat Racks</a></div>
-        <div><h4>Help</h4><a href="/#contact">Account Orders</a><a href="/#contact">Financing Options</a><a href="/#contact">Warranty Claims</a></div>
+        <div class="footer-brand"><h3><%= storeName %></h3><p><strong>Built for every rep, every room, every goal.</strong> Explore strength and conditioning equipment for home gyms and dedicated training spaces, chosen to support progress that lasts.</p></div>
+        <div class="footer-links"><h4>Quick Links</h4><div class="footer-link-list"><a href="#footer-info-modal" data-open-footer-info="privacy" data-footer-info-title="Privacy Policy" data-footer-info-subtitle="How <%= storeName %> handles your information" aria-haspopup="dialog">Privacy Policy</a><a href="#footer-info-modal" data-open-footer-info="terms" data-footer-info-title="Terms of Service" data-footer-info-subtitle="Terms for shopping with <%= storeName %>" aria-haspopup="dialog">Terms of Service</a><a href="#footer-info-modal" data-open-footer-info="shipping" data-footer-info-title="Shipping &amp; Returns" data-footer-info-subtitle="Order delivery, cancellations, and returns" aria-haspopup="dialog">Shipping &amp; Returns</a><a href="#contact-modal" data-open-contact-modal aria-haspopup="dialog">Contact Us</a></div></div>
+        <!-- <div><h4>Shop</h4><a href="/#categories">Dumbbells</a><a href="/#categories">Olympic Bars</a><a href="/#categories">Rowing Machines</a><a href="/#categories">Squat Racks</a></div> -->
+        <!-- <div><h4>Help</h4><a href="/#contact">Account Orders</a><a href="/#contact">Financing Options</a><a href="/#contact">Warranty Claims</a></div> -->
     </div>
     <div class="copyright">&copy; 2026 <%= storeName %>. All rights reserved.</div>
 </footer>
 <link rel="stylesheet" href="/css/contact-modal.css">
+<link rel="stylesheet" href="/css/footer-info-modal.css">
 <%- include('contact-modal') %>
+<%- include('footer-info-modal') %>
 <link rel="stylesheet" href="/css/notification-modal.css">
 <link rel="stylesheet" href="/css/inline-validation.css">
 <div class="app-notification-overlay" id="appNotification" role="dialog" aria-modal="true" aria-labelledby="appNotificationTitle" aria-describedby="appNotificationMessage">
@@ -25,3 +27,4 @@
 <script src="/js/notification-modal.js"></script>
 <script src="/js/inline-validation.js"></script>
 <script src="/js/contact-modal.js"></script>
+<script src="/js/footer-info-modal.js"></script>

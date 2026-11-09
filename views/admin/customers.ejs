@@ -117,7 +117,7 @@
 										</td>
 										<td>
 											<div class="action-buttons">
-												<button class="action-btn view-btn" title="View" data-userid="<%= user._id %>">👁️</button>
+												<a class="action-btn view-btn" href="/admin/customers/<%= user._id %>" title="View customer details" aria-label="View <%= user.name || 'customer' %> details">👁️</a>
 
 												<button class="action-btn block-btn" title="Block/Unblock" data-userid="<%= user._id %>" data-isblocked="<%= user.isBlocked %>">🚫</button>
 											</div>

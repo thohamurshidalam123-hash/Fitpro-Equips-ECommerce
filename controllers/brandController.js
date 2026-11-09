@@ -4,7 +4,7 @@ const isHtmlFormRequest = req => String(req.headers.accept || '').includes('text
 const loadBrands = async (req, res) => {
     try {
         if (!req.session.adminId) return res.redirect('/admin/login');
-                
+
         const searchQuery = String(req.query.search || '').trim();
         const statusFilter = String(req.query.status || '').trim();
         const categoryFilter = String(req.query.category || '').trim();

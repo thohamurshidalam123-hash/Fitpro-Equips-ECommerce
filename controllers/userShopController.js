@@ -13,7 +13,7 @@ const loadLandingPage = async (req, res) => {
 };
 
 const loadShopPage = async (req, res) => {
-    try{
+    try {
         const message = req.session.message || null;
         const messageType = req.session.messageType || 'error';
         delete req.session.message;
@@ -33,7 +33,7 @@ const loadShopPage = async (req, res) => {
             : [];
 
         // For rendering view
-        res.render('user/shop',{
+        res.render('user/shop', {
             products: data.products,
             wishlistProductIds,
             categories: data.categories,
@@ -45,7 +45,7 @@ const loadShopPage = async (req, res) => {
             totalPages: data.totalPages,
             totalProducts: data.totalProducts,
             //For passing active filters back to UI to keep checkboxes checked and inputs filled
-            activeFilters :{
+            activeFilters: {
                 search,
                 category: categoryFilter,
                 brand: brandFilter,
@@ -54,14 +54,14 @@ const loadShopPage = async (req, res) => {
                 sort: sortOption
             }
         });
-    }catch(error){
-        console.error('Erro in loading shop page:',error.message);
+    } catch (error) {
+        console.error('Erro in loading shop page:', error.message);
         res.status(500).send('Server Error while loading shop');
     }
 };
 
-const productDetailsPage = async (req,res) => {
-    try{
+const productDetailsPage = async (req, res) => {
+    try {
         const data = await userShopService.getProductDetails(req.params.id);
         if (data.unavailable) {
             req.session.message = 'This product is currently unavailable';
@@ -78,14 +78,14 @@ const productDetailsPage = async (req,res) => {
             wishlistProductIds,
             currentPage: 'shop'
         });
-    }catch(error){
-        console.error('Error in loading product details page',error.message);
+    } catch (error) {
+        console.error('Error in loading product details page', error.message);
 
-    res.redirect('/shop');
+        res.redirect('/shop');
     }
 };
 
-module.exports = { 
+module.exports = {
     loadLandingPage,
     loadShopPage,
     productDetailsPage

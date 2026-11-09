@@ -35,7 +35,7 @@
                 <section class="shop-results" aria-label="Products">
                     <% if (!products.length) { %><p>No available products match your filters.</p><% } %>
                     <div class="shop-product-grid"><% products.forEach(product => { 
-                        const image = product.images && product.images[0]; 
+                        const image = product.displayImages && product.displayImages[0]; 
                         const price = product.displayPrice || product.regularPrice; 
                         const serializedVariants = encodeURIComponent(JSON.stringify(product.variants || [])); 
                         const maxQuantity = Math.min(Number(product.availableStock) || 0, 5); 

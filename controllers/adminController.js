@@ -2,10 +2,10 @@ const adminService = require('../services/adminService');
 const { getOtpExpiryTimestamp, getOtpResendSeconds, setOtpResendAvailableAt } = require('../helpers/otpResend');
 
 // Render admin login page
-const loadLogin = async (req,res) => {
-    try{
-        if( req.session.adminId ){
-            return res.redirect( '/admin/dashboard' );
+const loadLogin = async (req, res) => {
+    try {
+        if (req.session.adminId) {
+            return res.redirect('/admin/dashboard');
         }
         res.render('admin/login', {
             message: null,
@@ -14,15 +14,15 @@ const loadLogin = async (req,res) => {
             adminResetEmail: req.session.adminResetEmail || '',
             otpResendSeconds: getOtpResendSeconds(req.session.adminResetOtpResendAt)
         });
-    }catch(error) {
-        console.log( 'Admin login render error:', error.message);
+    } catch (error) {
+        console.log('Admin login render error:', error.message);
         res.status(500).send('Server Error');
     }
 };
 
 // For admin's login submission
-const adminLogin = async (req,res) => {
-    try{
+const adminLogin = async (req, res) => {
+    try {
         const result = await adminService.authenticateAdmin(req.body);
         if (result.success) {
             // Setting admin session
@@ -30,36 +30,36 @@ const adminLogin = async (req,res) => {
             return res.redirect('/admin/dashboard');
         }
         return res.render('admin/login', { message: result.message, email: req.body.email || '' });
-        }catch(error){
-            console.log( 'Admin login error:',error.message);
-            res.status(500).send('Server Error');
-        }
+    } catch (error) {
+        console.log('Admin login error:', error.message);
+        res.status(500).send('Server Error');
+    }
 };
 
 // For admin logout
-const adminLogout = async (req,res) => {
-    try{
+const adminLogout = async (req, res) => {
+    try {
         const loginUrl = req.query.email
             ? `/admin/login?email=${encodeURIComponent(String(req.query.email))}`
             : '/admin/login';
         req.session.destroy((err) => {
-                if(err) console.log('Error destroying admin session: ',err);
-                res.redirect(loginUrl);
-            });
-        }catch(error) {
-            console.log('Admin logout error:',error.message);
-            res.status(500).send('Server Error');
-        }
+            if (err) console.log('Error destroying admin session: ', err);
+            res.redirect(loginUrl);
+        });
+    } catch (error) {
+        console.log('Admin logout error:', error.message);
+        res.status(500).send('Server Error');
+    }
 };
 
-const loadDashboard = async (req,res) => {
-    if(!req.session.adminId) return res.redirect('/admin/login');
-    res.render('admin/dashboard', { currentPage: 'dashboard' }); 
+const loadDashboard = async (req, res) => {
+    if (!req.session.adminId) return res.redirect('/admin/login');
+    res.render('admin/dashboard', { currentPage: 'dashboard' });
 };
 
 // Sending otp for forgot password
-const forgotPassword = async (req,res) => {
-    try{
+const forgotPassword = async (req, res) => {
+    try {
         const { email } = req.body
 
         const result = await adminService.sendAdminResetOtp(email);
@@ -69,38 +69,38 @@ const forgotPassword = async (req,res) => {
         req.session.adminResetOtp = result.otp;
         req.session.adminResetOtpExpiry = getOtpExpiryTimestamp();
         setOtpResendAvailableAt(req.session, 'adminResetOtpResendAt');
-        
+
         return res.json({ success: true, message: 'OTP sent successfully.', resendSeconds: getOtpResendSeconds(req.session.adminResetOtpResendAt) });
-    }catch(error){
-        return res.status(500).json({ success: false, message: 'Server Error'})
+    } catch (error) {
+        return res.status(500).json({ success: false, message: 'Server Error' })
     }
 }
 
 // Verifying otp entered by admin
-const verifyForgotOtp = async (req,res) => {
-    try{
-         const result = adminService.verifyAdminResetOtp({
-             otp: req.body.otp,
-             expectedOtp: req.session.adminResetOtp,
-             expiresAt: req.session.adminResetOtpExpiry
-         });
-            if (!result.success) {
-                const errors = req.session.adminResetOtp ? { otp: result.message } : null;
-                return res.status(result.statusCode).json({ success: false, message: result.message, errors });
-            }
-            delete req.session.adminResetOtpResendAt;
-        return res.status(200).json({ success: true, message: 'OTP verified successfully'});
-    }catch(error){
-            console.error('Admin verify OTP error:',error.message);
-            res.status(500).json({ success: false, message: 'Server Error'})
-     }
+const verifyForgotOtp = async (req, res) => {
+    try {
+        const result = adminService.verifyAdminResetOtp({
+            otp: req.body.otp,
+            expectedOtp: req.session.adminResetOtp,
+            expiresAt: req.session.adminResetOtpExpiry
+        });
+        if (!result.success) {
+            const errors = req.session.adminResetOtp ? { otp: result.message } : null;
+            return res.status(result.statusCode).json({ success: false, message: result.message, errors });
+        }
+        delete req.session.adminResetOtpResendAt;
+        return res.status(200).json({ success: true, message: 'OTP verified successfully' });
+    } catch (error) {
+        console.error('Admin verify OTP error:', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' })
+    }
 };
 
 // Update admin password
-const resetPassword = async (req,res) => {
-    try{
-        if(!req.session.adminResetEmail){
-            return res.status(400).json({ success: false, message: 'Session expired. Please start over'});
+const resetPassword = async (req, res) => {
+    try {
+        if (!req.session.adminResetEmail) {
+            return res.status(400).json({ success: false, message: 'Session expired. Please start over' });
         }
         const result = await adminService.updateAdminPassword({ ...req.body, email: req.session.adminResetEmail });
         if (!result.success) {
@@ -114,17 +114,17 @@ const resetPassword = async (req,res) => {
         delete req.session.adminResetOtpExpiry;
         delete req.session.adminResetOtpResendAt;
 
-        return res.json({ success: true, message: 'Password updated successfully.'});
-    
-    }catch(error){
-        console.error('Admin password reset error:',error.message);
-        res.status(500).json({  success: false, message: 'Server Error'});
+        return res.json({ success: true, message: 'Password updated successfully.' });
+
+    } catch (error) {
+        console.error('Admin password reset error:', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
 // Resending OTP for forgot password
-const resendForgotOtp = async (req,res) => {
-    try{
+const resendForgotOtp = async (req, res) => {
+    try {
         const email = req.session.adminResetEmail;
         if (!email || !req.session.adminResetOtp) {
             return res.status(400).json({ success: false, message: 'Password reset session expired. Please start again.' });
@@ -147,16 +147,16 @@ const resendForgotOtp = async (req,res) => {
 
         return res.json({ success: true, message: 'OTP resent successfully to your email.', resendSeconds: getOtpResendSeconds(req.session.adminResetOtpResendAt) });
 
-    }catch(error){
-        console.error('Admin resend OTP error:',error.message);
-        res.status(500).json({ success: false, message: 'Server Error'});
+    } catch (error) {
+        console.error('Admin resend OTP error:', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
 // Load Customers Page
 const loadCustomers = async (req, res) => {
-    try{
-        if(!req.session.adminId) return res.redirect('/admin/login');
+    try {
+        if (!req.session.adminId) return res.redirect('/admin/login');
 
         const page = parseInt(req.query.page) || 1;
         const limit = 10;
@@ -176,25 +176,39 @@ const loadCustomers = async (req, res) => {
             blockedCount: data.blockedCount,
             currentPage: 'customers'
         });
-    }catch(error){
+    } catch (error) {
         console.log('Error in loading customer management page:', error.message);
         res.status(500).send('Server Error');
     }
 };
 
+const loadCustomerDetails = async (req, res) => {
+    try {
+        if (!req.session.adminId) return res.redirect('/admin/login');
+
+        const data = await adminService.getCustomerDetails(req.params.id);
+        if (!data) return res.status(404).send('Customer not found');
+
+        res.render('admin/adminCustomerDetails', { ...data, currentPage: 'customers' });
+    } catch (error) {
+        console.error('Error loading customer details:', error.message);
+        res.status(500).send('Server Error');
+    }
+};
+
 // Block/Unblock user
-const toggleBlockUser = async (req,res) => {
-    try{
-        if(!req.session.adminId){
-            return res.status(401).json({ success: false, message:'Unauthorized'});
+const toggleBlockUser = async (req, res) => {
+    try {
+        if (!req.session.adminId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
         }
 
         const result = await adminService.toggleCustomerBlock(req.params.id);
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
         res.json(result);
-    }catch(error){
-        console.error('Block/Unblock error:',error.message);
-        res.status(500).json({ success: false, message:'Server Error'});
+    } catch (error) {
+        console.error('Block/Unblock error:', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
@@ -210,6 +224,7 @@ module.exports = {
     resetPassword,
     resendForgotOtp,
     loadCustomers,
+    loadCustomerDetails,
     toggleBlockUser,
 
 }

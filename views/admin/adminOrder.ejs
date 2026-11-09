@@ -92,9 +92,7 @@
         .status-badge.delivered { color: #087b4e; background: #d9f7eb; }
         .status-badge.cancelled { color: #bd3940; background: #fde7e8; }
         .status-badge.returnrequested { color: #6b21a8; background: #f3e8ff; }
-        
-        .btn-review-return { display: inline-block; margin-top: 6px; padding: 4px 8px; font-size: 8px; border-radius: 4px; border: none; background: #075bd6; color: white; cursor: pointer; }
-        .btn-review-return:hover { background: #064db5; }
+        .pending-item-return-count { display: inline-grid; min-width: 16px; height: 16px; margin-left: 5px; padding: 0 4px; place-items: center; border-radius: 8px; color: #6b21a8; background: #f3e8ff; font-size: 8px; font-weight: 700; }
 
         .order-amount { color: #263348; font-weight: 650; }
         .order-action-menu { position: relative; width: 24px; }
@@ -201,6 +199,7 @@
                                     const customerEmail = order.userId ? order.userId.email : 'N/A';
                                     const initials = customerName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
                                     const totalQty = order.items.reduce((sum, i) => sum + i.quantity, 0);
+                                    const pendingItemReturnCount = order.items.filter(item => item.itemStatus === 'Return requested').length;
                                     const statusClass = order.orderStatus.toLowerCase().replace(/\s+/g, '');
                                 %>
                                 <tr class="order-row">
@@ -217,7 +216,12 @@
                                     <td><span class="product-count"><%= totalQty %></span></td>
                                     <td><%= dateFormatted %></td>
                                     <td><span class="payment-badge"><%= order.paymentStatus || 'Paid' %></span></td>
-                                    <td><span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span></td>
+                                    <td>
+                                        <span class="status-badge <%= statusClass %>"><%= order.orderStatus %></span>
+                                        <% if (pendingItemReturnCount > 0) { %>
+                                            <span class="pending-item-return-count" aria-label="<%= pendingItemReturnCount %> pending item return requests" title="<%= pendingItemReturnCount %> pending item return requests"><%= pendingItemReturnCount %></span>
+                                        <% } %>
+                                    </td>
                                     <td class="order-amount">₹<%= order.grandTotal.toLocaleString('en-IN') %></td>
                                     <td>
                                         <details class="order-action-menu">
@@ -228,9 +232,6 @@
                                                 <a href="/admin/orders/<%= order._id %>">View details</a>
                                             </div>
                                         </details>
-                                        <% if (order.orderStatus === 'Return requested') { %>
-                                            <button class="btn-review-return" data-id="<%= order._id %>" data-reason="<%= order.returnReason %>">Review Return</button>
-                                        <% } %>
                                     </td>
                                 </tr>
                                 <% }) %>
@@ -270,23 +271,6 @@
         </main>
     </div>
 
-    <!-- ADDED MODAL FOR REVIEWING RETURNS -->
-    <div id="returnReviewModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center;">
-        <div style="background: #fff; width: 400px; padding: 24px; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-            <h3 style="margin-top: 0; color: #1c2738;">Review Return Request</h3>
-            <p style="font-size: 12px; color: #475569; margin-bottom: 20px;"><strong>Customer Reason:</strong> <span id="returnReasonText"></span></p>
-            <label for="returnRejectionReason" style="display:block; margin-bottom:6px; color:#334155; font-size:12px; font-weight:600;">Rejection reason</label>
-            <textarea id="returnRejectionReason" maxlength="500" rows="3" style="box-sizing:border-box; width:100%; margin-bottom:3px; padding:8px; border:1px solid #cbd5e1; border-radius:4px; resize:vertical;"></textarea>
-            <p id="returnRejectionReasonError" style="margin:0 0 14px; color:#dc2626; font-size:12px;" hidden></p>
-            
-            <div style="display: flex; gap: 10px; justify-content: flex-end;">
-                <button id="btnCloseModal" style="padding: 8px 14px; background: #e2e8f0; border: none; border-radius: 4px; cursor: pointer;">Cancel</button>
-                <button id="btnRejectReturn" style="padding: 8px 14px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer;">Reject</button>
-                <button id="btnApproveReturn" style="padding: 8px 14px; background: #16a34a; color: white; border: none; border-radius: 4px; cursor: pointer;">Approve</button>
-            </div>
-        </div>
-    </div>
-
     <script>
         const filterForm = document.getElementById('filterForm');
         const searchInput = filterForm.querySelector('input[name="search"]');
@@ -295,99 +279,6 @@
             filterForm.requestSubmit();
         });
 
-        // ADDED JAVASCRIPT FOR RETURN MODAL AND AJAX REQUESTS
-        const returnModal = document.getElementById('returnReviewModal');
-        const reasonText = document.getElementById('returnReasonText');
-        const rejectionReason = document.getElementById('returnRejectionReason');
-        const rejectionReasonError = document.getElementById('returnRejectionReasonError');
-        let currentReturnOrderId = null;
-
-        const showRejectionReasonError = message => {
-            rejectionReasonError.textContent = message;
-            rejectionReasonError.hidden = false;
-            rejectionReason.setAttribute('aria-invalid', 'true');
-            rejectionReason.focus();
-        };
-
-        rejectionReason.addEventListener('input', () => {
-            rejectionReasonError.textContent = '';
-            rejectionReasonError.hidden = true;
-            rejectionReason.removeAttribute('aria-invalid');
-        });
-
-        // Open Modal
-        document.querySelectorAll('.btn-review-return').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                currentReturnOrderId = e.target.dataset.id;
-                reasonText.textContent = e.target.dataset.reason || 'No reason provided';
-                rejectionReason.value = '';
-                rejectionReasonError.textContent = '';
-                rejectionReasonError.hidden = true;
-                rejectionReason.removeAttribute('aria-invalid');
-                returnModal.style.display = 'flex';
-            });
-        });
-
-        // Close Modal
-        document.getElementById('btnCloseModal').addEventListener('click', () => {
-            returnModal.style.display = 'none';
-            currentReturnOrderId = null;
-        });
-
-        const showReturnStatusModal = (message, type = 'success') => {
-            returnModal.style.display = 'none';
-            currentReturnOrderId = null;
-            if (typeof window.showAppModal === 'function') {
-                window.showAppModal(message, type, {
-                    onClose: () => window.location.reload()
-                });
-            } else {
-                window.location.reload();
-            }
-        };
-
-        // Approve Return
-        document.getElementById('btnApproveReturn').addEventListener('click', async () => {
-            if(!currentReturnOrderId) return;
-            try {
-                const res = await fetch(`/admin/orders/${currentReturnOrderId}/approve-return`, { method: 'POST' });
-                const data = await res.json();
-                if(data.success) {
-                    showReturnStatusModal(data.message || 'Return request approved successfully.', 'success');
-                } else {
-                    showReturnStatusModal(data.message || 'Unable to approve return request.', 'error');
-                }
-            } catch (err) {
-                showReturnStatusModal('Error processing approval.', 'error');
-            }
-        });
-
-        // Reject Return
-        document.getElementById('btnRejectReturn').addEventListener('click', async () => {
-            if(!currentReturnOrderId) return;
-            const reason = rejectionReason.value.trim();
-            if (!reason) {
-                showRejectionReasonError('Please provide a reason for rejecting this return.');
-                return;
-            }
-            try {
-                const res = await fetch(`/admin/orders/${currentReturnOrderId}/reject-return`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reason })
-                });
-                const data = await res.json();
-                if(data.success) {
-                    showReturnStatusModal(data.message || 'Return request rejected.', 'success');
-                } else if (data.errors && data.errors.reason) {
-                    showRejectionReasonError(data.errors.reason);
-                } else {
-                    showReturnStatusModal(data.message || 'Unable to reject return request.', 'error');
-                }
-            } catch (err) {
-                showReturnStatusModal('Error processing rejection.', 'error');
-            }
-        });
     </script>
     <%- include('../partials/admin-footer.ejs') %>
 </body>

@@ -41,7 +41,7 @@ button { font: inherit; }
 .hero-actions { display: flex; gap: 12px; }
 .button { display: inline-flex; align-items: center; justify-content: center; min-width: 98px; height: 34px; padding: 0 16px; border: 1px solid var(--blue); border-radius: 4px; color: #fff; background: var(--blue); font-size: 10px; cursor: pointer; }
 .button.secondary { color: #3d4759; border-color: #d7deeb; background: #fff; }
-.hero-image { width: 100%; min-height: 260px; aspect-ratio: 1.75 / 1; border-radius: 5px; background: url("https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1600&q=85") center / cover; }
+.hero-image { width: 100%; min-height: 260px; aspect-ratio: 1.75 / 1; border-radius: 5px; background: url("/images/ambitious-studio-rick-barrett-MJhNmZ_DMds-unsplash.jpg") center / cover; }
 .section { padding: clamp(24px, 4vw, 48px) clamp(18px, 7vw, 120px); }
 .section-heading { margin: 0 0 6px; font-size: 19px; }
 .section-subtitle { margin: 0 0 22px; color: var(--muted); font-size: 10px; }

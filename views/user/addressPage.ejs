@@ -48,13 +48,13 @@
         .address-card:not(.default) .address-detail { margin-bottom: 8px; }
         .address-benefits { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 22px; margin-top: 44px; }
         .benefit { min-height: 63px; display: flex; gap: 12px; align-items: flex-start; padding: 15px 18px; border-radius: 9px; background: #fff; }
-        .benefit.dark { color: #fff; background: #121b2b; }
         .benefit-icon { color: var(--address-blue); font-size: 15px; }
         .benefit:nth-child(2) .benefit-icon { color: #14c878; }
         .benefit h3 { margin: 0 0 5px; font-size: 10px; }
         .benefit p { margin: 0; color: #8691a3; font-size: 8px; line-height: 1.45; }
-        .benefit.dark p { color: #fff; text-align: center; }
-        .support-button { width: 100%; margin-top: 7px; padding: 6px; border: 1px solid #405069; border-radius: 4px; color: #fff; background: transparent; font-size: 8px; cursor: pointer; }
+        .support-button { width: 100%; margin-top: 7px; padding: 7px 10px; border: 1px solid var(--address-blue); border-radius: 5px; color: #fff; background: var(--address-blue); font-size: 9px; font-weight: 600; cursor: pointer; }
+        .support-button:hover { background: #1552d5; }
+        .support-button:focus-visible { outline: 2px solid #8eb6f7; outline-offset: 2px; }
         
         /* Modal Styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; place-items: center; z-index: 1000; }
@@ -157,7 +157,7 @@
             <section class="address-benefits" aria-label="Shopping benefits">
                 <div class="benefit"><div class="benefit-icon">♢</div><div><h3>Secure Storage</h3><p>Your personal data is protected by industry-standard AES-256 encryption.</p></div></div>
                 <div class="benefit"><div class="benefit-icon">ϟ</div><div><h3>Fast Checkout</h3><p>One-click checkout across all Apex Vitality platforms with saved addresses.</p></div></div>
-                <div class="benefit dark"><div style="width:100%; text-align:center"><h3>Need Help?</h3><button class="support-button" type="button">◉ &nbsp; Contact Support</button></div></div>
+                <div class="benefit"><div style="width:100%; text-align:center"><h3>Need Help?</h3><button class="support-button" type="button" data-open-contact-modal aria-haspopup="dialog">◉ &nbsp; Contact Support</button></div></div>
             </section>
         </main>
         <%- include('../partials/user-footer') %>

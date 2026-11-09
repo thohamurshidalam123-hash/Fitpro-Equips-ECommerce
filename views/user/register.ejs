@@ -11,7 +11,7 @@
 		a { color: inherit; text-decoration: none; }
 		.register-shell { min-height: calc(100vh - 4px); display: flex; flex-direction: column; }
 		.register-main { flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); min-height: 500px; }
-		.welcome-panel { position: relative; display: flex; align-items: flex-end; min-height: 500px; padding: clamp(36px, 5vw, 72px); overflow: hidden; color: #fff; background: linear-gradient(180deg, rgba(32, 76, 129, .05), rgba(24, 78, 158, .63)), url("https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?auto=format&fit=crop&w=1600&q=85") center / cover; }
+		.welcome-panel { position: relative; display: flex; align-items: flex-end; min-height: 500px; padding: clamp(36px, 5vw, 72px); overflow: hidden; color: #fff; background: linear-gradient(180deg, rgba(32, 76, 129, .05), rgba(24, 78, 158, .63)), url("/images/registraion.jpeg") center / cover; }
 		.welcome-copy { max-width: 360px; }
 		.welcome-copy h1 { max-width: 330px; margin: 0 0 15px; color: #fff; font-size: clamp(30px, 3.3vw, 43px); line-height: .98; }.welcome-copy p { max-width: 320px; margin: 0; color: rgba(255,255,255,.88); font-size: 12px; line-height: 1.5; }
 		.form-panel { display: flex; align-items: center; justify-content: center; padding: clamp(32px, 5vw, 58px); }.form-content { width: min(100%, 390px); }
@@ -69,7 +69,7 @@
 					<div class="trust-row"><div class="trust-item"><span class="trust-icon">&#9825;</span><span>Secure Registration</span></div><div class="trust-item"><span class="trust-icon">&#9671;</span><span>Protected Data</span></div><div class="trust-item"><span class="trust-icon">&#10003;</span><span>Safe Shopping</span></div></div>
 			</section>
 		</main>
-		<section class="help-area"><div class="help-box"><h3>Need Assistance?</h3><p>Our support team is available 24/7 to help you with your setup or any account queries.</p><a href="#contact"><span>&#9742;</span> Contact Us</a></div></section>
+		<section class="help-area"><div class="help-box"><h3>Need Assistance?</h3><p>Our support team is available 24/7 to help you with your setup or any account queries.</p><a href="#contact-modal" data-open-contact-modal aria-haspopup="dialog"><span>&#9742;</span> Contact Us</a></div></section>
 		<%- include('../partials/user-footer') %>
 	</div>
 	<script>
@@ -122,6 +122,7 @@
 			else if (!/^[A-Za-z]+(?:[ -][A-Za-z]+)*$/.test(name)) errors.name = 'Full Name can contain only letters, spaces, and hyphens';
 			if (!email) errors.email = 'Email Address is required';
 			else if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/i.test(email)) errors.email = 'Please enter a valid email address';
+			else if (email.split('@')[0].length < 2) errors.email = 'Email address must have at least 2 characters before @';
 			if (!phone) errors.phone = 'Phone Number is required';
 			else if (!/^[6-9]\d{9}$/.test(phone)) errors.phone = 'Please enter a valid Indian mobile number';
 			if (!date) errors.dateOfBirth = 'Date of Birth is required';

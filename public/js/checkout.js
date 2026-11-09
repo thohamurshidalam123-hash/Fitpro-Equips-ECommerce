@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedPayment = 'razorpay'; // Default active method
     const paymentOptions = document.querySelectorAll('.payment-method-item');
     const checkoutTotal = Number(document.querySelector('.payment-methods-grid')?.dataset.grandTotal);
-    
+
     paymentOptions.forEach(option => {
         option.addEventListener('click', () => {
             if (option.dataset.paymentMethod === 'cod' && checkoutTotal > 5000) {
@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             option.classList.add('active');
             option.setAttribute('aria-pressed', 'true');
-            
+
             // Track the selected method for the backend payload
             selectedPayment = option.getAttribute('data-payment-method');
         });
@@ -26,11 +26,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Modal Elements
     const changeAddressModal = document.getElementById('changeAddressModal');
     const addAddressModal = document.getElementById('addAddressModal');
-    
+
     // Using querySelectorAll to catch the Add Address button even if the list is empty
     const btnChangeAddress = document.getElementById('btnChangeAddress');
-    const btnsAddNewAddress = document.querySelectorAll('#btnAddNewAddress'); 
-    
+    const btnsAddNewAddress = document.querySelectorAll('#btnAddNewAddress');
+
     const closeButtons = document.querySelectorAll('[data-close-modal]');
 
     // Open Change Address Modal
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnChangeAddress.addEventListener('click', (e) => {
             e.preventDefault();
             changeAddressModal.classList.add('active');
-            changeAddressModal.style.display = 'block'; 
+            changeAddressModal.style.display = 'block';
             document.body.style.overflow = 'hidden';
         });
     }
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
                 addAddressModal.classList.add('active');
-                addAddressModal.style.display = 'block'; 
+                addAddressModal.style.display = 'block';
                 document.body.style.overflow = 'hidden';
             });
         });
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnApplySelectedAddress) {
         btnApplySelectedAddress.addEventListener('click', () => {
             const selectedOption = document.querySelector('.saved-address-option.selected');
-            
+
             if (selectedOption) {
                 const addressRadio = selectedOption.querySelector('input[type="radio"]');
                 if (!addressRadio) return;
@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
         addAddressForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             clearAddressErrors();
-            
+
             const payload = {
                 fullName: document.getElementById('newFullName').value.trim(),
                 phone: document.getElementById('newPhone').value.trim(),
@@ -232,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                
+
                 if (data.success) {
                     window.showAppModal(data.message || 'Address added successfully.', 'success', {
                         onClose: () => {
@@ -297,14 +297,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const res = await fetch('/checkout/place-order', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        addressId: addressId, 
-                        paymentMethod: selectedPayment 
+                    body: JSON.stringify({
+                        addressId: addressId,
+                        paymentMethod: selectedPayment
                     })
                 });
-                
+
                 const data = await res.json();
-                
+
                 if (data.success) {
                     // RAZORPAY INTEGRATION BLOCK
                     if (data.paymentMethod === 'razorpay') {
@@ -349,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 }
                             }
                         };
-                        
+
                         const rzp = new Razorpay(options);
                         rzp.on('payment.failed', async function (response) {
                             // Payment failed at the gateway level

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= customer.name %> | Customer Details</title>
+    <link rel="stylesheet" href="/css/admin-dashboard.css">
+    <link rel="stylesheet" href="/css/admin-scale.css">
+    <link rel="stylesheet" href="/css/customer-details.css">
+</head>
+<body>
+    <div class="admin-dashboard customer-details-page">
+        <%- include('../partials/admin-sidebar.ejs', { currentPage: 'customers' }) %>
+
+        <main class="customer-details-main">
+            <%- include('../partials/admin-page-topbar.ejs') %>
+
+            <a class="customer-back-link" href="/admin/customers">&larr; Customers</a>
+
+            <section class="customer-profile-heading" aria-labelledby="customer-name">
+                <div class="customer-profile-avatar">
+                    <% if (customer.profile_image) { %>
+                        <img src="<%= customer.profile_image %>" alt="<%= customer.name %> profile">
+                    <% } else { %>
+                        <span aria-hidden="true"><%= (customer.name || 'C').split(' ').map(part => part.charAt(0)).slice(0, 2).join('').toUpperCase() %></span>
+                    <% } %>
+                </div>
+                <div class="customer-heading-copy">
+                    <div class="customer-heading-title">
+                        <h1 id="customer-name"><%= customer.name %></h1>
+                        <span class="customer-status <%= customer.isBlocked ? 'blocked' : 'active' %>"><%= customer.isBlocked ? 'Blocked' : 'Active' %></span>
+                    </div>
+                    <p><%= customer.email %></p>
+                    <small>Customer ID: <%= customer._id %></small>
+                </div>
+                <div class="customer-joined">
+                    <span>Joined</span>
+                    <strong><%= customer.createdAt ? new Date(customer.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not available' %></strong>
+                </div>
+            </section>
+
+            <section class="customer-metrics" aria-label="Customer overview">
+                <article class="customer-metric">
+                    <span class="metric-mark orders-mark">#</span>
+                    <div><span>Total orders</span><strong><%= Number(summary.totalOrders || 0).toLocaleString('en-IN') %></strong></div>
+                </article>
+                <article class="customer-metric">
+                    <span class="metric-mark spend-mark">₹</span>
+                    <div><span>Total spend</span><strong>₹<%= Number(summary.totalSpend || 0).toLocaleString('en-IN') %></strong></div>
+                </article>
+                <article class="customer-metric">
+                    <span class="metric-mark returns-mark">↩</span>
+                    <div><span>Returned items</span><strong><%= Number(summary.returnedItems || 0).toLocaleString('en-IN') %></strong></div>
+                </article>
+                <article class="customer-metric">
+                    <span class="metric-mark cancellations-mark">×</span>
+                    <div><span>Cancelled items</span><strong><%= Number(summary.cancelledItems || 0).toLocaleString('en-IN') %></strong></div>
+                </article>
+                <article class="customer-metric">
+                    <span class="metric-mark cart-mark">▣</span>
+                    <div><span>Cart products</span><strong><%= Number(cartProductCount || 0).toLocaleString('en-IN') %><small><%= Number(cartUnitCount || 0).toLocaleString('en-IN') %> units</small></strong></div>
+                </article>
+                <article class="customer-metric">
+                    <span class="metric-mark wishlist-mark">♡</span>
+                    <div><span>Wishlist products</span><strong><%= Number(wishlistCount || 0).toLocaleString('en-IN') %></strong></div>
+                </article>
+            </section>
+
+            <div class="customer-details-layout">
+                <div class="customer-details-primary">
+                    <section class="customer-panel">
+                        <h2>Personal information</h2>
+                        <dl class="customer-info-list">
+                            <div><dt>Full name</dt><dd><%= customer.name || 'Not provided' %></dd></div>
+                            <div><dt>Email address</dt><dd><%= customer.email || 'Not provided' %></dd></div>
+                            <div><dt>Phone</dt><dd><%= customer.phone || 'Not provided' %></dd></div>
+                            <div><dt>Gender</dt><dd><%= customer.gender || 'Not provided' %></dd></div>
+                            <div><dt>Date of birth</dt><dd><%= customer.dateOfBirth ? new Date(customer.dateOfBirth).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Not provided' %></dd></div>
+                        </dl>
+                    </section>
+
+                    <section class="customer-panel customer-orders-panel">
+                        <div class="customer-panel-heading">
+                            <h2>Recent orders</h2>
+                            <span><%= orders.length %> shown</span>
+                        </div>
+                        <% if (orders.length) { %>
+                            <div class="customer-orders-scroll">
+                                <table class="customer-orders-table">
+                                    <thead><tr><th>Order ID</th><th>Date</th><th>Status</th><th>Amount</th></tr></thead>
+                                    <tbody>
+                                        <% orders.forEach(order => { const statusClass = String(order.orderStatus || 'pending').toLowerCase().replace(/[^a-z0-9]+/g, '-'); %>
+                                            <tr>
+                                                <td><strong>#<%= order.orderId || String(order._id).slice(-8).toUpperCase() %></strong></td>
+                                                <td><%= order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A' %></td>
+                                                <td><span class="order-status <%= statusClass %>"><%= order.orderStatus || 'Pending' %></span></td>
+                                                <td>₹<%= Number(order.grandTotal || 0).toLocaleString('en-IN') %></td>
+                                            </tr>
+                                        <% }); %>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <% } else { %>
+                            <p class="customer-empty-state">This customer has not placed an order yet.</p>
+                        <% } %>
+                    </section>
+                </div>
+
+                <aside class="customer-details-sidebar">
+                    <section class="customer-panel">
+                        <h2>Account activity</h2>
+                        <dl class="customer-info-list compact">
+                            <div><dt>Account status</dt><dd><span class="customer-status <%= customer.isBlocked ? 'blocked' : 'active' %>"><%= customer.isBlocked ? 'Blocked' : 'Active' %></span></dd></div>
+                            <div><dt>Return requests</dt><dd><%= Number(summary.returnRequests || 0).toLocaleString('en-IN') %></dd></div>
+                            <div><dt>Cart lines</dt><dd><%= Number(cartProductCount || 0).toLocaleString('en-IN') %></dd></div>
+                            <div><dt>Wishlist products</dt><dd><%= Number(wishlistCount || 0).toLocaleString('en-IN') %></dd></div>
+                        </dl>
+                    </section>
+
+                    <section class="customer-panel">
+                        <h2>Default address</h2>
+                        <% if (address) { %>
+                            <% const addressText = [address.houseName, address.street, address.landmark, address.city, address.district, address.state, address.pincode].filter(Boolean).join(', '); %>
+                            <div class="customer-address">
+                                <strong><%= address.fullName %></strong>
+                                <p><%= addressText || 'Address details unavailable' %></p>
+                                <span><%= address.phone %></span>
+                            </div>
+                        <% } else { %>
+                            <p class="customer-empty-state">No saved address.</p>
+                        <% } %>
+                    </section>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/admin-footer.ejs') %>
+</body>
+</html>

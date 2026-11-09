@@ -1,0 +1,52 @@
+<div class="contact-modal-overlay footer-info-overlay" id="footer-info-modal" data-footer-info-modal hidden>
+    <section class="contact-modal-dialog footer-info-dialog" role="dialog" aria-modal="true" aria-labelledby="footer-info-title" aria-describedby="footer-info-subtitle">
+        <div class="contact-modal-content">
+            <header class="contact-modal-header">
+                <span class="contact-modal-support-icon footer-info-icon" aria-hidden="true">i</span>
+                <div>
+                    <h2 id="footer-info-title">Store information</h2>
+                    <p id="footer-info-subtitle"><%= storeName %> policies</p>
+                </div>
+            </header>
+            <div class="footer-info-content" data-footer-info-content></div>
+        </div>
+        <footer class="contact-modal-footer">
+            <button type="button" data-close-footer-info>Close</button>
+        </footer>
+    </section>
+</div>
+
+<template data-footer-info-template="privacy">
+    <h3>Information we collect</h3>
+    <p>When you use <%= storeName %>, we may collect the details you provide, such as your name, email address, phone number, profile details, and delivery addresses. We also use your cart, wishlist, and order information to provide the store's services.</p>
+    <h3>How we use your information</h3>
+    <p>We use this information to manage your account, process orders and payments, arrange delivery, handle cancellations or returns, respond to support requests, and improve your shopping experience.</p>
+    <h3>Service providers and security</h3>
+    <p>Information needed to complete a transaction or delivery may be shared with the relevant payment and delivery providers. We use reasonable safeguards to protect account and order information, and retain records as needed to provide our services and meet applicable requirements.</p>
+    <h3>Your choices</h3>
+    <p>You can review and update account details from your profile. For privacy questions or requests, contact the <%= storeName %> support team using the Contact Us link.</p>
+</template>
+
+<template data-footer-info-template="terms">
+    <h3>Your account</h3>
+    <p>Provide accurate contact and delivery details and keep your sign-in credentials private. Activity performed through your account is your responsibility. Please contact support if you believe your account has been used without permission.</p>
+    <h3>Products, prices, and orders</h3>
+    <p>Product descriptions, prices, availability, discounts, and delivery estimates are shown when you shop and may change. An order is subject to confirmation and product availability. If an item or price cannot be fulfilled, <%= storeName %> may contact you to correct or cancel the affected order and arrange any applicable refund.</p>
+    <h3>Payments and promotions</h3>
+    <p>Use the payment options provided at checkout. Coupons and offers are subject to their stated eligibility, minimum purchase, and expiry conditions and cannot be applied outside those conditions.</p>
+    <h3>Responsible use</h3>
+    <p>Do not misuse the website, interfere with its operation, or provide unlawful or misleading information. Store content and branding may not be reused without permission. These terms apply together with the Shipping &amp; Returns information shown on this site.</p>
+    <h3>Questions</h3>
+    <p><%= storeName %> may update store terms when its services change. Contact support if you have a question about an order or these terms.</p>
+</template>
+
+<template data-footer-info-template="shipping">
+    <h3>Shipping and delivery</h3>
+    <p>Orders are sent to the delivery address provided at checkout. Shipping charges and estimated delivery information, when available, are shown during checkout. Processing or transit may take longer when products are unavailable or delivery is affected by circumstances outside the store's control.</p>
+    <h3>Order cancellations</h3>
+    <p>Cancellation availability depends on the order and item status. Use the order details page to request a cancellation when that option is available. Applicable refunds are handled through the store's refund process.</p>
+    <h3>Returns</h3>
+    <p>Return requests can be submitted for eligible delivered items from the order details page. Requests are reviewed by the <%= storeName %> team; an item that has been cancelled, returned, or had its return request rejected may not be eligible for another request.</p>
+    <h3>Refunds and delivery issues</h3>
+    <p>Approved returns and cancellations are refunded according to the order's payment and refund method. If an order arrives damaged, incomplete, or at the wrong address, contact support with the order details so the team can review it.</p>
+</template>

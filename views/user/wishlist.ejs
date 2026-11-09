@@ -29,7 +29,7 @@
 			</div>
 
 			<section class="wishlist-grid" aria-label="Saved products">
-				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.images && product.images[0]; const price = Number(product.displayPrice ?? product.regularPrice); const oldPrice = Number(product.regularPrice) > price ? Number(product.regularPrice) : null; const variants = product.variants || []; const hasAvailableVariant = variants.some(productVariant => Number(productVariant.stock) > 0 && productVariant.status !== 'Out of Stock'); %>
+				<% wishlistItems.forEach(item => { const product = item.productId; const image = product.displayImages && product.displayImages[0]; const price = Number(product.displayPrice ?? product.regularPrice); const oldPrice = Number(product.regularPrice) > price ? Number(product.regularPrice) : null; const variants = product.variants || []; const hasAvailableVariant = variants.some(productVariant => Number(productVariant.stock) > 0 && productVariant.status !== 'Out of Stock'); %>
 					<article class="wishlist-card" data-wishlist-card data-product-id="<%= product._id %>">
 						<div class="wishlist-image"<% if (image) { %> style="background-image: url('<%= image %>')"<% } %>>
 							<button class="remove-wishlist" type="button" aria-label="Remove <%= product.productName %> from wishlist" data-remove-wishlist data-product-id="<%= product._id %>" data-variant-id="<%= item.variantId || '' %>">×</button>

@@ -114,7 +114,7 @@ const loadOrderSuccess = async (req, res) => {
 
 // For verifying payment
 const verifyPayment = async (req, res) => {
-    try{
+    try {
         const { orderId: gatewayOrderId, paymentData } = req.body;
         const result = await checkoutService.verifyRazorpayPayment({
             gatewayOrderId,
@@ -125,19 +125,19 @@ const verifyPayment = async (req, res) => {
 
         if (result.success) {
             delete req.session.pendingRazorpayPayment;
-            return res.status(200).json({ success: true, orderId: result.orderId, message: 'Payment verified successfully.'});
-        }else{
+            return res.status(200).json({ success: true, orderId: result.orderId, message: 'Payment verified successfully.' });
+        } else {
             return res.status(400).json({ success: false, message: result.message });
         }
     } catch (error) {
-        console.error('Error verifying payment:',error);
-        return res.status(500).json({ success: false, message: 'Server error during payment verification.'});
+        console.error('Error verifying payment:', error);
+        return res.status(500).json({ success: false, message: 'Server error during payment verification.' });
     }
 };
 
 // For handling payment fialure callback
 const paymentFailure = async (req, res) => {
-    try{
+    try {
         await checkoutService.handlePaymentFailure({
             gatewayOrderId: req.body.orderId,
             pendingPayment: req.session.pendingRazorpayPayment
@@ -148,21 +148,21 @@ const paymentFailure = async (req, res) => {
             }
             delete req.session.pendingRazorpayPayment;
         }
-        return res.status(200).json({ success: true});
-    }catch(error) {
-        console.error('Error handling payment failure:',error);
-        return res.status(500).json({ success: false, message: 'Server Error in handling payment failure'});
+        return res.status(200).json({ success: true });
+    } catch (error) {
+        console.error('Error handling payment failure:', error);
+        return res.status(500).json({ success: false, message: 'Server Error in handling payment failure' });
     }
 };
 
 // For loading payment failed page
 const loadPaymentFailed = async (req, res) => {
-    try{
+    try {
         res.render('user/paymentFailed', {
             orderId: req.params.id,
             currentPage: 'shop'
         });
-    }catch(error) {
+    } catch (error) {
         res.redirect('/checkout');
     }
 };

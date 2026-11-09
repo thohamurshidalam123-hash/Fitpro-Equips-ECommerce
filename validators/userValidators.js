@@ -11,6 +11,7 @@ const validateEmail = (value) => {
     const email = normalizeEmail(value);
     if (!email) return 'Email Address is required';
     if (!emailPattern.test(email)) return 'Please enter a valid email address';
+    if (email.split('@')[0].length < 2) return 'Email address must have at least 2 characters before @';
     return null;
 };
 

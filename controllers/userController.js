@@ -366,7 +366,7 @@ const updatePassword = async (req, res) => {
         req.session.message = 'Password changed successfully. Please login.';
         req.session.messageType = 'success';
         return res.redirect('/login');
-    }catch(error){
+    } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
     }
@@ -405,11 +405,11 @@ const updateProfile = async (req, res) => {
 };
 
 // Render the Profile otp verification modal
-const loadProfileOtpModal=async(req,res)=>{
-    try{
-        if(!req.session.pendingProfileUpdate) return res.redirect('/userProfile');
+const loadProfileOtpModal = async (req, res) => {
+    try {
+        if (!req.session.pendingProfileUpdate) return res.redirect('/userProfile');
         return res.redirect('/userProfile?emailOtp=true');
-    }catch(error){
+    } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
     }
@@ -425,15 +425,15 @@ const verifyProfileOtp = async (req, res) => {
             expiresAt: req.session.profileOtpExpiry
         });
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
-            delete req.session.pendingProfileUpdate;
-            delete req.session.profileOtp;
-            delete req.session.profileOtpExpiry;
-            delete req.session.profileOtpResendAt;
+        delete req.session.pendingProfileUpdate;
+        delete req.session.profileOtp;
+        delete req.session.profileOtpExpiry;
+        delete req.session.profileOtpResendAt;
 
-            delete req.session.userId;
-            req.session.message = 'Your email was updated. Please log in with your new email.';
-            req.session.messageType = 'success';
-            return res.json({ success: true, redirectUrl: '/login' });
+        delete req.session.userId;
+        req.session.message = 'Your email was updated. Please log in with your new email.';
+        req.session.messageType = 'success';
+        return res.json({ success: true, redirectUrl: '/login' });
     } catch (error) {
         console.error('Profile OTP verification error:', error.message);
         res.status(500).json({ success: false, message: 'Server Error' });
@@ -467,28 +467,28 @@ const resendProfileOtp = async (req, res) => {
     }
 };
 
-const loadAddressPage = async (req, res)=>{
-    try{
-        if(!req.session.userId){
+const loadAddressPage = async (req, res) => {
+    try {
+        if (!req.session.userId) {
             return res.redirect('/login');
         }
 
         const { user, addresses } = await userService.getAddressPageData(req.session.userId);
 
-        res.render('user/addressPage',{
+        res.render('user/addressPage', {
             user,
             addresses,
-            currentPage:'addresses'
+            currentPage: 'addresses'
         });
-    }catch(error){
+    } catch (error) {
         console.log(error.message);
         res.status(500).send('Server Error');
     }
 }
 
 // Google authentication controller
-const googleLogin = async (req,res) => {
-    try{
+const googleLogin = async (req, res) => {
+    try {
         const result = await userService.authenticateGoogleUser(req.body.credential);
         if (!result.success) return res.status(result.statusCode).json({ success: false, message: result.message });
 

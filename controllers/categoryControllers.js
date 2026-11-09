@@ -41,29 +41,29 @@ const addCategory = async (req, res) => {
 
 // For editing category
 const editCategory = async (req, res) => {
-    try{
+    try {
         const result = await categoryService.updateCategory({ ...req.body, image: req.file });
         if (!result.success) {
             return res.status(400).json({ success: false, message: 'Please correct the errors below', errors: result.errors });
         }
-        res.json({success: true, message: 'Category updated successfully'});
-    }catch(error){
-        console.error('Error in edit category',error.message);
-        res.status(500).json({success: false, message: 'Server Error'})
+        res.json({ success: true, message: 'Category updated successfully' });
+    } catch (error) {
+        console.error('Error in edit category', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' })
     }
 };
 
 // For Deleting category (Toggle Status)
 const toggleCategoryStatus = async (req, res) => {
-    try{
+    try {
         const result = await categoryService.toggleCategoryStatus(req.params.id);
         if (!result.success) {
             return res.status(result.statusCode).json({ success: false, message: result.message });
         }
         res.json(result);
-    }catch(error){
-        console.error('Error in toggling category status',error.message);
-        res.status(500).json({success: false, message : 'Server Error'});
+    } catch (error) {
+        console.error('Error in toggling category status', error.message);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 

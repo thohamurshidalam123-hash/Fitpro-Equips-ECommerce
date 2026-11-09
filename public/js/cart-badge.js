@@ -18,5 +18,5 @@
         .then(result => {
             if (result && result.success && !hasLocalUpdate) renderCartBadgeCount(result.count);
         })
-        .catch(() => {});
+        .catch(() => { });
 }());

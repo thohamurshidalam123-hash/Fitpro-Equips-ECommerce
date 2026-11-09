@@ -8,8 +8,8 @@ const userController = require('../controllers/userController');
 const addressController = require('../controllers/addressController');
 const passport = require('passport');
 const userShopController = require('../controllers/userShopController');
-const cartController = require ('../controllers/cartController')
-const wishlistController = require ('../controllers/wishlistController');
+const cartController = require('../controllers/cartController')
+const wishlistController = require('../controllers/wishlistController');
 const checkoutController = require('../controllers/checkoutController');
 const orderController = require('../controllers/orderController');
 const invoiceController = require('../controllers/invoiceController');
@@ -114,11 +114,11 @@ router.get('/verify-profile-otp', requireUserSession, userController.loadProfile
 router.post('/verify-profile-otp', requireUserSession, userController.verifyProfileOtp);
 router.post('/resend-profile-otp', requireUserSession, userController.resendProfileOtp);
 
-router.get('/auth/google', 
+router.get('/auth/google',
     passport.authenticate('google', { scope: ['profile', 'email'] })
 );
 
-router.get('/auth/google/callback', 
+router.get('/auth/google/callback',
     passport.authenticate('google', { session: false, failureRedirect: '/login' }),
     (req, res) => {
         // Tie the authenticated Google user to your standard Express session
@@ -144,16 +144,16 @@ router.post('/google-login', userController.googleLogin);
 
 // Shop page routes
 router.get('/about-us', (req, res) => res.render('user/about', { currentPage: 'about' }));
-router.get('/shop',userShopController.loadShopPage);
-router.get('/products/:id',userShopController.productDetailsPage)
+router.get('/shop', userShopController.loadShopPage);
+router.get('/products/:id', userShopController.productDetailsPage)
 
 // Cart page routes
-router.get('/cart',cartController.loadCartPage);
+router.get('/cart', cartController.loadCartPage);
 router.get('/cart/count', cartController.getCartCount);
-router.post('/cart/add',cartController.addToCart);
-router.post('/cart/update',cartController.updateQuantity);
-router.post('/cart/remove',cartController.removeFromCart);
-router.post('/cart/moveToWishlist',cartController.moveToWishlist);
+router.post('/cart/add', cartController.addToCart);
+router.post('/cart/update', cartController.updateQuantity);
+router.post('/cart/remove', cartController.removeFromCart);
+router.post('/cart/moveToWishlist', cartController.moveToWishlist);
 
 //Wishlist routes
 router.get('/wishlist', requireUserSession, wishlistController.loadWishlist);
@@ -163,29 +163,29 @@ router.post('/wishlist/remove', requireUserSession, wishlistController.removeWis
 router.post('/wishlist/clear', requireUserSession, wishlistController.clearWishlist);
 
 // Checkout routes
-router.get('/checkout',requireUserSession,checkoutController.loadCheckout);
+router.get('/checkout', requireUserSession, checkoutController.loadCheckout);
 router.post('/checkout/address/add', requireUserSession, checkoutController.addOrderAddress);
 router.post('/checkout/place-order', requireUserSession, checkoutController.placeOrder);
 router.get('/order-success/:id', requireUserSession, checkoutController.loadOrderSuccess);
 
 // Order routes
-router.get('/orders',requireUserSession,orderController.loadOrderHistory);
-router.get('/account/orders/:id',requireUserSession,orderController.loadOrderDetails);
-router.post('/account/orders/:id/cancel',requireUserSession,orderController.cancelOrder);
-router.post('/account/orders/:id/return',requireUserSession,orderController.returnOrder);
+router.get('/orders', requireUserSession, orderController.loadOrderHistory);
+router.get('/account/orders/:id', requireUserSession, orderController.loadOrderDetails);
+router.post('/account/orders/:id/cancel', requireUserSession, orderController.cancelOrder);
+router.post('/account/orders/:id/return', requireUserSession, orderController.returnOrder);
 router.get('/account/orders/:id/invoice', invoiceController.downloadInvoice);
 router.post('/account/orders/:id/retry-payment', requireUserSession, orderController.retryPayment);
 
 // Payment routes
-router.post('/checkout/verify-payment',requireUserSession, checkoutController.verifyPayment);
-router.post('/checkout/payment-failed',requireUserSession, checkoutController.paymentFailure);
-router.get('/order-failed/:id',requireUserSession, checkoutController.loadPaymentFailed);
+router.post('/checkout/verify-payment', requireUserSession, checkoutController.verifyPayment);
+router.post('/checkout/payment-failed', requireUserSession, checkoutController.paymentFailure);
+router.get('/order-failed/:id', requireUserSession, checkoutController.loadPaymentFailed);
 router.post('/wallet/top-ups/order', requireUserSession, walletController.createTopUpOrder);
 router.post('/wallet/top-ups/verify', requireUserSession, walletController.verifyTopUpPayment);
 
 // Coupon routes
 router.post('/apply-coupon', couponController.applyCoupon);
-router.post('/remove-coupon',couponController.removeCoupon);
+router.post('/remove-coupon', couponController.removeCoupon);
 
 
 module.exports = router;

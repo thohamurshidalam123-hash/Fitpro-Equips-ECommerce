@@ -154,10 +154,11 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 // ============ ACTION BUTTONS ============
-document.querySelectorAll('.action-btn').forEach(btn => {
+document.querySelectorAll('button.action-btn').forEach(btn => {
 	btn.addEventListener('click', function(e) {
+		const orderId = this.closest('tr')?.querySelector('.order-id')?.textContent;
+		if (!orderId) return;
 		e.preventDefault();
-		const orderId = this.closest('tr').querySelector('.order-id').textContent;
 		console.log('Viewing order:', orderId);
 		// Implement actual order view functionality here
 		// window.location.href = '/admin/orders/' + orderId;

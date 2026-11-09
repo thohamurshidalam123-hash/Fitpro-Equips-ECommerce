@@ -8,13 +8,19 @@ const DEFAULT_SETTINGS = {
     key: 'global',
     storeName: 'Fitpro Equips',
     supportPhone: '+91 6238833963',
+    supportEmail: 'fitproequips.test1@gmail.com',
     shippingCharge: 500,
     freeShippingThreshold: 5000
 };
 
 const getSettings = async () => {
     const settings = await StoreSettings.findOne({ key: 'global' }).lean();
-    if (settings) return { ...DEFAULT_SETTINGS, ...settings, supportPhone: settings.supportPhone || DEFAULT_SETTINGS.supportPhone };
+    if (settings) return {
+        ...DEFAULT_SETTINGS,
+        ...settings,
+        supportPhone: settings.supportPhone || DEFAULT_SETTINGS.supportPhone,
+        supportEmail: settings.supportEmail || DEFAULT_SETTINGS.supportEmail
+    };
 
     return StoreSettings.findOneAndUpdate(
         { key: 'global' },
@@ -37,6 +43,10 @@ const validateSettings = data => {
         errors.supportPhone = 'Enter a valid phone number with 7 to 15 digits.';
     }
 
+    const supportEmail = String(data.supportEmail || '').trim().toLowerCase();
+    if (!supportEmail) errors.supportEmail = 'Support email is required.';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(supportEmail)) errors.supportEmail = 'Enter a valid support email address.';
+
     for (const field of ['shippingCharge', 'freeShippingThreshold']) {
         const value = Number(data[field]);
         if (data[field] === '' || !Number.isSafeInteger(value) || value < 0 || value > 10000000) {
@@ -55,6 +65,7 @@ const saveSettings = async data => {
         { $set: {
             storeName: String(data.storeName).trim(),
             supportPhone: String(data.supportPhone).trim(),
+            supportEmail: String(data.supportEmail).trim().toLowerCase(),
             shippingCharge: Number(data.shippingCharge),
             freeShippingThreshold: Number(data.freeShippingThreshold)
         }, $setOnInsert: { key: 'global' } },

@@ -14,7 +14,7 @@
         <%- include('../partials/user-header', { currentPage: 'shop' }) %>
 
         <main>
-            <div class="product-details-main" data-variants="<%= JSON.stringify(product.variants || []) %>" data-product-images="<%= JSON.stringify(product.images || []) %>" data-best-offer-percentage="<%= product.bestOfferPercentage || 0 %>">
+            <div class="product-details-main" data-variants="<%= JSON.stringify(product.variants || []) %>" data-product-images="<%= JSON.stringify(product.displayImages || product.images || []) %>" data-best-offer-percentage="<%= product.bestOfferPercentage || 0 %>">
                 <!-- Dynamic Breadcrumbs -->
                 <nav class="product-breadcrumb" aria-label="Breadcrumb">
                     <a href="/">Home</a><span>›</span>
@@ -27,7 +27,7 @@
                     <div class="product-gallery">
                         <!-- Main Product Image -->
                         <div class="product-gallery-main">
-                            <img id="productImage" src="<%= product.images[0] %>" data-zoom-image="<%= product.images[0] %>" alt="<%= product.productName %>">
+                            <img id="productImage" src="<%= (product.displayImages || product.images)[0] %>" data-zoom-image="<%= (product.displayImages || product.images)[0] %>" alt="<%= product.productName %>">
                             <div class="image-zoom-controls" aria-label="Image zoom controls">
                                 <button type="button" data-zoom-out aria-label="Zoom out">−</button>
                                 <button type="button" data-zoom-reset aria-label="Reset image zoom">Reset</button>
@@ -38,7 +38,7 @@
                         
                         <!-- Dynamic Thumbnails -->
                         <div class="product-thumbnails" id="product-gallery" aria-label="Product images">
-                            <% product.images.forEach((img, index) => { %>
+                            <% (product.displayImages || product.images).forEach((img, index) => { %>
                                 <button type="button" class="thumbnail <%= index === 0 ? 'active' : '' %>" data-image="<%= img %>" aria-label="View image <%= index + 1 %>">
                                     <img src="<%= img %>" alt="">
                                 </button>

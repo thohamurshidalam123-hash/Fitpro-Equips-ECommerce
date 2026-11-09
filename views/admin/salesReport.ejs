@@ -139,16 +139,7 @@
         <%- include('../partials/admin-sidebar.ejs', { currentPage: 'sales-reports' }) %>
 
         <main class="main-content sales-report-main" id="reportContentArea">
-            <header class="admin-page-topbar">
-                <label class="admin-global-search">
-                    <span aria-hidden="true">⌕</span>
-                    <input id="recentOrderSearch" type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search recent orders">
-                </label>
-                <div class="admin-topbar-actions">
-                    <!-- <button class="sales-notification" type="button" aria-label="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"></path></svg></button> -->
-                    <a href="mailto:support@fitpro.com">Support</a>
-                </div>
-            </header>
+            <%- include('../partials/admin-page-topbar.ejs', { searchId: 'recentOrderSearch' }) %>
 
             <section class="sales-intro" aria-labelledby="sales-title">
                 <div>
@@ -157,7 +148,7 @@
                 </div>
                 <div class="sales-export-actions">
                     <button class="sales-export-button" id="exportPdf" type="button">PDF</button>
-                    <button class="sales-export-button" id="exportCsv" type="button">Excel</button>
+                    <button class="sales-export-button" id="exportCsv" type="button" data-report-title="<%= storeName %> Sales Report">Excel</button>
                 </div>
             </section>
 
@@ -351,8 +342,9 @@
                 'Order ID', 'Customer', 'Amount', 'Total Discount', 'Coupon Discount',
                 'Product Offer Discount', 'Payment Method', 'Date'
             ];
+            const reportTitle = document.getElementById('exportCsv').dataset.reportTitle;
             const worksheetData = [
-                [<%- JSON.stringify(storeName + ' Sales Report') %>],
+                [reportTitle],
                 ['Period', reportPeriod],
                 ['Date Range', `${startDate} to ${endDate}`],
                 [],

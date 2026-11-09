@@ -11,12 +11,12 @@ const getCouponValidationErrors = error => {
 
 // For apllying coupon
 const applyCoupon = async (req, res) => {
-    try{
-        const userId =req.session.userId;
+    try {
+        const userId = req.session.userId;
         const { couponCode } = req.body;
 
         if (!userId) {
-            return res.status(401).json({ success: false, message: 'Please login to apply coupons.'});
+            return res.status(401).json({ success: false, message: 'Please login to apply coupons.' });
         }
         if (req.session.appliedCoupon) {
             return res.status(409).json({
@@ -28,39 +28,39 @@ const applyCoupon = async (req, res) => {
         const result = await couponService.applyCoupon(userId, couponCode);
 
         if (result.success) {
-        // Save coupon state in the user's session
-        req.session.appliedCoupon = {
-            id: result.couponId,
-            code: result.couponCode,
-            name: result.couponName,
-            discountAmount: result.discountAmount
-        };
-        return res.status(200).json(result);
+            // Save coupon state in the user's session
+            req.session.appliedCoupon = {
+                id: result.couponId,
+                code: result.couponCode,
+                name: result.couponName,
+                discountAmount: result.discountAmount
+            };
+            return res.status(200).json(result);
         } else {
             return res.status(400).json(result);
         }
     } catch (error) {
-        console.error('Error applying coupon:',error);
-        res.status(500).json({ success: false, message: 'Server Error'});
+        console.error('Error applying coupon:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
 // For removing coupon
 const removeCoupon = async (req, res) => {
-    try{
+    try {
         if (req.session.appliedCoupon) {
             delete req.session.appliedCoupon;
         }
-        res.status(200).json({ success: true, message: 'Coupon removed successfully.'});
-    }catch(error) {
-        console.error('Error in removing coupon:',error);
-        res.status(500).json({ success: false, message: 'Server Error'});
+        res.status(200).json({ success: true, message: 'Coupon removed successfully.' });
+    } catch (error) {
+        console.error('Error in removing coupon:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
 // For renderring coupon management page (admin side)
 const getCoupons = async (req, res) => {
-    try{
+    try {
         if (!req.session.adminId) return res.redirect('/admin/login');
 
         const limit = 5;
@@ -117,22 +117,22 @@ const getCoupons = async (req, res) => {
 };
 
 // For creating a new coupon
-const createCoupon = async (req,res) => {
-    try{
+const createCoupon = async (req, res) => {
+    try {
         const couponCode = String(req.body.couponCode || '').trim().toUpperCase();
         if (!couponCode) return res.status(400).json({ success: false, errors: { couponCode: 'Coupon code is required.' } });
 
         // For validating if coupon code already exist
         const existingCoupon = await Coupon.findOne({ couponCode });
-        if(existingCoupon){
+        if (existingCoupon) {
             return res.status(400).json({ success: false, message: 'Please correct the errors below.', errors: { couponCode: 'Coupon code already exists.' } });
         }
 
         const newCoupon = new Coupon({ ...req.body, couponCode });
         await newCoupon.save();
 
-        res.status(201).json({ success: true, message: 'Coupon created successfully'});
-    }catch(error) {
+        res.status(201).json({ success: true, message: 'Coupon created successfully' });
+    } catch (error) {
         console.error(error);
         const errors = getCouponValidationErrors(error);
         res.status(errors ? 400 : 500).json({ success: false, message: errors ? 'Please correct the errors below.' : 'Error creating coupon', ...(errors ? { errors } : {}) });
@@ -141,7 +141,7 @@ const createCoupon = async (req,res) => {
 
 // For updating a coupon
 const updateCoupon = async (req, res) => {
-    try{
+    try {
         const { id } = req.params;
         const couponCode = String(req.body.couponCode || '').trim().toUpperCase();
         if (!couponCode) return res.status(400).json({ success: false, errors: { couponCode: 'Coupon code is required.' } });
@@ -157,8 +157,8 @@ const updateCoupon = async (req, res) => {
         }
 
         await Coupon.findByIdAndUpdate(id, { ...req.body, couponCode }, { new: true, runValidators: true });
-        res.status(200).json({ success: true, message: 'Coupon update successfully'});
-    }catch (error) {
+        res.status(200).json({ success: true, message: 'Coupon update successfully' });
+    } catch (error) {
         console.error(error);
         const errors = getCouponValidationErrors(error);
         res.status(errors ? 400 : 500).json({ success: false, message: errors ? 'Please correct the errors below.' : 'Error in updating coupon', ...(errors ? { errors } : {}) });
@@ -167,13 +167,13 @@ const updateCoupon = async (req, res) => {
 
 // For deleting coupon
 const deleteCoupon = async (req, res) => {
-    try{
+    try {
         const { id } = req.params;
         await Coupon.findByIdAndDelete(id);
-        res.status(200).json({ message: 'Coupon deleted successfully'});
-    }catch(error) {
+        res.status(200).json({ message: 'Coupon deleted successfully' });
+    } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Error in deleting coupon'});
+        res.status(500).json({ message: 'Error in deleting coupon' });
     }
 };
 module.exports = {

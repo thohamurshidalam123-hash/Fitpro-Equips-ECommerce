@@ -1,5 +1,9 @@
 const User = require('../models/user');
 const Order = require('../models/orderModel');
+const Cart = require('../models/cartModel');
+const Wishlist = require('../models/wishlistModel');
+const Address = require('../models/addressModel');
+const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const { sendOtpEmail } = require('./emailServices');
 const { isOtpExpired } = require('../helpers/otpResend');
@@ -68,6 +72,66 @@ const getCustomers = async ({ page, limit, searchQuery, status }) => {
     return { users, totalUsers, totalPages: Math.ceil(totalUsers / limit), activeCount, blockedCount };
 };
 
+const getCustomerDetails = async userId => {
+    if (!mongoose.isValidObjectId(userId)) return null;
+
+    const customer = await User.findOne({ _id: userId, role: 'user' }).select('-password').lean();
+    if (!customer) return null;
+
+    const [summaryRows, orders, cart, wishlist, address] = await Promise.all([
+        Order.aggregate([
+            { $match: { userId: customer._id } },
+            {
+                $project: {
+                    returnedItems: { $size: { $filter: { input: { $ifNull: ['$items', []] }, as: 'item', cond: { $eq: ['$$item.itemStatus', 'Returned'] } } } },
+                    cancelledItems: { $size: { $filter: { input: { $ifNull: ['$items', []] }, as: 'item', cond: { $eq: ['$$item.itemStatus', 'Cancelled'] } } } },
+                    returnRequests: { $size: { $filter: { input: { $ifNull: ['$items', []] }, as: 'item', cond: { $eq: ['$$item.itemStatus', 'Return requested'] } } } },
+                    totalSpend: {
+                        $sum: {
+                            $map: {
+                                input: {
+                                    $filter: {
+                                        input: { $ifNull: ['$items', []] },
+                                        as: 'item',
+                                        cond: { $not: [{ $in: [{ $ifNull: ['$$item.itemStatus', ''] }, ['Cancelled', 'Returned']] }] }
+                                    }
+                                },
+                                as: 'item',
+                                in: { $ifNull: ['$$item.itemTotal', { $multiply: [{ $ifNull: ['$$item.price', 0] }, { $ifNull: ['$$item.quantity', 0] }] }] }
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalOrders: { $sum: 1 },
+                    returnedItems: { $sum: '$returnedItems' },
+                    cancelledItems: { $sum: '$cancelledItems' },
+                    returnRequests: { $sum: '$returnRequests' },
+                    totalSpend: { $sum: '$totalSpend' }
+                }
+            }
+        ]),
+        Order.find({ userId: customer._id }).sort({ createdAt: -1 }).limit(8).select('orderId orderStatus grandTotal createdAt').lean(),
+        Cart.findOne({ userId: customer._id }).select('items').lean(),
+        Wishlist.findOne({ userId: customer._id }).select('products').lean(),
+        Address.findOne({ userId: customer._id }).sort({ isDefault: -1, updatedAt: -1 }).lean()
+    ]);
+
+    const cartItems = cart?.items || [];
+    return {
+        customer,
+        summary: summaryRows[0] || { totalOrders: 0, returnedItems: 0, cancelledItems: 0, returnRequests: 0, totalSpend: 0 },
+        orders,
+        cartProductCount: cartItems.length,
+        cartUnitCount: cartItems.reduce((total, item) => total + Number(item.quantity || 0), 0),
+        wishlistCount: wishlist?.products?.length || 0,
+        address
+    };
+};
+
 // For blocking or unblocking a customer
 const toggleCustomerBlock = async userId => {
     const user = await User.findById(userId);
@@ -81,4 +145,4 @@ const toggleCustomerBlock = async userId => {
     };
 };
 
-module.exports = { authenticateAdmin, sendAdminResetOtp, verifyAdminResetOtp, updateAdminPassword, getCustomers, toggleCustomerBlock };
+module.exports = { authenticateAdmin, sendAdminResetOtp, verifyAdminResetOtp, updateAdminPassword, getCustomers, getCustomerDetails, toggleCustomerBlock };

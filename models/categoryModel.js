@@ -1,13 +1,13 @@
-const mongoose= require ('mongoose');
+const mongoose = require('mongoose');
 
-const categorySchema= new mongoose.Schema({
-    name:{
+const categorySchema = new mongoose.Schema({
+    name: {
         type: String,
         required: true,
         unique: true,
         trim: true
     },
-    description:{
+    description: {
         type: String,
         required: true,
         trim: true
@@ -20,17 +20,17 @@ const categorySchema= new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    status:{
+    status: {
         type: String,
-        enum:['Active', 'Disabled'],
+        enum: ['Active', 'Disabled'],
         default: 'Active'
     },
-    offerPercentage: { 
-        type: Number, 
+    offerPercentage: {
+        type: Number,
         default: 0,
         min: 0,
-        max: 100 
+        max: 100
     }
-},{ timestamps: true});
+}, { timestamps: true });
 
 module.exports = mongoose.model('Category', categorySchema);

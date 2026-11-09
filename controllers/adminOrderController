@@ -1,9 +1,9 @@
 const adminOrderService = require('../services/adminOrderService');
-const Order = require('../models/orderModel'); 
+const Order = require('../models/orderModel');
 
 // For listing orders with search, filter, sort (descending) and pagination
 const loadAdminOrders = async (req, res) => {
-    try{
+    try {
         const page = parseInt(req.query.page, 10) || 1;
         const search = req.query.search ? req.query.search.trim() : '';
         const data = await adminOrderService.getAdminOrders({
@@ -14,33 +14,33 @@ const loadAdminOrders = async (req, res) => {
         });
 
         // For fetching count of pending returns for sidebar badge
-        const pendingReturnCount = await Order.countDocuments({ orderStatus: 'Return requested'});
-        
+        const pendingReturnCount = await Order.countDocuments({ orderStatus: 'Return requested' });
+
         res.render('admin/adminOrder', {
             currentPage: 'orders',
             pendingReturnCount,
             ...data,
         });
-    }catch(error) {
-        console.error('Error in load admin order page:',error);
-        res.status(500).json({ success: false, message: 'Server Error'});
+    } catch (error) {
+        console.error('Error in load admin order page:', error);
+        res.status(500).json({ success: false, message: 'Server Error' });
     }
 };
 
 // For loading order details page
 const loadAdminOrderDetails = async (req, res) => {
-    try{
+    try {
         const order = await adminOrderService.getAdminOrderDetails(req.params.id);
-        
-        if(!order) return res.redirect('/admin/orders');
+
+        if (!order) return res.redirect('/admin/orders');
 
         res.render('admin/adminOrderDetails', {
             currentPage: 'orders',
             order
         });
-    }catch(error) {
-        console.error('Error in load admin order details page:',error);
-        res.status(500).json({ success: false, message: 'Server Errror'});
+    } catch (error) {
+        console.error('Error in load admin order details page:', error);
+        res.status(500).json({ success: false, message: 'Server Errror' });
     }
 };
 

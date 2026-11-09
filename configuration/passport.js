@@ -10,7 +10,7 @@ passport.use(new GoogleStrategy({
     try {
         // 1. Check if user already exists
         let user = await User.findOne({ googleId: profile.id });
-        
+
         if (!user) {
             // 2. Create new user if they don't exist
             user = new User({
@@ -23,7 +23,7 @@ passport.use(new GoogleStrategy({
                 // Note: phone, gender, and dateOfBirth are missing here.
             });
             // Bypass strict validation temporarily since Google doesn't provide phone/DOB
-            await user.save({ validateBeforeSave: false }); 
+            await user.save({ validateBeforeSave: false });
         }
         return done(null, user);
     } catch (error) {

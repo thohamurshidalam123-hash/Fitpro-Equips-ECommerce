@@ -16,13 +16,13 @@ const salesReportController = require('../controllers/salesReportController');
 const settingsController = require('../controllers/settingsController');
 
 router.use(async (req, res, next) => {
-    try {
-        res.locals.pendingReturnCount = await Order.countDocuments({ orderStatus: 'Return requested' });
-    } catch (error) {
-        console.error('Admin return count middleware error:', error);
-        res.locals.pendingReturnCount = 0;
-    }
-    next();
+	try {
+		res.locals.pendingReturnCount = await Order.countDocuments({ orderStatus: 'Return requested' });
+	} catch (error) {
+		console.error('Admin return count middleware error:', error);
+		res.locals.pendingReturnCount = 0;
+	}
+	next();
 });
 
 const productUploadDir = path.join(__dirname, '..', 'uploads', 'products');
@@ -82,9 +82,9 @@ const requireAdminSession = (req, res, next) => {
 	next();
 };
 
-router.get('/login',adminController.loadLogin);
-router.post('/login',adminController.adminLogin);
-router.get('/logout',adminController.adminLogout);
+router.get('/login', adminController.loadLogin);
+router.post('/login', adminController.adminLogin);
+router.get('/logout', adminController.adminLogout);
 router.get('/dashboard', adminDashboardController.loadDashboard);
 router.get('/settings', (req, res, next) => req.session.adminId ? next() : res.redirect('/admin/login'), settingsController.loadSettings);
 router.post('/settings', requireAdminSession, settingsController.saveSettings);
@@ -95,20 +95,21 @@ router.post('/settings/email/cancel-otp', requireAdminSession, settingsControlle
 router.get('/sales-reports', salesReportController.loadSalesReport);
 router.get('/sales-reports/pdf', salesReportController.downloadPdfReport);
 
-router.post('/forgot-password',adminController.forgotPassword);
-router.post('/verify-forgot-otp',adminController.verifyForgotOtp);
-router.post('/reset-password',adminController.resetPassword);
-router.post('/resend-otp',adminController.resendForgotOtp);
+router.post('/forgot-password', adminController.forgotPassword);
+router.post('/verify-forgot-otp', adminController.verifyForgotOtp);
+router.post('/reset-password', adminController.resetPassword);
+router.post('/resend-otp', adminController.resendForgotOtp);
 
-router.get('/customers',adminController.loadCustomers)
-router.post('/toggle-block/:id',adminController.toggleBlockUser);
+router.get('/customers', adminController.loadCustomers)
+router.get('/customers/:id', adminController.loadCustomerDetails);
+router.post('/toggle-block/:id', adminController.toggleBlockUser);
 
 // Category management routes
-router.get('/category',categoryController.loadCategories);
+router.get('/category', categoryController.loadCategories);
 router.get('/categories', categoryController.loadCategories);
 router.post('/category/add', parseCategoryUpload, categoryController.addCategory);
 router.post('/category/edit', parseCategoryUpload, categoryController.editCategory);
-router.patch('/category/status/:id',categoryController.toggleCategoryStatus);
+router.patch('/category/status/:id', categoryController.toggleCategoryStatus);
 
 // Brand management routes
 router.get('/brands/:id', brandController.loadBrandDetails);
@@ -124,15 +125,15 @@ router.post('/products/edit/:id', parseProductUpload, productController.editProd
 router.get('/products/:id', productController.loadProductDetails);
 router.post('/products/:productId/variants/add', parseProductUpload, productController.addVariant);
 router.put('/products/:productId/variants/edit/:variantId', parseProductUpload, productController.editVariant);
-router.delete('/products/:productId/variants/delete/:variantId',productController.deleteVariant);
+router.delete('/products/:productId/variants/delete/:variantId', productController.deleteVariant);
 
 // Order management routes
-router.get('/orders',adminOrderController.loadAdminOrders);
+router.get('/orders', adminOrderController.loadAdminOrders);
 router.get('/orders/:id/invoice', invoiceController.downloadAdminInvoice);
-router.get('/orders/:id',adminOrderController.loadAdminOrderDetails);
-router.post('/orders/:id/status',adminOrderController.updateOrderStatus);
-router.post('/orders/:id/approve-return',adminOrderController.handleApproveReturn);
-router.post('/orders/:id/reject-return',adminOrderController.handleRejectReturn);
+router.get('/orders/:id', adminOrderController.loadAdminOrderDetails);
+router.post('/orders/:id/status', adminOrderController.updateOrderStatus);
+router.post('/orders/:id/approve-return', adminOrderController.handleApproveReturn);
+router.post('/orders/:id/reject-return', adminOrderController.handleRejectReturn);
 
 
 // Coupon management routes

@@ -2,6 +2,7 @@ const Product = require('../models/productModel');
 const Category = require('../models/categoryModel');
 const Brand = require('../models/brandModel');
 const { getBestOfferPercentage, getHighestVariantPrice, getEffectivePrice } = require('../utils/offerPricing');
+const { getProductDisplayImages } = require('../utils/productImages');
 
 // For loading active categories on the landing page
 const getLandingCategories = async () => Category.find({ status: 'Active' }).sort({ createdAt: -1 }).lean();
@@ -69,6 +70,7 @@ const getShopPageData = async ({ page, limit, search, categoryFilter, brandFilte
 
         return {
             ...product,
+            displayImages: getProductDisplayImages(product),
             variants: (product.variants || []).map(variant => ({
                 ...variant,
                 displayPrice: getEffectivePrice(product, variant)
@@ -101,6 +103,7 @@ const getProductDetails = async productId => {
 
     const highestVariantPrice = getHighestVariantPrice(product);
     if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
+    product.displayImages = getProductDisplayImages(product);
 
     // For dynamic offer logic for single product
     const bestOfferPercentage = getBestOfferPercentage(product);

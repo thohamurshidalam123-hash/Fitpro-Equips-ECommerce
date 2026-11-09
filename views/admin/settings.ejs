@@ -76,6 +76,11 @@
 							<input id="supportPhone" name="supportPhone" type="tel" value="<%= settings.supportPhone %>" minlength="7" maxlength="24" autocomplete="tel" required>
 							<span class="settings-error" data-error="supportPhone" aria-live="polite"></span>
 						</div>
+						<div class="settings-field full">
+							<label for="supportEmail">SUPPORT EMAIL</label>
+							<input id="supportEmail" name="supportEmail" type="email" value="<%= settings.supportEmail %>" maxlength="254" autocomplete="email" required>
+							<span class="settings-error" data-error="supportEmail" aria-live="polite"></span>
+						</div>
 					</div>
 					<p class="settings-message" id="settingsMessage" role="status" aria-live="polite"></p>
 					</form>

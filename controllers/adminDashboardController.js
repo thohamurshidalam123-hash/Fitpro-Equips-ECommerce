@@ -7,7 +7,7 @@ const loadDashboard = async (req, res) => {
         // For fetching all the aggregated dashboard data
         const dashboardData = await dashboardService.getDashboardStats();
 
-        res.render('admin/dashboard', { 
+        res.render('admin/dashboard', {
             currentPage: 'dashboard',
             totalOrders: dashboardData.totalOrders,
             pendingOrders: dashboardData.pendingOrders,
@@ -20,7 +20,7 @@ const loadDashboard = async (req, res) => {
             topCategories: dashboardData.topCategories,
             topBrands: dashboardData.topBrands,
             chartData: dashboardData.chartData
-        }); 
+        });
     } catch (error) {
         console.error('Error loading admin dashboard:', error);
         res.status(500).send('Server Error loading dashboard');

@@ -1,6 +1,7 @@
 const Wishlist = require('../models/wishlistModel');
 const Product = require('../models/productModel');
 const { getBestOfferPercentage, getHighestVariantPrice, getEffectivePrice } = require('../utils/offerPricing');
+const { getProductDisplayImages } = require('../utils/productImages');
 
 const getWishlistBadgeCount = async userId => {
     const wishlist = await Wishlist.findOne({ userId }).select('products').lean();
@@ -33,6 +34,7 @@ const getWishlist = async ({ userId, page, limit }) => {
             ...item,
             productId: {
                 ...product,
+                displayImages: getProductDisplayImages(product),
                 regularPrice: highestVariantPrice ?? (Number(product.regularPrice) || 0),
                 bestOfferPercentage: getBestOfferPercentage(product),
                 displayPrice: getEffectivePrice(product),

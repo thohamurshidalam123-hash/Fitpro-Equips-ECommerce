@@ -3,6 +3,7 @@ const Category = require('../models/categoryModel');
 const Brand = require('../models/brandModel');
 const { validateProduct } = require('../validators/productValidators');
 const { getHighestVariantPrice } = require('../utils/offerPricing');
+const { getProductDisplayImages } = require('../utils/productImages');
 
 const getHighlights = data => Array.from({ length: 4 }, (_, index) => ({
     title: String(data[`highlightTitle${index + 1}`] || '').trim()
@@ -49,6 +50,7 @@ const getProducts = async ({ page, limit, searchQuery, categoryFilter, statusFil
     products.forEach(product => {
         const highestVariantPrice = getHighestVariantPrice(product);
         if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
+        product.displayImages = getProductDisplayImages(product);
         product.bestOfferPercentage = Math.max(
             Number(product.offerPercentage) || 0,
             Number(product.categoryId?.offerPercentage) || 0,
@@ -141,6 +143,7 @@ const getProductDetails = async (productId) => {
     if (product) {
         const highestVariantPrice = getHighestVariantPrice(product);
         if (highestVariantPrice !== null) product.regularPrice = highestVariantPrice;
+        product.displayImages = getProductDisplayImages(product);
         product.bestOfferPercentage = Math.max(
             Number(product.offerPercentage) || 0,
             Number(product.categoryId?.offerPercentage) || 0,

@@ -3,5 +3,8 @@
         <span aria-hidden="true">⌕</span>
         <input type="search" placeholder="Search categories, slugs, or IDs..." aria-label="Search admin pages" <% if (typeof searchId !== 'undefined' && searchId) { %>id="<%= searchId %>"<% } %>>
     </label>
-    <div class="admin-topbar-actions"><a href="mailto:support@fitpro.com">Support</a></div>
+    <div class="admin-topbar-actions"><a href="#contact-modal" data-open-contact-modal aria-haspopup="dialog">Support</a></div>
 </header>
+<link rel="stylesheet" href="/css/contact-modal.css">
+<%- include('contact-modal') %>
+<script src="/js/contact-modal.js"></script>

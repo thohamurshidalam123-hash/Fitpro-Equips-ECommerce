@@ -1,44 +1,44 @@
-const mongoose = require ('mongoose');
+const mongoose = require('mongoose');
 
 const productSchema = new mongoose.Schema({
-    productName : { type:String, required: true, trim: true },
+    productName: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
     brandId: { type: mongoose.Schema.Types.ObjectId, ref: 'Brand' },
-    categoryId: { type: mongoose.Schema.Types.ObjectId, ref:'Category', required: true },
-    regularPrice: { type: Number, required: true, min: 0},
-    salePrice: { type: Number, default:0, min: 0},
-    offerPercentage : { type: Number, default: 0},
-    availableStock: { type: Number, required: true, min: 0},
+    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: 'Category', required: true },
+    regularPrice: { type: Number, required: true, min: 0 },
+    salePrice: { type: Number, default: 0, min: 0 },
+    offerPercentage: { type: Number, default: 0 },
+    availableStock: { type: Number, required: true, min: 0 },
     images: {
         type: [String],
         required: true,
         validate: [arrayLimit, 'A minimum of 3 images is required']
     },
 
-    variants : [{
-        name: { type: String},
+    variants: [{
+        name: { type: String },
         color: { type: String },
         weight: { type: Number },
         weightUnit: { type: String, default: 'kg' },
-        price: { type: Number},
+        price: { type: Number },
         stock: { type: Number, default: 0, min: 0 },
         images: { type: [String], default: [] },
-        status : { type: String, enum: ['In Stock','Low Stock','Out of Stock','Active']},
+        status: { type: String, enum: ['In Stock', 'Low Stock', 'Out of Stock', 'Active'] },
     }],
 
     highlights: [{
         title: { type: String, trim: true }
     }],
 
-    status:{
+    status: {
         type: String,
-        enum:['Active', 'Out of Stock', 'Low Stock'],
-        default:'Active'
+        enum: ['Active', 'Out of Stock', 'Low Stock'],
+        default: 'Active'
     }
-},{ timestamps: true});
+}, { timestamps: true });
 
-function arrayLimit(val){
-    return val.length >= 3 ;
+function arrayLimit(val) {
+    return val.length >= 3;
 }
 
-module.exports = mongoose.model('Product',productSchema);
+module.exports = mongoose.model('Product', productSchema);

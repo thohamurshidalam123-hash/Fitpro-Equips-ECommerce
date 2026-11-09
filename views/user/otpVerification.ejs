@@ -13,7 +13,7 @@
 		button { font: inherit; }
 		.otp-shell { min-height: calc(100vh - 4px); display: flex; flex-direction: column; }
 		.otp-main { flex: 1; display: grid; grid-template-columns: 1fr 1fr; min-height: 490px; }
-		.welcome-panel { position: relative; display: flex; align-items: center; min-height: 490px; padding: clamp(36px, 5vw, 72px); overflow: hidden; color: #fff; background: linear-gradient(180deg, rgba(32,76,129,.04), rgba(24,78,158,.58)), url("https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?auto=format&fit=crop&w=1200&q=85") center / cover; }
+		.welcome-panel { position: relative; display: flex; align-items: center; min-height: 490px; padding: clamp(36px, 5vw, 72px); overflow: hidden; color: #fff; background: linear-gradient(180deg, rgba(32,76,129,.04), rgba(24,78,158,.58)), url("/images/email%20otp%20page%20after%20registration.avif") center / cover; }
 		.welcome-copy { max-width: 360px; }.welcome-copy h1 { margin: 0 0 14px; color: #fff; font-size: clamp(30px, 3.3vw, 43px); line-height: .98; }.welcome-copy p { max-width: 320px; margin: 0; color: rgba(255,255,255,.88); font-size: 12px; line-height: 1.5; }
 		.form-panel { display: flex; align-items: center; justify-content: center; padding: clamp(32px, 5vw, 58px); }.form-content { width: min(100%, 390px); }
 		.verification-card { padding: 30px 26px 25px; border: 1px solid #e8edf5; border-radius: 7px; background: #fff; box-shadow: 0 4px 16px rgba(37,77,145,.09); }.verification-card h2 { margin: 0 0 6px; color: var(--blue); font-size: 16px; }.intro { margin: 0 0 10px; color: var(--muted); font-size: 10px; line-height: 1.45; }.email-chip { display: inline-flex; align-items: center; gap: 5px; margin-bottom: 22px; padding: 4px 8px; border-radius: 9px; color: var(--blue); background: #eaf2ff; font-size: 9px; }
@@ -58,7 +58,7 @@
 				</div>
 			</section>
 		</main>
-		<section class="help-area"><div class="help-content"><h3>NEED HELP?</h3><div class="help-links"><a href="#contact"><span>&#9742;</span>Support</a><a href="#contact"><span>&#9635;</span>FAQs</a></div></div></section>
+		<!-- <section class="help-area"><div class="help-content"><h3>NEED HELP?</h3><div class="help-links"><a href="#contact"><span>&#9742;</span>Support</a><a href="#contact"><span>&#9635;</span>FAQs</a></div></div></section> -->
 		<%- include('../partials/user-footer') %>
 	</div>
 		<div class="success-modal <%= typeof registrationSuccess !== 'undefined' && registrationSuccess ? '' : 'hidden' %>" role="dialog" aria-modal="true" aria-labelledby="success-title">

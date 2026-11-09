@@ -53,10 +53,12 @@ app.use(async (req, res, next) => {
         const settings = await settingsService.getSettings();
         res.locals.storeName = settings.storeName;
         res.locals.supportPhone = settings.supportPhone;
+        res.locals.supportEmail = settings.supportEmail;
     } catch (error) {
         console.error('Store name load error:', error.message);
         res.locals.storeName = 'Fitpro Equips';
         res.locals.supportPhone = '+91 6238833963';
+        res.locals.supportEmail = 'fitproequips.test1@gmail.com';
     }
     next();
 });
