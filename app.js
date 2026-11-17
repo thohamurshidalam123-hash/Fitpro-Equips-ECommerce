@@ -1,5 +1,6 @@
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo').default;
 const path = require('path');
 const passport = require('passport');
 const User = require('./models/user');
@@ -8,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
 const app = express();
+app.set('trust proxy',1);
 
 //Set up the View Engine (EJS)
 app.set('view engine', 'ejs');
@@ -23,14 +25,22 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //Session Configuration
 app.use(session({
-    secret: process.env.SESSION_SECRET || 'fallback_secret_key',
+    secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     rolling: true,
+
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGODB_URI,
+        collectionName: 'sessions',
+        ttl: 14 * 24 * 60 * 60
+    }),
+
     cookie: {
-        secure: process.env.NODE_ENV === 'production', // true if on HTTPS
-        httpOnly: true, // Prevents attacks
-        maxAge: 1000 * 60 * 60 * 24 // 1 day session
+        secure: 'auto',
+        httpOnly: true,
+        sameSite: 'lax',
+        maxAge: 1000 * 60 * 60 * 24
     }
 }));
 
