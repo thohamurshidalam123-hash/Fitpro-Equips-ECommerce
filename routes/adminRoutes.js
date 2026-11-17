@@ -57,7 +57,7 @@ const parseCategoryUpload = (req, res, next) => categoryUpload.single('image')(r
 		return res.status(400).json({
 			success: false,
 			message: 'Please correct the errors below',
-			errors: { image: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : 'File not supported' }
+			errors: { image: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : error.code === 'LIMIT_UNEXPECTED_FILE' ? 'Please select only one image.' : 'File not supported' }
 		});
 	}
 	next();
@@ -66,7 +66,7 @@ const parseCategoryUpload = (req, res, next) => categoryUpload.single('image')(r
 const brandUploadDir = path.join(__dirname, '..', 'uploads', 'brands');
 fs.mkdirSync(brandUploadDir, { recursive: true });
 const parseBrandUpload = (req, res, next) => multer({ dest: brandUploadDir, limits: { fileSize: 5 * 1024 * 1024 } }).single('logo')(req, res, error => {
-	if (error) return res.status(400).json({ success: false, errors: { logo: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : 'File not supported' } });
+	if (error) return res.status(400).json({ success: false, errors: { logo: error.code === 'LIMIT_FILE_SIZE' ? 'Image cannot exceed 5 MB' : error.code === 'LIMIT_UNEXPECTED_FILE' ? 'Please select only one image.' : 'File not supported' } });
 	if (req.file) {
 		const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${req.file.mimetype === 'image/png' ? '.png' : '.jpg'}`;
 		const target = path.join(brandUploadDir, filename);

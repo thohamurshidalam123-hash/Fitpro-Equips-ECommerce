@@ -25,14 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const description = descriptionInput.value.trim();
         const categoryId = categoryInput.value.trim();
         const offerValue = offerInput.value.trim();
+        const logoCountExceeded = logoInput.files.length > 1;
         if (!name) errors.name = 'Brand name is required';
         else if (!/^[A-Za-z0-9][A-Za-z0-9 &'().-]*$/.test(name)) errors.name = 'Brand name contains unsupported characters';
         if (!description) errors.description = 'Brand description is required';
         else if (description.length > 250) errors.description = 'Brand description cannot exceed 250 characters';
         if (!categoryId) errors.categoryId = 'Category is required';
         if (offerValue && (!Number.isFinite(Number(offerValue)) || Number(offerValue) < 0 || Number(offerValue) > 100)) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
-        const selectedLogo = getSelectedLogoFile();
-        if (!idInput.value && !selectedLogo) errors.logo = 'Brand image is required';
+        if (logoCountExceeded) errors.logo = 'Please select only one image.';
+        const selectedLogo = logoCountExceeded ? null : getSelectedLogoFile();
+        if (!idInput.value && !selectedLogo && !logoCountExceeded) errors.logo = 'Brand image is required';
         if (selectedLogo) {
             if (!['image/png', 'image/jpeg'].includes(selectedLogo.type)) errors.logo = 'File not supported';
             else if (selectedLogo.size > 5 * 1024 * 1024) errors.logo = 'Image cannot exceed 5 MB';
@@ -77,6 +79,13 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.addEventListener('click', event => { if (event.target === modal) modal.classList.add('hidden'); });
     logoInput.addEventListener('change', () => {
         logoProcessed = false;
+        if (logoInput.files.length > 1) {
+            originalLogoFile = null;
+            selectedLogoFile = null;
+            logoProcessing = Promise.resolve(null);
+            window.showInlineFieldErrors(form, { logo: 'Please select only one image.' });
+            return;
+        }
         originalLogoFile = logoInput.files[0] || null;
         selectedLogoFile = originalLogoFile;
         logoProcessing = originalLogoFile ? resizeBrandImage(originalLogoFile).then(file => { selectedLogoFile = file; return file; }).catch(() => { selectedLogoFile = originalLogoFile; return originalLogoFile; }) : Promise.resolve(null);

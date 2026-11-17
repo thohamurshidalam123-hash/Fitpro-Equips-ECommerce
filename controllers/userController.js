@@ -65,7 +65,7 @@ const registerUser = async (req, res) => {
     try {
         const result = await userService.registerUser(req.body);
         if (!result.success) {
-            return res.status(result.statusCode || 200).json({ success: false, errors: result.errors, formData: result.formData });
+            return res.status(result.statusCode || 400).json({ success: false, errors: result.errors, formData: result.formData });
         }
 
         // Store user data and OTP in session
@@ -114,8 +114,8 @@ const verifyOtp = async (req, res) => {
             userData: req.session.userData
         });
         if (!result.success) {
-            if (wantsJson) return res.json({ success: false, message: result.message });
-            return res.render('user/otpVerification', {
+            if (wantsJson) return res.status(400).json({ success: false, message: result.message });
+            return res.status(400).render('user/otpVerification', {
                 message: result.message,
                 currentPage: 'otp',
                 otpResendSeconds: getOtpResendSeconds(req.session.otpResendAt)
@@ -180,7 +180,7 @@ const resendOtp = async (req, res) => {
                 otpResendSeconds: getOtpResendSeconds(req.session.otpResendAt)
             });
         } else {
-            return res.render('user/otpVerification', {
+            return res.status(500).render('user/otpVerification', {
                 message: 'Failed to send OTP. Please try again.',
                 messageType: 'error',
                 currentPage: 'otp',
@@ -313,7 +313,7 @@ const processForgotPassword = async (req, res) => {
             return res.redirect('/reset-password');
         }
 
-        return res.render('user/forgotPassword', {
+        return res.status(500).render('user/forgotPassword', {
             currentPage: 'forgot-password',
             message: 'Failed to send OTP. Please try again later.'
         });
@@ -338,7 +338,7 @@ const updatePassword = async (req, res) => {
             confirmPassword: req.body.confirmPassword
         });
         if (!result.success) {
-            return res.render('user/resetPassword', {
+            return res.status(400).render('user/resetPassword', {
                 currentPage: 'reset-password',
                 fieldErrors: result.errors,
                 otpResendSeconds: getOtpResendSeconds(req.session.resetOtpResendAt)

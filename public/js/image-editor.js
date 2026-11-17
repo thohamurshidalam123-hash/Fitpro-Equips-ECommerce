@@ -120,10 +120,23 @@
 		};
 		const files = [...input.files];
 		if (!files.length) { delete input.dataset.processing; return null; }
+		const maxFiles = Number(input.dataset.maxFiles || 0);
+		if (maxFiles > 0 && files.length > maxFiles) {
+			input.value = '';
+			input.dataset.invalidFile = 'true';
+			input.dataset.invalidFileMessage = 'Please select only one image.';
+			input.processedFiles = [];
+			delete input.dataset.processing;
+			if (typeof window.showInlineFieldErrors === 'function') {
+				window.showInlineFieldErrors(input.form, { [input.name]: input.dataset.invalidFileMessage });
+			}
+			return null;
+		}
 		const unsupportedFile = files.find(file => !['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type));
 		if (unsupportedFile) {
 			input.value = '';
 			input.dataset.invalidFile = 'true';
+			delete input.dataset.invalidFileMessage;
 			delete input.dataset.processing;
 			if (typeof window.showInlineFieldErrors === 'function') {
 				window.showInlineFieldErrors(input.form, { [input.name]: 'Choose a PNG, JPEG, GIF, or WebP image.' });
@@ -132,6 +145,7 @@
 			return null;
 		}
 		delete input.dataset.invalidFile;
+		delete input.dataset.invalidFileMessage;
 		const processed = [];
 		for (const file of files) {
 			const result = input.dataset.autoResize === 'true' ? await resizeImage(file, options) : await editImage(file, options);

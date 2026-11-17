@@ -773,6 +773,7 @@
                         <!-- DYNAMIC CART LOOP -->
                         <% if (typeof cartItems !== 'undefined' && cartItems.length > 0) { %>
                             <% cartPageItems.forEach(item => { %>
+                               <% if (item.productId) { %>
                                 <!-- Task D.vii: Add class if item is disabled or out of stock -->
                                 <article class="cart-item <%= (!item.isAvailable || item.outOfStock) ? 'disabled-item' : '' %>" data-cart-item-id="<%= item._id %>">
                                     <div class="product-thumb">
@@ -806,6 +807,15 @@
                                         <span class="subtotal">Subtotal <strong>₹<span data-cart-line-total><%= item.totalPrice.toLocaleString('en-IN') %></span></strong></span>
                                     </div>
                                 </article>
+                            <% } else { %>
+    <article class="cart-item disabled-item" data-cart-item-id="<%= item._id %>">
+        <div class="product-info">
+            <h2 class="product-name">This product is no longer available</h2>
+            <p class="error-msg">This item may have been removed from our store.</p>
+            <button class="mini-link remove" type="button" onclick="removeItem('<%= item._id %>')">Remove</button>
+        </div>
+    </article>
+<% } %>
                             <% }) %>
                         <% } else { %>
                             <div style="text-align: center; padding: 40px; background: rgba(255,255,255,0.75); border-radius: 12px; border: 1px solid var(--line);">

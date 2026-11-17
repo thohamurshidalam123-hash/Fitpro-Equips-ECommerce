@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		else if (description.length > 250) errors.description = 'Description cannot exceed 250 characters';
 		if (offerValue && (!Number.isFinite(Number(offerValue)) || Number(offerValue) < 0 || Number(offerValue) > 100)) errors.offerPercentage = 'Offer must be between 0 and 100 percent';
 		if (!idInput.value && !image) errors.image = 'Category image is required';
-		if (imageInput.dataset.invalidFile === 'true' || (image && !['image/png', 'image/jpeg'].includes(image.type))) errors.image = 'File not supported';
+		if (imageInput.dataset.invalidFile === 'true' || (image && !['image/png', 'image/jpeg'].includes(image.type))) errors.image = imageInput.dataset.invalidFileMessage || 'File not supported';
 		else if (image && image.size > 5 * 1024 * 1024) errors.image = 'Image cannot exceed 5 MB';
 		return errors;
 	};
@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		featuredInput.checked = category?.featured === 'true';
 		imageInput.value = '';
 		delete imageInput.dataset.invalidFile;
+		delete imageInput.dataset.invalidFileMessage;
 		selectedImage.textContent = category?.image ? 'Current image will be kept unless a new image is selected.' : '';
 		clearErrors();
 		modal.classList.remove('hidden');
@@ -71,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	imageInput.addEventListener('change', async () => {
 		if (imageInput.imageProcessingPromise) await imageInput.imageProcessingPromise;
 		if (imageInput.dataset.invalidFile === 'true') {
-			window.showInlineFieldErrors(form, { image: 'File not supported' });
+			window.showInlineFieldErrors(form, { image: imageInput.dataset.invalidFileMessage || 'File not supported' });
 		} else clearFieldError('image');
 	});
 	modal.addEventListener('click', event => { if (event.target === modal) closeModal(); });

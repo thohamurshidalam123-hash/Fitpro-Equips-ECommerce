@@ -1,36 +1,237 @@
 /* Shared visual scale for authenticated admin pages. */
-body:has(.admin-dashboard) { background: #f7f8ff; color: #172033; }
-.admin-dashboard { grid-template-columns: 198px 1fr; }
-.admin-dashboard .sidebar { width: 198px; box-shadow: none; border-right-color: #dfe4ee; }
-.admin-dashboard .sidebar-header { padding: 25px 26px 20px; }
-.admin-dashboard .logo-icon { display: none; }
-.admin-dashboard .logo-text h1 { font-size: 18px; }
-.admin-dashboard .logo-text p { font-size: 8px; letter-spacing: .8px; }
-.admin-dashboard .sidebar-nav { padding: 20px 0; }
-.admin-dashboard .nav-item { gap: 10px; padding: 10px 25px; font-size: 12px; }
-.admin-dashboard .nav-icon { width: 15px; font-size: 14px; }
-.admin-dashboard .sidebar-footer { padding: 18px 25px; gap: 14px; }
-.admin-dashboard .admin-profile { padding: 8px; }
-.admin-dashboard .admin-avatar { width: 30px; height: 30px; font-size: 13px; }
-.admin-dashboard .admin-name { font-size: 10px; }
-.admin-dashboard .admin-email { font-size: 8px; }
-.admin-dashboard .logout-btn { justify-content: flex-start; padding: 4px 8px; background: transparent; font-size: 11px; }
-.admin-dashboard > .main-content { grid-column: 2; padding: 0 47px 45px; }
-.admin-dashboard .admin-page-topbar { height: 53px; margin: 0 calc(var(--admin-topbar-gutter, 47px) * -1) 23px; padding: 0 18px; }
-.admin-dashboard .admin-page-search { width: 332px; height: 31px; }
-.admin-dashboard .brand-topbar { height: 53px; margin: 0 -47px 23px; padding: 0 18px; }
-.admin-dashboard .brand-content { padding: 0 47px 45px; }
-.admin-dashboard .brand-detail-content { padding: 0 47px 35px; }
-.admin-dashboard .product-page .main-content { padding: 0 47px 45px; }
-.admin-dashboard .product-page-topbar { margin: 0 -47px 23px; padding: 0 18px; }
+body:has(.admin-dashboard) {
+    background: #f7f8ff;
+    color: #172033;
+}
+.admin-dashboard {
+    grid-template-columns: 198px 1fr;
+}
+.admin-dashboard .sidebar {
+    width: 198px;
+    box-shadow: none;
+    border-right-color: #dfe4ee;
+}
+.admin-dashboard .sidebar-header {
+    padding: 25px 26px 20px;
+}
+.admin-dashboard .logo-icon {
+    display: none;
+}
+.admin-dashboard .logo-text h1 {
+    font-size: 18px;
+}
+.admin-dashboard .logo-text p {
+    font-size: 8px;
+    letter-spacing: 0.8px;
+}
+.admin-dashboard .sidebar-nav {
+    padding: 20px 0;
+}
+.admin-dashboard .nav-item {
+    gap: 10px;
+    padding: 10px 25px;
+    font-size: 12px;
+}
+.admin-dashboard .nav-icon {
+    width: 15px;
+    font-size: 14px;
+}
+.admin-dashboard .sidebar-footer {
+    padding: 18px 25px;
+    gap: 14px;
+}
+.admin-dashboard .admin-profile {
+    padding: 8px;
+}
+.admin-dashboard .admin-avatar {
+    width: 30px;
+    height: 30px;
+    font-size: 13px;
+}
+.admin-dashboard .admin-name {
+    font-size: 10px;
+}
+.admin-dashboard .admin-email {
+    font-size: 8px;
+}
+.admin-dashboard .logout-btn {
+    justify-content: flex-start;
+    padding: 4px 8px;
+    background: transparent;
+    font-size: 11px;
+}
+.admin-dashboard > .main-content {
+    grid-column: 2;
+    padding: 0 47px 45px;
+}
+.admin-dashboard .admin-page-topbar {
+    height: 53px;
+    margin: 0 calc(var(--admin-topbar-gutter, 47px) * -1) 23px;
+    padding: 0 18px;
+}
+.admin-dashboard .admin-page-search {
+    width: 332px;
+    height: 31px;
+}
+.admin-dashboard .brand-topbar {
+    height: 53px;
+    margin: 0 -47px 23px;
+    padding: 0 18px;
+}
+.admin-dashboard .brand-content {
+    padding: 0 47px 45px;
+}
+.admin-dashboard .brand-detail-content {
+    padding: 0 47px 35px;
+}
+.admin-dashboard .product-page .main-content {
+    padding: 0 47px 45px;
+}
+.admin-dashboard .product-page-topbar {
+    margin: 0 -47px 23px;
+    padding: 0 18px;
+}
+
+@media (max-width: 1200px) {
+    .admin-dashboard,
+    .admin-dashboard.order-management-page,
+    .admin-dashboard.admin-order-detail {
+        grid-template-columns: 1fr;
+    }
+    .admin-dashboard .sidebar,
+    .admin-dashboard.order-management-page > .sidebar,
+    .admin-dashboard.admin-order-detail > .sidebar {
+        position: static;
+        width: 100%;
+        height: auto;
+        flex-direction: column;
+    }
+    .admin-dashboard .sidebar-header {
+        padding: 10px 16px;
+        border-right: 0;
+        border-bottom: 1px solid #dfe4ee;
+    }
+    .admin-dashboard .sidebar-nav {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 2px;
+        padding: 6px;
+        border-right: 0;
+        overflow: visible;
+    }
+    .admin-dashboard .nav-item {
+        min-width: 0;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 4px;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        font-size: 11px;
+    }
+    .admin-dashboard .nav-item.active {
+        border: 0;
+        border-bottom: 3px solid #1a73e8;
+    }
+    .admin-dashboard .nav-label {
+        overflow-wrap: anywhere;
+        text-align: center;
+    }
+    .admin-dashboard .sidebar-footer {
+        display: flex;
+        flex-direction: row;
+        justify-content: flex-end;
+        padding: 6px 12px;
+        border-top: 1px solid #dfe4ee;
+        border-left: 0;
+    }
+    .admin-dashboard .admin-profile {
+        display: none;
+    }
+    .admin-dashboard .logout-btn {
+        padding: 6px 10px;
+    }
+    .admin-dashboard > .main-content,
+    .admin-dashboard.order-management-page > .main-content,
+    .admin-dashboard.admin-order-detail > .detail-main {
+        grid-column: 1;
+        min-width: 0;
+        padding: 0 24px 32px;
+    }
+}
 
 @media (max-width: 800px) {
-	.admin-dashboard { grid-template-columns: 1fr; }
-	.admin-dashboard .sidebar { position: static; width: 100%; height: auto; }
-	.admin-dashboard .sidebar-nav { display: grid; grid-template-columns: repeat(3, 1fr); padding: 5px 0; }
-	.admin-dashboard .sidebar-footer { display: none; }
-	.admin-dashboard > .main-content { grid-column: 1; padding: 0 16px 30px; }
-	.admin-dashboard .admin-page-topbar { --admin-topbar-gutter: 16px; margin: 0 calc(var(--admin-topbar-gutter) * -1) 20px; padding: 0 16px; }
-	.admin-dashboard .brand-topbar { margin: 0 -16px 20px; padding: 0 16px; }
-	.admin-dashboard .admin-page-search, .admin-dashboard .brand-global-search { width: min(100%, 332px); }
+    .admin-dashboard {
+        grid-template-columns: 1fr;
+    }
+    .admin-dashboard .sidebar {
+        width: 100%;
+    }
+    .admin-dashboard .sidebar-nav {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        padding: 5px;
+    }
+    .admin-dashboard .sidebar-footer {
+        display: flex;
+    }
+    .admin-dashboard > .main-content,
+    .admin-dashboard.order-management-page > .main-content,
+    .admin-dashboard.admin-order-detail > .detail-main {
+        grid-column: 1;
+        padding: 0 16px 30px;
+    }
+    .admin-dashboard .admin-page-topbar {
+        --admin-topbar-gutter: 16px;
+        margin: 0 calc(var(--admin-topbar-gutter) * -1) 20px;
+        padding: 0 16px;
+    }
+    .admin-dashboard .brand-topbar {
+        margin: 0 -16px 20px;
+        padding: 0 16px;
+    }
+    .admin-dashboard .admin-page-search,
+    .admin-dashboard .brand-global-search {
+        width: min(100%, 332px);
+    }
+    .admin-dashboard.order-management-page .orders-stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .admin-dashboard.order-management-page .orders-filterbar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .admin-dashboard.order-management-page .orders-query {
+        grid-column: 1 / -1;
+    }
+    .admin-dashboard.order-management-page .orders-table-footer {
+        flex-wrap: wrap;
+    }
+    .admin-dashboard.admin-order-detail .detail-content-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+    .admin-dashboard.admin-order-detail .detail-meta-grid {
+        width: 100%;
+    }
+    .admin-dashboard.admin-order-detail .products-panel {
+        overflow-x: auto;
+    }
+    .admin-dashboard.admin-order-detail .products-table {
+        min-width: 560px;
+    }
+}
+
+@media (max-width: 520px) {
+    .admin-dashboard.order-management-page > .main-content,
+    .admin-dashboard.admin-order-detail > .detail-main {
+        padding-right: 12px;
+        padding-left: 12px;
+    }
+    .admin-dashboard.order-management-page .orders-stat {
+        padding: 10px 8px;
+    }
+    .admin-dashboard.order-management-page .orders-stat-label {
+        font-size: 8px;
+    }
+    .admin-dashboard.order-management-page .orders-filterbar {
+        gap: 6px;
+        padding: 7px;
+    }
 }

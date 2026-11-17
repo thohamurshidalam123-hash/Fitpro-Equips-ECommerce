@@ -43,17 +43,17 @@ const registerUser = async data => {
     if (Object.keys(errors).length) return { success: false, statusCode: 400, errors, formData };
 
     if (await User.findOne({ email: trimmedEmail })) {
-        return { success: false, errors: { email: 'Email already registered' }, formData };
+        return { success: false, statusCode: 409, errors: { email: 'Email already registered' }, formData };
     }
     if (await User.findOne({ phone: normalizedPhone })) {
-        return { success: false, errors: { phone: 'This phone number is already registered' }, formData };
+        return { success: false, statusCode: 409, errors: { phone: 'This phone number is already registered' }, formData };
     }
 
     let referringUserId = null;
-    if(trimmedReferralCode) {
-        const referrer = await User.findOne({ referralCode : trimmedReferralCode });
+    if (trimmedReferralCode) {
+        const referrer = await User.findOne({ referralCode: trimmedReferralCode });
         if (!referrer) {
-            return { success: false, errors: { referralCode: 'Invalid referral code.'}, formData}
+            return { success: false, statusCode: 400, errors: { referralCode: 'Invalid referral code.' }, formData }
         }
         referringUserId = referrer._id;
     }
@@ -61,7 +61,7 @@ const registerUser = async data => {
     const securePassword = await bcrypt.hash(trimmedPassword, 10);
     const otp = generateOtp();
     const emailSent = await sendOtpEmail(trimmedEmail, otp);
-    if (!emailSent) return { success: false, errors: { form: 'Failed to send OTP. Please try again.' }, formData };
+    if (!emailSent) return { success: false, statusCode: 500, errors: { form: 'Failed to send OTP. Please try again.' }, formData };
 
     return {
         success: true,
@@ -72,9 +72,9 @@ const registerUser = async data => {
 
 // For creating user after OTP verification
 const createRegisteredUser = async userData => {
-    
+
     let newReferralCode = generateReferralCode();
-    while (await User.exists({ referralCode: newReferralCode })){
+    while (await User.exists({ referralCode: newReferralCode })) {
         newReferralCode = generateReferralCode();
     }
 
@@ -92,14 +92,14 @@ const createRegisteredUser = async userData => {
     });
     await newUser.save();
 
-    if(userData.referredBy) {
+    if (userData.referredBy) {
         try {
-             await walletService.creditWallet(
+            await walletService.creditWallet(
                 userData.referredBy,
                 100,
                 `Referral earning credited for inviting ${newUser.name}`,
                 null
-             );
+            );
         } catch (error) {
             console.error('Failed to credit referral bonus', error);
         }
