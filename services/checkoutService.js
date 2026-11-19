@@ -39,7 +39,7 @@ const getCheckoutData = async ({ userId, addressId, appliedCouponCode }) => {
             productId: product._id,
             name: product.productName,
             quantity: item.quantity,
-            image: product.images && product.images.length > 0 ? product.images[0] : '',
+            image: (variant?.images?.[0]) || product.images?.[0] || '',
             price,
             itemTotal
         };
@@ -134,7 +134,7 @@ const placeOrder = async ({ userId, addressId, paymentMethod, couponCode, paymen
             productId: product._id,
             variantId: item.variantId,
             name: product.productName,
-            image: (variant && variant.images[0]) || product.images[0] || '',
+            image: (variant?.images?.[0]) || product.images?.[0] || '',
             price,
             quantity: item.quantity,
             itemTotal
